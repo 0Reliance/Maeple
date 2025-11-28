@@ -1,0 +1,8 @@
+{
+  "name": "POZIMIND",
+  "description": "Your neuro-affirming companion for pattern literacy and capacity tracking. Powered by Poziverse.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
