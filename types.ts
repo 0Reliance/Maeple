@@ -144,6 +144,15 @@ export interface FacialAnalysis {
   signs: string[]; // e.g. ["droopy eyelids", "tight lips"]
 }
 
+// New: Baseline Calibration for Bio-Mirror
+export interface FacialBaseline {
+  id: string;
+  timestamp: string;
+  neutralTension: number; // Resting jaw tension
+  neutralFatigue: number; // Resting eye openness
+  neutralMasking: number; // Resting asymmetry
+}
+
 export interface StateCheck {
   id: string;
   timestamp: string;

@@ -117,6 +117,12 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
   return (
     <div className="space-y-6">
       
+      {/* Mobile-Only Header */}
+      <div className="md:hidden">
+          <h2 className="text-xl font-bold text-slate-800">Quick Capture</h2>
+          <p className="text-sm text-slate-500">Log context, capacity, and patterns.</p>
+      </div>
+
       {/* Phase 3: Immediate Strategy Feedback Overlay */}
       {lastStrategies.length > 0 && (
           <div className="bg-teal-600 rounded-3xl p-6 text-white shadow-xl animate-fadeIn relative overflow-hidden">
@@ -209,7 +215,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
           <button
             onClick={handleSubmit}
             disabled={!text || isProcessing}
-            className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all transform active:scale-95 ${
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all transform active:scale-95 ${
               !text || isProcessing
                 ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
                 : 'bg-teal-600 text-white hover:bg-teal-700 shadow-md hover:shadow-lg shadow-teal-200'
@@ -218,7 +224,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
             {isProcessing ? (
               <>
                 <Loader2 size={20} className="animate-spin" />
-                <span>Parsing Patterns...</span>
+                <span>Parsing...</span>
               </>
             ) : (
               <>

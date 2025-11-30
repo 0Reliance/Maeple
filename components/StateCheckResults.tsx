@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { FacialAnalysis, HealthEntry } from '../types';
-import { Activity, CheckCircle2, Save, Scale, ShieldCheck, EyeOff } from 'lucide-react';
+import { FacialAnalysis, HealthEntry, FacialBaseline } from '../types';
+import { Activity, CheckCircle2, Save, Scale, ShieldCheck, EyeOff, Info } from 'lucide-react';
 import { compareSubjectiveToObjective } from '../services/comparisonEngine';
 import { saveStateCheck } from '../services/stateCheckService';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,15 +10,16 @@ interface Props {
   analysis: FacialAnalysis;
   imageSrc: string;
   recentEntry: HealthEntry | null;
+  baseline?: FacialBaseline | null;
   onClose: () => void;
 }
 
-const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, onClose }) => {
+const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, baseline, onClose }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
 
-  // Run Comparison Logic
-  const comparison = compareSubjectiveToObjective(recentEntry, analysis);
+  // Run Comparison Logic with Baseline
+  const comparison = compareSubjectiveToObjective(recentEntry, analysis, baseline);
   
   const handleSave = async () => {
       setIsSaving(true);
@@ -51,15 +52,14 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, o
            <div className="w-full md:w-1/3 space-y-3">
                <div className="aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-inner relative">
                    <img src={imageSrc} alt="Selfie" className="w-full h-full object-cover transform scale-x-[-1]" />
-                   {/* Overlay Analysis Points (Fake visual feedback) */}
-                   <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-teal-400 rounded-full opacity-50"></div>
-                   <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-teal-400 rounded-full opacity-50"></div>
-                   <div className="absolute bottom-1/3 left-1/2 w-2 h-2 bg-purple-400 rounded-full opacity-50"></div>
                </div>
                
                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
                    <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Masking Score</p>
                    <div className="text-2xl font-bold text-slate-800">{(analysis.maskingScore * 10).toFixed(1)}<span className="text-sm text-slate-400 font-normal">/10</span></div>
+                   {comparison.baselineApplied && (
+                       <span className="text-[10px] text-indigo-500 font-medium bg-indigo-50 px-2 py-0.5 rounded-full inline-block mt-1">Adjusted to Baseline</span>
+                   )}
                </div>
            </div>
 
@@ -97,8 +97,7 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, o
                             </div>
                             <div className="border-l border-indigo-200 pl-4">
                                 <p className="text-xs text-indigo-400 font-bold uppercase mb-1">Body Shows</p>
-                                <p className="font-bold text-indigo-900 text-lg leading-tight">{analysis.primaryEmotion}</p>
-                                <p className="text-xs text-indigo-600">Tension: {(Math.max(analysis.jawTension, analysis.eyeFatigue) * 10).toFixed(0)}/10</p>
+                                <p className="font-bold text-indigo-900 text-lg leading-tight">{comparison.objectiveState}</p>
                             </div>
                         </div>
                         
@@ -115,7 +114,7 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, o
                )}
 
                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                    <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm relative">
                         <div className="flex items-center gap-2 mb-2 text-slate-400 text-xs font-bold uppercase">
                             <Activity size={14} /> Jaw Tension
                         </div>
@@ -123,8 +122,13 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, o
                         <div className="w-full bg-slate-100 rounded-full h-1 mt-2">
                            <div className={`h-1 rounded-full ${analysis.jawTension > 0.5 ? 'bg-orange-400' : 'bg-emerald-400'}`} style={{width: `${analysis.jawTension * 100}%`}}></div>
                         </div>
+                        {comparison.baselineApplied && (
+                            <div className="absolute top-2 right-2 text-indigo-400" title="Baseline Adjusted">
+                                <Info size={12} />
+                            </div>
+                        )}
                     </div>
-                    <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                    <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm relative">
                         <div className="flex items-center gap-2 mb-2 text-slate-400 text-xs font-bold uppercase">
                             <EyeOff size={14} /> Eye Fatigue
                         </div>
@@ -132,6 +136,11 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, o
                          <div className="w-full bg-slate-100 rounded-full h-1 mt-2">
                            <div className={`h-1 rounded-full ${analysis.eyeFatigue > 0.5 ? 'bg-rose-400' : 'bg-emerald-400'}`} style={{width: `${analysis.eyeFatigue * 100}%`}}></div>
                         </div>
+                        {comparison.baselineApplied && (
+                            <div className="absolute top-2 right-2 text-indigo-400" title="Baseline Adjusted">
+                                <Info size={12} />
+                            </div>
+                        )}
                     </div>
                </div>
            </div>
