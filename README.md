@@ -1,5 +1,6 @@
+
 # POZIMIND: The Pattern Literacy Engine
-> *Alpha Release v1.0 | Powered by Poziverse*
+> *Alpha Release v1.1 | Powered by Poziverse*
 
 POZIMIND is a neuro-affirming health intelligence tool designed to shift the paradigm from **Symptom Surveillance** ("How broken are you?") to **Pattern Literacy** ("What is your context?").
 
@@ -11,8 +12,10 @@ It uses Google's Gemini 2.5 models to track multi-dimensional capacity, predict 
 Replaces linear "spoons" with a 7-point capacity grid (Focus, Social, Sensory, Emotional, Physical, Structure, Executive). This allows for nuanced tracking of energy budgets.
 
 ### 2. Bio-Mirror (State Check) 📸
-**New in v1.0:** An objective reality check for your nervous system.
+**New in v1.1:** An objective reality check for your nervous system.
 *   **Vision AI:** Analyzes selfies for Jaw Tension, Eye Fatigue, and Masking signals.
+*   **Baseline Calibration:** Teaches the AI your unique "resting face" to improve accuracy and reduce false positives for neurodivergent flat affect.
+*   **Longitudinal Trends:** Visualizes how masking effort correlates with physical tension over time.
 *   **Comparison Engine:** Compares your subjective mood log vs. objective physical signs to detect dissociation or high-functioning burnout.
 *   **Privacy-First:** Images are processed in memory and encrypted locally using AES-GCM before storage.
 
@@ -82,6 +85,24 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
 
 5.  **Access the App**
     Open `http://localhost:3000`.
+
+## 📱 Mobile Testing Guide
+
+POZIMIND behaves differently depending on the device context to optimize for neurodivergent needs (Focus vs Capture).
+
+**To test Mobile View in Chrome DevTools:**
+1.  Open Developer Tools (F12).
+2.  Toggle Device Toolbar (Ctrl+Shift+M).
+3.  Select "iPhone 12" or "Pixel 5".
+4.  **Observe:**
+    *   Sidebar disappears.
+    *   Sticky **Bottom Navigation** appears.
+    *   Default view switches to **Smart Journal** (Capture-First) instead of Dashboard.
+    *   "Quick Capture" header appears.
+
+**To test Bio-Mirror Camera:**
+*   Ensure your testing browser has permission to access the webcam.
+*   On mobile devices, check that you are testing via HTTPS (required for Camera/Mic access).
 
 ## 📦 Deployment
 
