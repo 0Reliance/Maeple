@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Zap, Brain, Volume2, EyeOff, BookHeart, Activity, Calendar, Compass } from 'lucide-react';
+import { Zap, Brain, Volume2, EyeOff, BookHeart, Activity, Calendar, Compass, Camera } from 'lucide-react';
 
 const Guide: React.FC = () => {
   return (
@@ -132,6 +132,19 @@ const Guide: React.FC = () => {
 
             <div className="flex gap-6 items-start">
                 <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xl shrink-0">3</div>
+                <div>
+                    <h3 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        Use the Bio-Mirror <Camera size={16} className="text-indigo-500" />
+                    </h3>
+                    <p className="text-slate-600">
+                        When you can't describe how you feel, use the <strong>Bio-Mirror (State Check)</strong>. 
+                        It objectively analyzes your face for jaw tension and eye fatigue to validate your burnout.
+                    </p>
+                </div>
+            </div>
+            
+             <div className="flex gap-6 items-start">
+                <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xl shrink-0">4</div>
                 <div>
                     <h3 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
                         Identify the Gap <Activity size={16} className="text-indigo-500" />

@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { ParsedResponse } from "../types";
+import { ParsedResponse, CapacityProfile } from "../types";
 
 // Initialize the client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -35,39 +35,89 @@ const healthEntrySchema: Schema = {
     neuroMetrics: {
       type: Type.OBJECT,
       properties: {
-        spoonLevel: { type: Type.NUMBER, description: "Estimated Energy Capacity (1-10) based on text tone" },
         sensoryLoad: { type: Type.NUMBER, description: "1-10 scale of environmental intensity (noise, crowds)" },
         contextSwitches: { type: Type.NUMBER, description: "Estimated number of role/task switches mentioned" },
-        maskingScore: { type: Type.NUMBER, description: "1-10 estimate of effort spent 'performing' neurotypicality" }
+        maskingScore: { type: Type.NUMBER, description: "1-10 estimate of effort spent 'performing' neurotypicality or suppressing traits" }
       },
-      required: ["spoonLevel", "sensoryLoad", "contextSwitches", "maskingScore"]
+      required: ["sensoryLoad", "contextSwitches", "maskingScore"]
+    },
+    activityTypes: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: "Tags for activity types detected: #DeepWork, #Meeting, #Social, #Chore, #Rest, #Travel, #Admin, #Masking"
     },
     strengths: {
       type: Type.ARRAY,
       items: { type: Type.STRING },
       description: "List of character strengths displayed (e.g., Curiosity, Zest, Flow, Persistence, Empathy)"
     },
-    summary: { type: Type.STRING, description: "Brief neutral summary of the entry" }
+    summary: { type: Type.STRING, description: "Brief neutral summary of the entry" },
+    analysisReasoning: { type: Type.STRING, description: "Brief explanation of why you assigned the masking/sensory scores based on linguistic markers." },
+    strategies: {
+      type: Type.ARRAY,
+      description: "3 actionable, neuro-affirming strategies tailored to the user's current capacity state.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          id: { type: Type.STRING },
+          title: { type: Type.STRING },
+          action: { type: Type.STRING, description: "Specific, bite-sized instruction." },
+          type: { type: Type.STRING, enum: ["REST", "FOCUS", "SOCIAL", "SENSORY", "EXECUTIVE"] },
+          relevanceScore: { type: Type.NUMBER }
+        }
+      }
+    }
   },
-  required: ["moodScore", "moodLabel", "neuroMetrics", "strengths", "summary"]
+  required: ["moodScore", "moodLabel", "neuroMetrics", "activityTypes", "strengths", "summary", "strategies", "analysisReasoning"]
 };
 
 /**
  * Parses natural language health journals into structured JSON.
- * Uses Gemini 2.5 Flash for neurodiversity-affirming analysis.
+ * Uses Gemini 2.5 Flash with Advanced Chain-of-Thought prompting for Neuro-Affirming Analysis.
  */
-export const parseJournalEntry = async (text: string, manualSpoons?: number): Promise<ParsedResponse> => {
+export const parseJournalEntry = async (text: string, capacityProfile: CapacityProfile): Promise<ParsedResponse> => {
   try {
+    const systemInstruction = `
+      You are POZIMIND, an expert Neuro-Affirming Health Analyst.
+      Your mission is to move beyond "Symptom Tracking" to "Pattern Literacy".
+      
+      You must analyze the user's journal entry through the lens of:
+      1. Spoon Theory (Energy Capacity vs Demand)
+      2. Sensory Processing (Environmental Load)
+      3. Masking (The hidden cost of fitting in)
+      4. Executive Function (Task switching cost)
+
+      DETECTING MASKING (Linguistic Markers):
+      - High Masking: Over-explaining, apologetic tone, rigid structure, suppression of emotions, mentioning "acting normal" or "professional face".
+      - Low Masking (Authentic): Fragmented sentences (if tired), vivid sensory metaphors, mentioning special interests, honest expression of burnout.
+
+      DETECTING SENSORY LOAD:
+      - Look for mentions of: Lights, sounds, textures, crowds, temperature, "buzzing", "overwhelmed", "shut down".
+
+      DETECTING EXECUTIVE DYSFUNCTION:
+      - Look for: "Stuck", "Doom scrolling", "Couldn't start", "Forgot", "Scattered". Do not label this as laziness.
+
+      STRATEGY GENERATION:
+      - Generate 3 specific, micro-strategies based on the *Delta* between their Capacity Profile and their actual state.
+      - If Social Capacity is low but they socialized -> Suggest "Social Decompression".
+      - If Sensory Load is high -> Suggest "Low Stimulation Environment".
+      - If they are in #DeepWork/Flow -> Suggest "Protecting Focus".
+    `;
+
     const prompt = `
-      You are a neurodiversity-affirming health analyst. Analyze this journal entry: "${text}".
+      USER CONTEXT:
+      - Reported Capacity Profile (1-10):
+        Focus: ${capacityProfile.focus}, Social: ${capacityProfile.social}, Sensory Tolerance: ${capacityProfile.sensory}, Emotional: ${capacityProfile.emotional}
       
-      Your goal is to look beyond symptoms and identify:
-      1. Capacity (Spoons): How much energy does the user have? (1=Empty, 10=Full). ${manualSpoons ? `User manually reported: ${manualSpoons}/10.` : ''}
-      2. Sensory Load: Were they in loud, bright, or crowded places?
-      3. Strengths: Did they show Curiosity, Flow, Zest, Kindness, or Persistence?
-      4. Masking: Did they mention having to 'act normal' or hide their feelings?
-      
-      Return JSON adhering to the schema.
+      JOURNAL ENTRY:
+      "${text}"
+
+      TASK:
+      Analyze the entry. 
+      1. Did the user exceed their reported capacity? 
+      2. Are they masking? Look at the tone.
+      3. Extract specific activities.
+      4. Generate 3 specific neuro-affirming strategies for the next 2 hours.
     `;
 
     const response = await ai.models.generateContent({
@@ -76,7 +126,9 @@ export const parseJournalEntry = async (text: string, manualSpoons?: number): Pr
       config: {
         responseMimeType: "application/json",
         responseSchema: healthEntrySchema,
-        systemInstruction: "You are an expert in neurodivergent burnout patterns. Prioritize identifying 'Flow States' and 'Sensory Overload'.",
+        systemInstruction: systemInstruction,
+        // Temperature 0.7 allows for creative strategy generation while keeping schema strict
+        temperature: 0.7, 
       },
     });
 
