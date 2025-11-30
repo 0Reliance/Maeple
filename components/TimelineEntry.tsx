@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { HealthEntry } from '../types';
-import { Pill, Activity, Moon, Tag, Clock, Zap, Volume2, Star, EyeOff } from 'lucide-react';
+import { Pill, Volume2, Star, EyeOff, Brain, Users, Zap, LayoutList, Clock } from 'lucide-react';
 
 interface TimelineEntryProps {
   entry: HealthEntry;
@@ -11,18 +11,31 @@ interface TimelineEntryProps {
  * TimelineEntry
  * 
  * Renders a single health journal entry with neuro-affirming visualizations.
- * Highlights Capacity (Spoons), Strengths, and Sensory Load.
+ * Shows Capacity Fingerprint, Activity Types, and Strengths.
  */
 const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry }) => {
   const dateObj = new Date(entry.timestamp);
   const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const dayStr = dateObj.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 
-  // Safety check for older entries without neuroMetrics
+  // Safety check for older entries
   const spoons = entry.neuroMetrics?.spoonLevel ?? 5;
   const sensory = entry.neuroMetrics?.sensoryLoad ?? 0;
   const masking = entry.neuroMetrics?.maskingScore ?? 0;
   const strengths = entry.strengths || [];
+  const activityTypes = entry.activityTypes || [];
+  const capacity = entry.neuroMetrics?.capacity;
+
+  const CapacityDot = ({ val, color }: {val:number, color:string}) => (
+      <div className="flex flex-col items-center gap-0.5">
+          <div className={`w-1.5 h-6 bg-slate-100 rounded-full relative overflow-hidden`}>
+              <div 
+                className={`absolute bottom-0 left-0 right-0 bg-${color}-400 rounded-full`} 
+                style={{height: `${val*10}%`}}
+              ></div>
+          </div>
+      </div>
+  );
 
   return (
     <div className="group bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-200">
@@ -30,20 +43,28 @@ const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry }) => {
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-wrap items-center gap-3">
           
-          {/* Spoons / Capacity Badge */}
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
-            spoons >= 7 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-            spoons >= 4 ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
-            'bg-rose-50 text-rose-700 border-rose-100'
-          }`} title="Energy Capacity (Spoons)">
-             <Zap size={12} fill="currentColor" />
-             <span>{spoons}/10</span>
-          </div>
+          {/* Capacity Fingerprint (Mini) */}
+          {capacity ? (
+              <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100" title="Capacity Fingerprint">
+                 <CapacityDot val={capacity.focus} color="indigo" />
+                 <CapacityDot val={capacity.social} color="pink" />
+                 <CapacityDot val={capacity.sensory} color="orange" />
+                 <CapacityDot val={capacity.executive} color="yellow" />
+                 <span className="text-[10px] font-bold text-slate-400 ml-1">{spoons}/10</span>
+              </div>
+          ) : (
+             <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-100">
+                 <Zap size={12} fill="currentColor" />
+                 <span>{spoons}/10</span>
+             </div>
+          )}
 
-          {/* Mood Label (Secondary now) */}
-          <span className="text-slate-500 text-xs font-medium px-2 py-0.5 bg-slate-50 rounded-full">
-            {entry.moodLabel}
-          </span>
+          {/* Activity Tags */}
+          {activityTypes.slice(0, 3).map((tag, i) => (
+              <span key={i} className="text-[10px] font-bold text-slate-500 px-2 py-1 bg-slate-50 rounded-md uppercase tracking-wide">
+                  {tag.replace('#', '')}
+              </span>
+          ))}
         </div>
 
         {/* Timestamp */}
@@ -66,7 +87,7 @@ const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry }) => {
       {/* Neuro-Affirming Metrics Footer */}
       <div className="space-y-3 pt-3 border-t border-slate-50">
         
-        {/* Row 1: Character Strengths (The "Good Stuff") */}
+        {/* Row 1: Strengths */}
         {strengths.length > 0 && (
             <div className="flex flex-wrap gap-2">
                 {strengths.map((str, idx) => (
@@ -78,7 +99,7 @@ const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry }) => {
             </div>
         )}
 
-        {/* Row 2: Context & Load (Sensory, Masking) */}
+        {/* Row 2: Context & Load */}
         <div className="flex flex-wrap gap-2">
             {/* Sensory Load Warning */}
             {sensory > 5 && (
@@ -96,7 +117,7 @@ const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry }) => {
                 </div>
             )}
 
-            {/* Meds (Legacy but important) */}
+            {/* Meds */}
             {entry.medications.map((med, idx) => (
                 <div key={`med-${idx}`} className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-xs font-medium border border-blue-100">
                     <Pill size={12} />
