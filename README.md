@@ -1,5 +1,5 @@
 # POZIMIND: The Pattern Literacy Engine
-> *Powered by Poziverse*
+> *Alpha Release v1.0 | Powered by Poziverse*
 
 POZIMIND is a neuro-affirming health intelligence tool designed to shift the paradigm from **Symptom Surveillance** ("How broken are you?") to **Pattern Literacy** ("What is your context?").
 
@@ -27,6 +27,10 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
 ### 5. Visual Therapy & Live Coach
 *   **Visual Therapy:** Context-aware generative art for emotional processing.
 *   **Live Coach:** Voice-first companion using Gemini Live API for verbal processing.
+
+### 6. Mobile-First Architecture
+*   **Thumb Zone Navigation:** Sticky bottom bar for quick capture on mobile.
+*   **Quick Actions:** Optimized flows for rapid logging during high-stress moments.
 
 ## 🛠️ Tech Stack
 
@@ -78,6 +82,16 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
 
 5.  **Access the App**
     Open `http://localhost:3000`.
+
+## 📦 Deployment
+
+This app is designed to be deployed as a Static Single Page Application (SPA).
+
+**Vercel / Netlify:**
+1.  Connect your repository.
+2.  Set Build Command: `npm run build`.
+3.  Set Output Directory: `dist` or `build`.
+4.  **Important:** Add your `REACT_APP_API_KEY` (or equivalent) in the Environment Variables settings of your hosting dashboard.
 
 ### 🔐 Privacy & Security Note
 POZIMIND follows a **Local-First** philosophy.

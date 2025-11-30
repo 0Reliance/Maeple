@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { wearableManager } from '../services/wearables/manager';
 import { ProviderType } from '../services/wearables/types';
-import { Activity, Check, Loader2, RefreshCw, Smartphone, Calendar, Save } from 'lucide-react';
+import { Activity, Check, Loader2, RefreshCw, Smartphone, Calendar, Save, Camera, ScanFace } from 'lucide-react';
 import { WearableDataPoint, UserSettings } from '../types';
 import { getUserSettings, saveUserSettings } from '../services/storageService';
+import BioCalibration from './BioCalibration';
 
 interface Props {
   onDataSynced: (data: WearableDataPoint[]) => void;
@@ -12,12 +13,15 @@ interface Props {
 
 const Settings: React.FC<Props> = ({ onDataSynced }) => {
   const [configs, setConfigs] = useState(wearableManager.getAllConfigs());
-  const [loading, setLoading] = useState<string | null>(null); // 'OURA' | null
+  const [loading, setLoading] = useState<string | null>(null);
   
   // Biological Context State
   const [cycleStart, setCycleStart] = useState('');
   const [cycleLength, setCycleLength] = useState(28);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  
+  // Calibration State
+  const [showCalibration, setShowCalibration] = useState(false);
 
   useEffect(() => {
     const settings = getUserSettings();
@@ -134,13 +138,35 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
   };
 
   return (
-    <div className="space-y-8 max-w-2xl mx-auto">
+    <div className="space-y-8 max-w-2xl mx-auto pb-12">
       <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-8 rounded-3xl shadow-xl">
         <h2 className="text-2xl font-bold mb-2">Settings & Integrations</h2>
         <p className="text-slate-300">
             Customize your biological context and connect external devices to build a complete digital phenotype.
         </p>
       </div>
+
+      {/* Bio-Mirror Calibration */}
+      <section className="space-y-4">
+         <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <ScanFace className="text-indigo-500" size={20} />
+            Bio-Mirror Calibration
+        </h3>
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+            <div className="max-w-md">
+                <h4 className="font-bold text-slate-800">Neutral Baseline</h4>
+                <p className="text-sm text-slate-500 mt-1">
+                    Teach Pozi what your "Resting Face" looks like. This improves accuracy by filtering out natural features (like heavy eyelids) from fatigue scores.
+                </p>
+            </div>
+            <button 
+                onClick={() => setShowCalibration(true)}
+                className="px-6 py-3 bg-indigo-50 text-indigo-600 rounded-xl font-bold hover:bg-indigo-100 transition-colors"
+            >
+                Calibrate
+            </button>
+        </div>
+      </section>
 
       {/* Biological Context Section */}
       <section className="space-y-4">
@@ -198,7 +224,6 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
         </h3>
         <div className="space-y-4">
             <ProviderCard id="OURA" name="Oura Ring" icon={Activity} />
-            {/* Placeholders for future integrations */}
             <div className="opacity-50 pointer-events-none relative">
                 <div className="absolute inset-0 bg-white/50 z-10 rounded-2xl"></div>
                 <ProviderCard id="GOOGLE_FIT" name="Google Fit" icon={Smartphone} />
@@ -209,6 +234,14 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
       <div className="text-center text-xs text-slate-400 mt-8 pb-8">
         Phase 2 Beta • Data stored locally in browser
       </div>
+
+      {/* Modal for Calibration */}
+      {showCalibration && (
+          <BioCalibration 
+             onComplete={() => setShowCalibration(false)} 
+             onCancel={() => setShowCalibration(false)} 
+          />
+      )}
     </div>
   );
 };

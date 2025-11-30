@@ -59,6 +59,8 @@ const StateCheckCamera: React.FC<Props> = ({ onCapture, onCancel }) => {
         
         const imageSrc = canvas.toDataURL('image/png');
         onCapture(imageSrc);
+        // Do not stop camera immediately here, let unmount handle it or let parent trigger
+        // Actually, stopping here is fine as we are done with this view
         stopCamera();
       }
     }

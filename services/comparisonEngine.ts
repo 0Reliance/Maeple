@@ -1,5 +1,5 @@
 
-import { HealthEntry, FacialAnalysis } from "../types";
+import { HealthEntry, FacialAnalysis, FacialBaseline } from "../types";
 
 export interface ComparisonResult {
   discrepancyScore: number; // 0-100
@@ -7,6 +7,7 @@ export interface ComparisonResult {
   objectiveState: string;
   insight: string;
   isMaskingLikely: boolean;
+  baselineApplied?: boolean; // New: Flag to show if calibration was used
 }
 
 /**
@@ -33,11 +34,29 @@ const getFacialValence = (analysis: FacialAnalysis): string => {
 
 /**
  * Compares the user's subjective journal entry with the objective facial analysis.
+ * Now supports optional Baseline Calibration.
  */
 export const compareSubjectiveToObjective = (
   journalEntry: HealthEntry | null,
-  analysis: FacialAnalysis
+  analysis: FacialAnalysis,
+  baseline?: FacialBaseline | null
 ): ComparisonResult => {
+  // 1. Calculate Deltas (if baseline exists)
+  let tension = Math.max(analysis.jawTension, analysis.eyeFatigue);
+  let masking = analysis.maskingScore;
+  let baselineApplied = false;
+
+  if (baseline) {
+      baselineApplied = true;
+      // Subtract baseline "resting" values to get the true current load
+      // Clamp at 0 to avoid negative scores
+      const tensionDelta = tension - Math.max(baseline.neutralTension, baseline.neutralFatigue);
+      tension = Math.max(0, tensionDelta);
+      
+      const maskingDelta = masking - baseline.neutralMasking;
+      masking = Math.max(0, maskingDelta);
+  }
+
   // Default if no journal entry
   if (!journalEntry) {
     return {
@@ -45,15 +64,14 @@ export const compareSubjectiveToObjective = (
       subjectiveState: "No recent entry",
       objectiveState: analysis.primaryEmotion,
       insight: "Log a journal entry to see how your self-perception matches your physical state.",
-      isMaskingLikely: analysis.maskingScore > 0.6
+      isMaskingLikely: masking > 0.6,
+      baselineApplied
     };
   }
 
   let score = 0;
   const mood = journalEntry.mood; // 1-5
-  const tension = Math.max(analysis.jawTension, analysis.eyeFatigue); // 0-1
   
-  // 1. Valence Mismatch (e.g. Said "Happy" (5) but Face is "Sad")
   // Normalize mood to 0-1 (1=0, 5=1)
   const normMood = (mood - 1) / 4; 
   
@@ -62,8 +80,8 @@ export const compareSubjectiveToObjective = (
                          analysis.primaryEmotion.toLowerCase().includes('joy');
 
   // Calculation:
-  // If Mood is High (>4) but Tension is High (>0.6) -> Discrepancy
-  if (mood >= 4 && tension > 0.6) {
+  // If Mood is High (>4) but Tension (adjusted) is High (>0.6) -> Discrepancy
+  if (mood >= 4 && tension > 0.5) {
       score += 60;
   }
 
@@ -77,22 +95,27 @@ export const compareSubjectiveToObjective = (
       score += 80;
   }
 
-  // Masking factor
-  if (analysis.maskingScore > 0.7) {
+  // Masking factor (adjusted)
+  if (masking > 0.6) {
       score += 20;
   }
 
   const discrepancyScore = Math.min(100, score);
   const subjectiveState = `${journalEntry.moodLabel} (${journalEntry.mood}/5)`;
-  const objectiveState = `${analysis.primaryEmotion} (Tension: ${(tension * 10).toFixed(0)}/10)`;
+  
+  // Display string shows "Corrected" if baseline used
+  const tensionLabel = (tension * 10).toFixed(0);
+  const objectiveState = baselineApplied 
+    ? `${analysis.primaryEmotion} (Adj. Tension: ${tensionLabel}/10)`
+    : `${analysis.primaryEmotion} (Tension: ${tensionLabel}/10)`;
 
   let insight = "Your internal state matches your physical signals.";
   
   if (discrepancyScore > 70) {
-      insight = "High Discrepancy Detected. You reported feeling okay, but your body is showing significant signs of distress or fatigue. This is a classic sign of dissociation or high-functioning burnout.";
+      insight = "High Discrepancy. You reported feeling okay, but your body is showing significant distress signals. This is a classic sign of dissociation.";
   } else if (discrepancyScore > 40) {
-      insight = "Moderate Discrepancy. There is a gap between your words and your body. You might be minimizing your stress levels.";
-  } else if (analysis.maskingScore > 0.6) {
+      insight = "Moderate Discrepancy. There is a gap between your words and your body.";
+  } else if (masking > 0.6) {
       insight = "Masking Detected. Even if your mood matches, your expression shows the effort of performance.";
   }
 
@@ -101,6 +124,7 @@ export const compareSubjectiveToObjective = (
     subjectiveState,
     objectiveState,
     insight,
-    isMaskingLikely: discrepancyScore > 50 || analysis.maskingScore > 0.6
+    isMaskingLikely: discrepancyScore > 50 || masking > 0.6,
+    baselineApplied
   };
 };

@@ -1,10 +1,11 @@
 
-import { StateCheck } from '../types';
+import { StateCheck, FacialBaseline } from '../types';
 import { encryptData, decryptData } from './encryptionService';
 
 const DB_NAME = 'pozimind_db';
 const STORE_NAME = 'state_checks';
-const DB_VERSION = 1;
+const BASELINE_STORE_NAME = 'facial_baseline';
+const DB_VERSION = 2; // Incremented for new store
 
 // Open DB Helper
 const openDB = (): Promise<IDBDatabase> => {
@@ -15,6 +16,9 @@ const openDB = (): Promise<IDBDatabase> => {
       const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(BASELINE_STORE_NAME)) {
+        db.createObjectStore(BASELINE_STORE_NAME, { keyPath: 'id' });
       }
     };
 
@@ -33,9 +37,6 @@ export const saveStateCheck = async (
   imageBlob?: Blob
 ): Promise<string> => {
   const db = await openDB();
-  
-  // Convert blob to ArrayBuffer for storage if needed, or store Blob directly
-  // IndexedDB handles Blobs natively in modern browsers
   
   // Encrypt the analysis data before storage
   const { cipher, iv } = await encryptData(data.analysis);
@@ -78,13 +79,6 @@ export const getStateCheck = async (id: string): Promise<StateCheck | null> => {
       // Decrypt
       const analysis = await decryptData(record.analysisCipher, record.iv);
       
-      // Convert Blob to Base64 URL for display if needed
-      let imageBase64 = undefined;
-      if (record.imageBlob) {
-         // In a real app, we'd likely use URL.createObjectURL(record.imageBlob)
-         // For simplicity and compatibility with our types, we might leave it or convert
-      }
-
       resolve({
         id: record.id,
         timestamp: record.timestamp,
@@ -95,4 +89,66 @@ export const getStateCheck = async (id: string): Promise<StateCheck | null> => {
     };
     request.onerror = () => reject(request.error);
   });
+};
+
+export const getRecentStateChecks = async (limit: number = 7): Promise<StateCheck[]> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll(); 
+
+    request.onsuccess = async () => {
+      const records = request.result || [];
+      // Sort by date desc
+      const sorted = records.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, limit);
+
+      // Decrypt all
+      const results: StateCheck[] = [];
+      for (const rec of sorted) {
+          try {
+              const analysis = await decryptData(rec.analysisCipher, rec.iv);
+              if (analysis) {
+                  results.push({
+                      id: rec.id,
+                      timestamp: rec.timestamp,
+                      analysis: analysis,
+                      userNote: rec.userNote
+                  });
+              }
+          } catch (e) {
+              console.error("Failed to decrypt record", rec.id);
+          }
+      }
+      resolve(results);
+    };
+    request.onerror = () => reject(request.error);
+  });
+};
+
+// --- BASELINE METHODS ---
+
+export const saveBaseline = async (baseline: FacialBaseline): Promise<void> => {
+    const db = await openDB();
+    // We only keep one baseline for now, mapped to ID 'USER_BASELINE'
+    const record = { ...baseline, id: 'USER_BASELINE' };
+    
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([BASELINE_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(BASELINE_STORE_NAME);
+        const request = store.put(record);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+};
+
+export const getBaseline = async (): Promise<FacialBaseline | null> => {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([BASELINE_STORE_NAME], 'readonly');
+        const store = transaction.objectStore(BASELINE_STORE_NAME);
+        const request = store.get('USER_BASELINE');
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+    });
 };

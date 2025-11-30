@@ -8,6 +8,7 @@ import {
 import { Brain, TrendingUp, Zap, Star, AlertTriangle, Sparkles, Lightbulb, Compass, Shield, TrendingDown, Activity, BatteryWarning, Layers, CloudRain, Sun, CloudFog, EyeOff, VenetianMask } from 'lucide-react';
 import { getUserSettings } from '../services/storageService';
 import { generateInsights, generateDailyStrategy, calculateBurnoutTrajectory, calculateCognitiveLoad, calculateCyclePhase } from '../services/analytics';
+import StateTrendChart from './StateTrendChart';
 
 interface HealthMetricsDashboardProps {
   entries: HealthEntry[];
@@ -342,6 +343,9 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({ entries
           )}
 
       </div>
+
+      {/* State Check Trends (Phase 6 Bio-Mirror) */}
+      <StateTrendChart />
 
       {/* Pattern Insights Section (Phase 2 & 6) */}
       {insights.length > 0 && (

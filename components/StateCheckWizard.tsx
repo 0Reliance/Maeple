@@ -4,38 +4,46 @@ import { Camera, Sparkles, Loader2, ArrowRight } from 'lucide-react';
 import StateCheckCamera from './StateCheckCamera';
 import StateCheckResults from './StateCheckResults';
 import { analyzeStateFromImage } from '../services/geminiVisionService';
-import { getEntries } from '../services/storageService';
-import { FacialAnalysis, HealthEntry } from '../types';
+import { getBaseline } from '../services/stateCheckService'; 
+import { getEntries as getJournalEntries } from '../services/storageService'; 
+import { FacialAnalysis, HealthEntry, FacialBaseline } from '../types';
 
 const StateCheckWizard: React.FC = () => {
   const [step, setStep] = useState<'INTRO' | 'CAMERA' | 'ANALYZING' | 'RESULTS'>('INTRO');
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<FacialAnalysis | null>(null);
   const [recentEntry, setRecentEntry] = useState<HealthEntry | null>(null);
+  const [baseline, setBaseline] = useState<FacialBaseline | null>(null);
 
-  // Load recent entry on mount for comparison context
+  // Load recent entry and baseline
   useEffect(() => {
-      const entries = getEntries();
-      if (entries.length > 0) {
-          // Sort desc
-          const sorted = [...entries].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-          // Only use if within last 24 hours
-          const latest = sorted[0];
-          const now = new Date();
-          const entryTime = new Date(latest.timestamp);
-          const diffHours = (now.getTime() - entryTime.getTime()) / (1000 * 60 * 60);
-          
-          if (diffHours < 24) {
-              setRecentEntry(latest);
+      const loadContext = async () => {
+          // 1. Get Journal Entry
+          const entries = getJournalEntries();
+          if (entries.length > 0) {
+              const sorted = [...entries].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+              const latest = sorted[0];
+              const now = new Date();
+              const entryTime = new Date(latest.timestamp);
+              const diffHours = (now.getTime() - entryTime.getTime()) / (1000 * 60 * 60);
+              if (diffHours < 24) setRecentEntry(latest);
           }
-      }
+
+          // 2. Get Baseline
+          try {
+              const b = await getBaseline();
+              setBaseline(b);
+          } catch (e) {
+              console.error("No baseline found");
+          }
+      };
+      loadContext();
   }, []);
 
   const handleCapture = async (src: string) => {
     setImageSrc(src);
     setStep('ANALYZING');
     
-    // Remove data:image/png;base64, prefix
     const base64 = src.split(',')[1];
     
     try {
@@ -59,7 +67,15 @@ const StateCheckWizard: React.FC = () => {
   }
 
   if (step === 'RESULTS' && analysis && imageSrc) {
-    return <StateCheckResults analysis={analysis} imageSrc={imageSrc} recentEntry={recentEntry} onClose={reset} />;
+    return (
+        <StateCheckResults 
+            analysis={analysis} 
+            imageSrc={imageSrc} 
+            recentEntry={recentEntry} 
+            baseline={baseline}
+            onClose={reset} 
+        />
+    );
   }
 
   if (step === 'ANALYZING') {
