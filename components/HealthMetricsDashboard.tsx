@@ -5,7 +5,7 @@ import {
   Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ComposedChart, Bar, Legend, Line, ReferenceArea
 } from 'recharts';
-import { Brain, TrendingUp, Zap, Star, AlertTriangle, Sparkles, Lightbulb, Compass, Shield, TrendingDown, Activity, BatteryWarning, Layers, CloudRain, Sun, CloudFog, EyeOff, VenetianMask } from 'lucide-react';
+import { Brain, TrendingUp, Zap, Star, AlertTriangle, Sparkles, Lightbulb, Compass, Shield, TrendingDown, Activity, BatteryWarning, Layers, CloudRain, Sun, CloudFog, EyeOff, VenetianMask, PhoneCall } from 'lucide-react';
 import { getUserSettings } from '../services/storageService';
 import { generateInsights, generateDailyStrategy, calculateBurnoutTrajectory, calculateCognitiveLoad, calculateCyclePhase } from '../services/analytics';
 import StateTrendChart from './StateTrendChart';
@@ -224,6 +224,23 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({ entries
                   <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-white/50 p-2 rounded-lg w-fit">
                       <BatteryWarning size={14} className="text-orange-500" />
                       <span>Est. Recovery: <strong>{forecast.recoveryDaysNeeded} Days</strong></span>
+                  </div>
+              )}
+
+              {/* Safety Interceptor */}
+              {forecast.riskLevel === 'CRITICAL' && (
+                  <div className="mt-4 pt-4 border-t border-rose-200">
+                      <p className="text-xs font-bold text-rose-500 mb-2 flex items-center gap-1">
+                          <AlertTriangle size={12} /> CLINICAL NOTE
+                      </p>
+                      <p className="text-xs text-rose-800 mb-2">
+                          Sustained critical load predicts severe burnout. Consider activating your support network.
+                      </p>
+                      {userSettings.safetyContact && (
+                          <a href={`tel:${userSettings.safetyContact}`} className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-200 text-rose-800 rounded-lg text-xs font-bold hover:bg-rose-300 transition-colors">
+                              <PhoneCall size={12} /> Call Support
+                          </a>
+                      )}
                   </div>
               )}
           </div>

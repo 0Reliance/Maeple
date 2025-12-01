@@ -66,7 +66,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900">
       {/* Mobile Top Header (Branding Only) */}
-      <div className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 flex justify-center items-center sticky top-0 z-30">
+      <div className="md:hidden bg-white/90 backdrop-blur-md border-b border-slate-100 p-4 flex justify-center items-center sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-teal-200 shadow-lg">P</div>
           <span className="font-bold text-slate-800 tracking-tight">POZIMIND</span>
@@ -74,7 +74,10 @@ function App() {
       </div>
 
       {/* Sidebar Navigation (Desktop & Mobile Menu) */}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-100 transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) md:translate-x-0 md:static md:h-screen flex flex-col print:hidden ${
+      {/* Mobile Menu Z-Index must be higher than content but lower than BottomNav if we want bottom nav visible, 
+          OR higher than everything if it covers the screen. 
+          Here, we slide it in above everything except maybe the very bottom edge. */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) md:translate-x-0 md:static md:h-screen flex flex-col print:hidden ${
         mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
       }`}>
         <div className="p-8 hidden md:flex items-center gap-3 mb-2">
@@ -192,7 +195,7 @@ function App() {
       {/* Overlay for mobile menu */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-30 md:hidden print:hidden"
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 md:hidden print:hidden"
           onClick={() => setMobileMenuOpen(false)}
         ></div>
       )}

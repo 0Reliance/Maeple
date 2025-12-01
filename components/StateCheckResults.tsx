@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FacialAnalysis, HealthEntry, FacialBaseline } from '../types';
-import { Activity, CheckCircle2, Save, Scale, ShieldCheck, EyeOff, Info } from 'lucide-react';
+import { Activity, CheckCircle2, Save, Scale, ShieldCheck, EyeOff, Info, PhoneCall, AlertTriangle } from 'lucide-react';
 import { compareSubjectiveToObjective } from '../services/comparisonEngine';
 import { saveStateCheck } from '../services/stateCheckService';
+import { getUserSettings } from '../services/storageService';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
@@ -17,10 +18,19 @@ interface Props {
 const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, baseline, onClose }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [safetyContact, setSafetyContact] = useState<string>('');
+
+  useEffect(() => {
+     const settings = getUserSettings();
+     if(settings.safetyContact) setSafetyContact(settings.safetyContact);
+  }, []);
 
   // Run Comparison Logic with Baseline
   const comparison = compareSubjectiveToObjective(recentEntry, analysis, baseline);
   
+  // Safety Interceptor Logic
+  const isCritical = comparison.discrepancyScore > 80 || (recentEntry?.mood || 5) <= 1 || analysis.maskingScore > 0.9;
+
   const handleSave = async () => {
       setIsSaving(true);
       try {
@@ -43,10 +53,42 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, b
       }
   };
 
+  const handleCallSupport = () => {
+      if(safetyContact) {
+          window.location.href = `tel:${safetyContact}`;
+      } else {
+          // Default to US crisis line if not set (Example)
+          window.location.href = 'tel:988';
+      }
+  };
+
   return (
     <div className="space-y-6 animate-fadeIn max-w-3xl mx-auto">
       <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xl overflow-hidden">
         
+        {/* Safety Interceptor Banner */}
+        {isCritical && (
+            <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 mb-6 flex items-start gap-4 animate-pulse">
+                <div className="p-3 bg-rose-100 text-rose-600 rounded-full">
+                    <AlertTriangle size={24} />
+                </div>
+                <div className="flex-1">
+                    <h3 className="text-lg font-bold text-rose-800">Support Recommended</h3>
+                    <p className="text-rose-600 text-sm mb-3">
+                        We detected high distress levels (Discrepancy: {comparison.discrepancyScore}%). 
+                        You don't have to handle this alone.
+                    </p>
+                    <button 
+                        onClick={handleCallSupport}
+                        className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 transition-colors shadow-md"
+                    >
+                        <PhoneCall size={16} />
+                        Call {safetyContact ? 'Support Contact' : 'Crisis Line (988)'}
+                    </button>
+                </div>
+            </div>
+        )}
+
         <div className="flex flex-col md:flex-row gap-6">
            {/* Image */}
            <div className="w-full md:w-1/3 space-y-3">
