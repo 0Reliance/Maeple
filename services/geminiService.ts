@@ -1,8 +1,9 @@
-
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { ParsedResponse, CapacityProfile } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Robustly retrieve API Key
+const apiKey = process.env.API_KEY || (window as any).process?.env?.API_KEY || '';
+const ai = new GoogleGenAI({ apiKey });
 
 // Schema for structured health parsing
 const healthEntrySchema: Schema = {
@@ -126,7 +127,6 @@ export const parseJournalEntry = async (text: string, capacityProfile: CapacityP
         responseMimeType: "application/json",
         responseSchema: healthEntrySchema,
         systemInstruction: systemInstruction,
-        // Temperature 0.7 allows for creative strategy generation while keeping schema strict
         temperature: 0.7, 
       },
     });
@@ -161,52 +161,6 @@ export const searchHealthInfo = async (query: string) => {
     };
   } catch (error) {
     console.error("Search error:", error);
-    throw error;
-  }
-};
-
-/**
- * Generates or edits images based on prompt.
- * Uses Gemini 2.5 Flash Image (Nano Banana).
- */
-export const generateOrEditImage = async (
-  prompt: string, 
-  base64Image?: string,
-  mimeType: string = "image/png"
-): Promise<string> => {
-  
-  const model = "gemini-2.5-flash-image";
-  const parts: any[] = [];
-
-  if (base64Image) {
-    // Editing mode
-    parts.push({
-      inlineData: {
-        data: base64Image,
-        mimeType: mimeType
-      }
-    });
-    parts.push({ text: prompt }); // Instruction for edit
-  } else {
-    // Generation mode
-    parts.push({ text: prompt });
-  }
-
-  try {
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: { parts },
-    });
-
-    // Extract image
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-      }
-    }
-    throw new Error("No image generated");
-  } catch (error) {
-    console.error("Image gen error:", error);
     throw error;
   }
 };

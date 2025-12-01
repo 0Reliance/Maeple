@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { ImagePlus, Wand2, Loader2, Save, Sparkles, Brain, Volume2, Star } from 'lucide-react';
-import { generateOrEditImage } from '../services/geminiService';
+// Fixed import path: generateOrEditImage is in geminiVisionService.ts
+import { generateOrEditImage } from '../services/geminiVisionService';
 import { getEntries } from '../services/storageService';
 import { HealthEntry } from '../types';
 
