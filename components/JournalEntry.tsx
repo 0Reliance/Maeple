@@ -117,12 +117,6 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
   return (
     <div className="space-y-6">
       
-      {/* Mobile-Only Header */}
-      <div className="md:hidden">
-          <h2 className="text-xl font-bold text-slate-800">Quick Capture</h2>
-          <p className="text-sm text-slate-500">Log context, capacity, and patterns.</p>
-      </div>
-
       {/* Phase 3: Immediate Strategy Feedback Overlay */}
       {lastStrategies.length > 0 && (
           <div className="bg-teal-600 rounded-3xl p-6 text-white shadow-xl animate-fadeIn relative overflow-hidden">

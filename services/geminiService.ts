@@ -2,7 +2,6 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { ParsedResponse, CapacityProfile } from "../types";
 
-// Initialize the client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // Schema for structured health parsing

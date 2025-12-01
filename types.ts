@@ -18,6 +18,7 @@ export enum View {
 export interface UserSettings {
   cycleStartDate?: string; // YYYY-MM-DD
   avgCycleLength?: number; // Default 28
+  safetyContact?: string; // Phone number or Name for crisis support
 }
 
 export interface Medication {
