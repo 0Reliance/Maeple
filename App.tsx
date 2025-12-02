@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, BookHeart, MessagesSquare, Search as SearchIcon, Image as ImageIcon, Menu, Settings as SettingsIcon, Compass, ShieldCheck, Map, FileText, Camera } from 'lucide-react';
 import JournalEntry from './components/JournalEntry';
@@ -74,10 +73,8 @@ function App() {
       </div>
 
       {/* Sidebar Navigation (Desktop & Mobile Menu) */}
-      {/* Mobile Menu Z-Index must be higher than content but lower than BottomNav if we want bottom nav visible, 
-          OR higher than everything if it covers the screen. 
-          Here, we slide it in above everything except maybe the very bottom edge. */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) md:translate-x-0 md:static md:h-screen flex flex-col print:hidden ${
+      {/* Increased Z-Index to 60 to sit above BottomNav (z-50) when open on mobile */}
+      <aside className={`fixed inset-y-0 left-0 z-[60] w-72 bg-white border-r border-slate-100 transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) md:translate-x-0 md:static md:h-screen flex flex-col print:hidden ${
         mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
       }`}>
         <div className="p-8 hidden md:flex items-center gap-3 mb-2">
@@ -195,7 +192,7 @@ function App() {
       {/* Overlay for mobile menu */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 md:hidden print:hidden"
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 md:hidden print:hidden"
           onClick={() => setMobileMenuOpen(false)}
         ></div>
       )}

@@ -1,9 +1,8 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { FacialAnalysis } from "../types";
 
-// Robustly retrieve API Key
-const apiKey = process.env.API_KEY || (window as any).process?.env?.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// Standardize API Key retrieval
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
  * Generates or edits images based on prompt.
