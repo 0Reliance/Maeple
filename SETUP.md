@@ -1,6 +1,10 @@
+
 # POZIMIND Setup Guide
 
+Welcome to POZIMIND—a professional, neuro-affirming health intelligence engine. This guide will help you get up and running quickly, with pride in every step.
+
 This guide will help you get POZIMIND up and running on your local machine.
+
 
 ## Prerequisites
 
@@ -8,6 +12,7 @@ This guide will help you get POZIMIND up and running on your local machine.
 - **npm** (comes with Node.js)
 - A **Google Gemini API Key** ([Get one free here](https://aistudio.google.com/app/apikey))
 - Optional: API keys for **OpenAI**, **Anthropic**, **Perplexity**, **OpenRouter**, **Z.ai** (add in-app under Settings → AI Providers; no extra env vars needed)
+
 
 ## Quick Start (5 Minutes)
 
@@ -69,14 +74,15 @@ Your browser will prompt you when these features are first used.
 2. **Bio-Mirror**: Take a state check selfie (requires camera permission)
 3. **Live Coach**: Start a voice conversation (requires microphone permission)
 
-## Build for Production
+
+## Build for Production & Deployment
 
 ```bash
 npm run build
 npm run preview
 ```
 
-The built files will be in the `dist/` folder.
+The built files will be in the `dist/` folder. Deploy to Vercel, Netlify, or any static host. See [README.md](./README.md#deployment) for full deployment instructions and best practices.
 
 ## Troubleshooting
 
@@ -158,13 +164,15 @@ POZIMIND runs entirely in your browser. Your data:
 - ✅ Can be cleared anytime in Settings
 - ❌ Is not backed up automatically (export your data regularly!)
 
+
 ## Next Steps
 
 Once setup is complete:
-1. Read the [HOW_TO_USE.md](./HOW_TO_USE.md) guide
-2. Configure your bio-context in **Settings**
-3. Set up Bio-Mirror baseline calibration
+1. Read the [HOW_TO_USE.md](./HOW_TO_USE.md) guide for best practices and feature walkthroughs.
+2. Configure your bio-context in **Settings**.
+3. Set up Bio-Mirror baseline calibration.
 4. Start your first journal entry!
+5. Explore the [DEV_REFERENCE.md](./DEV_REFERENCE.md) if you want to contribute or extend POZIMIND.
 
 ## Need Help?
 
@@ -174,4 +182,7 @@ Once setup is complete:
 
 ---
 
-*Built with ❤️ by Poziverse*
+
+---
+
+*Built with ❤️ and professional care by Poziverse. Proudly open for the future of neuro-affirming digital health.*

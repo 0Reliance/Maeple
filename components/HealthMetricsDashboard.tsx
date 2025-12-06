@@ -72,7 +72,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({ entries
 
   // 1. Generate Date Range (Last 14 days for clarity)
   const today = new Date();
-  const dateMap = new Map<string, any>();
+  const dateMap = new Map<string, unknown>();
   
   for (let i = 13; i >= 0; i--) {
     const d = new Date();

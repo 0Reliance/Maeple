@@ -4,7 +4,7 @@ import { searchHealthInfo, isAIConfigured } from '../services/geminiService';
 
 const SearchResources: React.FC = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{text: string | null, grounding?: any} | null>(null);
+  const [results, setResults] = useState<{text: string | null, grounding?: Array<{text: string}>} | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,7 +74,7 @@ const SearchResources: React.FC = () => {
                  <Globe size={12} /> Sources
                </h4>
                <div className="grid gap-2">
-                 {results.grounding.map((chunk: any, i: number) => {
+                 {results.grounding.map((chunk, i: number) => {
                    if (chunk.web?.uri) {
                      return (
                        <a 
