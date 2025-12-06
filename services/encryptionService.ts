@@ -7,7 +7,7 @@ const getKey = async () => {
   // In a real app, we'd derive this from a user password or store it in a secure enclave.
   // For this local-first MVP, we'll store a key in localStorage if not present, 
   // acknowledging that this protects against casual snooping but not root access.
-  const storedKey = localStorage.getItem("pozimind_key");
+  const storedKey = localStorage.getItem("maeple_key");
   if (storedKey) {
     return importKey(storedKey);
   } else {
@@ -17,7 +17,7 @@ const getKey = async () => {
       ["encrypt", "decrypt"]
     );
     const exported = await window.crypto.subtle.exportKey("jwk", key);
-    localStorage.setItem("pozimind_key", JSON.stringify(exported));
+    localStorage.setItem("maeple_key", JSON.stringify(exported));
     return key;
   }
 };

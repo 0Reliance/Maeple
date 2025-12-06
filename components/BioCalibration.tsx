@@ -49,7 +49,7 @@ const BioCalibration: React.FC<Props> = ({ onComplete, onCancel }) => {
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-2">Calibration Complete</h3>
               <p className="text-slate-500 mb-6">
-                  Pozi now knows your "Neutral". Future Bio-Mirror checks will measure the <em>change</em> from this baseline, making them much more accurate for your unique face.
+                  Mae now knows your "Neutral". Future Bio-Mirror checks will measure the <em>change</em> from this baseline, making them much more accurate for your unique face.
               </p>
               <button 
                 onClick={onComplete}
@@ -79,7 +79,7 @@ const BioCalibration: React.FC<Props> = ({ onComplete, onCancel }) => {
                 </div>
                 <h2 className="text-2xl font-bold text-slate-900">Calibrate Your Bio-Mirror</h2>
                 <p className="text-slate-500 mt-2">
-                    Neurodivergent faces are unique. To get accurate fatigue and masking data, Pozi needs to know what your "Resting Face" looks like.
+                    Neurodivergent faces are unique. To get accurate fatigue and masking data, Mae needs to know what your "Resting Face" looks like.
                 </p>
             </div>
 

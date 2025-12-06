@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "=== POZIMIND App Test ==="
+echo "=== MAEPLE App Test ==="
 echo ""
 echo "1. Checking if server is running..."
 if lsof -i :5173 >/dev/null 2>&1; then
@@ -29,7 +29,7 @@ fi
 echo ""
 echo "4. Testing page content..."
 CONTENT=$(curl -s --max-time 5 http://localhost:5173 2>/dev/null)
-if echo "$CONTENT" | grep -q "POZIMIND"; then
+if echo "$CONTENT" | grep -q "MAEPLE"; then
     echo "   ✓ App HTML loaded"
     echo "   ✓ Title found: $(echo "$CONTENT" | grep -o '<title>.*</title>')"
 else

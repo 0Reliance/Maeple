@@ -170,7 +170,7 @@ const VisionBoard: React.FC = () => {
                             AI Creation
                         </span>
                    </div>
-                   <a href={generatedImage} download="pozimind-vision.png" className="flex items-center gap-2 text-sm text-slate-500 hover:text-purple-600 transition-colors font-medium">
+                   <a href={generatedImage} download="maeple-vision.png" className="flex items-center gap-2 text-sm text-slate-500 hover:text-purple-600 transition-colors font-medium">
                      <Save size={16} />
                      Save to Device
                    </a>

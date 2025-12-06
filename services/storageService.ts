@@ -1,8 +1,8 @@
 
 import { HealthEntry, UserSettings } from "../types";
 
-const STORAGE_KEY = "pozimind_entries";
-const SETTINGS_KEY = "pozimind_user_settings";
+const STORAGE_KEY = "maeple_entries";
+const SETTINGS_KEY = "maeple_user_settings";
 
 export const getEntries = (): HealthEntry[] => {
   const stored = localStorage.getItem(STORAGE_KEY);

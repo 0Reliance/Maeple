@@ -1,6 +1,6 @@
 {
-  "name": "POZIMIND",
-  "description": "Your neuro-affirming companion for pattern literacy and capacity tracking. Powered by Poziverse.",
+  "name": "MAEPLE",
+  "description": "Mental And Emotional Pattern Literacy Engine—your kind, trustworthy companion for understanding your patterns, capacity, and well-being. Part of Poziverse.",
   "requestFramePermissions": [
     "microphone",
     "camera"

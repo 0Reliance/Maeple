@@ -1,6 +1,6 @@
-# POZIMIND Product Roadmap
+# MAEPLE Product Roadmap
 
-This document tracks the evolution of POZIMIND from a simple journal to a clinical-grade digital phenotype engine.
+This document tracks the evolution of MAEPLE from a simple journal to a clinical-grade digital phenotype engine.
 
 ## 🟢 Phase 1: Multi-Dimensional Capacity (COMPLETED)
 - [x] Create `CapacityProfile` interface (Focus, Social, Sensory, etc).
@@ -15,7 +15,7 @@ This document tracks the evolution of POZIMIND from a simple journal to a clinic
 
 ## 🟢 Phase 3: Smart Recommendations (COMPLETED)
 - [x] Implement `generateDailyStrategy` logic.
-- [x] Create "Pozi's Strategy Deck" UI.
+- [x] Create "Mae's Strategy Deck" UI.
 - [x] specific interventions for Sensory Overload and Social Burnout.
 
 ## 🟢 Phase 4: Burnout Trajectory (COMPLETED)

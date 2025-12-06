@@ -1,7 +1,7 @@
 #!/bin/bash
-# POZIMIND Setup Verification Script
+# MAEPLE Setup Verification Script
 
-echo "🔍 POZIMIND Setup Verification"
+echo "🔍 MAEPLE Setup Verification"
 echo "================================"
 echo ""
 

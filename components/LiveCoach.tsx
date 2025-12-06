@@ -46,7 +46,7 @@ const LiveCoach: React.FC = () => {
     }
 
     setStatus('connecting');
-    setStatusNote('Requesting microphone and starting Pozi Live...');
+    setStatusNote('Requesting microphone and starting Mae Live...');
     try {
       const ai = getAIClient();
       if (!ai) {
@@ -70,11 +70,11 @@ const LiveCoach: React.FC = () => {
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
         config: {
           responseModalities: [Modality.AUDIO],
-          systemInstruction: `You are 'Pozi', a neurodiversity-affirming companion from the Poziverse.
+          systemInstruction: `You are 'Mae', a kind and trustworthy clinical companion from MAEPLE (Mental And Emotional Pattern Literacy Engine), part of the Poziverse.
           
           Your Goal: Help users identify their patterns of 'Boom and Bust' cycles, sensory overload, and masking burnout.
           
-          Tone: Calm, validation-first, curiosity-driven, positive but grounded.
+          Tone: Calm, validation-first, curiosity-driven, positive but grounded, clinically sound.
           
           Key Concepts to Use:
           - "Spoons" (Energy Capacity): Ask "How are your spoons looking today?"
@@ -163,7 +163,7 @@ const LiveCoach: React.FC = () => {
           onerror: (err) => {
             console.error("Session error", err);
             setStatus('error');
-            setStatusNote('Could not connect to Pozi Live. Check your key and try again.');
+            setStatusNote('Could not connect to Mae Live. Check your key and try again.');
             cleanup();
           }
         }
@@ -211,8 +211,8 @@ const LiveCoach: React.FC = () => {
 
         <div className="relative z-10 text-center space-y-8">
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold tracking-tight">Pozi Live Coach</h2>
-              <p className="text-indigo-200">Talk to Pozi about your patterns and capacity.</p>
+              <h2 className="text-2xl font-bold tracking-tight">Mae Live Coach</h2>
+              <p className="text-indigo-200">Talk to Mae about your patterns and capacity.</p>
               <p className="text-xs text-indigo-100/80">Provider: Gemini Live. Allow mic; if no audio, check your Gemini key.</p>
             </div>
 

@@ -75,7 +75,7 @@ class ErrorBoundary extends Component<Props, State> {
                 </h1>
                 <p className="text-slate-600 mt-1">
                   {isApiKeyError 
-                    ? 'POZIMIND needs your Google Gemini API key to function.'
+                    ? 'MAEPLE needs your Google Gemini API key to function.'
                     : 'An unexpected error occurred in the application.'}
                 </p>
               </div>

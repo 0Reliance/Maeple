@@ -1,4 +1,4 @@
-// Service Worker Registration for POZIMIND
+// Service Worker Registration for MAEPLE
 // Handles offline functionality and caching
 
 const SW_VERSION = '1.0.0';
@@ -58,8 +58,8 @@ class ServiceWorkerManager {
   private showUpdateNotification() {
     // Create a simple notification for app update
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('POZIMIND Update Available', {
-        body: 'A new version of POZIMIND is available. Click to update.',
+      new Notification('MAEPLE Update Available', {
+        body: 'A new version of MAEPLE is available. Click to update.',
         icon: '/icon-192x192.png',
         tag: 'app-update'
       }).onclick = () => {
@@ -123,7 +123,7 @@ class ServiceWorkerManager {
 
   private async addToIndexedDB(item: OfflineQueueItem): Promise<void> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('pozimind-offline', 1);
+      const request = indexedDB.open('maeple-offline', 1);
       
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
@@ -141,7 +141,7 @@ class ServiceWorkerManager {
 
   public async getQueuedActions(): Promise<OfflineQueueItem[]> {
     return new Promise((resolve) => {
-      const request = indexedDB.open('pozimind-offline', 1);
+      const request = indexedDB.open('maeple-offline', 1);
       
       request.onsuccess = () => {
         const db = request.result;
@@ -156,7 +156,7 @@ class ServiceWorkerManager {
 
   public async clearQueue(): Promise<void> {
     return new Promise((resolve) => {
-      const request = indexedDB.open('pozimind-offline', 1);
+      const request = indexedDB.open('maeple-offline', 1);
       
       request.onsuccess = () => {
         const db = request.result;

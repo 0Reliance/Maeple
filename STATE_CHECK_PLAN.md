@@ -1,4 +1,4 @@
-# POZIMIND State Check: The 6-Phase Strategic Plan
+# MAEPLE State Check: The 6-Phase Strategic Plan
 
 ## Status: 🚀 PRODUCTION READY (Alpha v1.1)
 
@@ -42,4 +42,4 @@
 - [x] Integrate baseline delta logic into Comparison Engine.
 
 ---
-*Plan executed by POZIMIND Engineering Team.*
+*Plan executed by MAEPLE Engineering Team.*

@@ -163,7 +163,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
         </h3>
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
             <p className="text-sm text-slate-500">
-                If POZIMIND detects critical burnout or high dissociation (via Bio-Mirror), who should we suggest you call?
+                If MAEPLE detects critical burnout or high dissociation (via Bio-Mirror), who should we suggest you call?
             </p>
              <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Support Contact Number</label>
@@ -206,7 +206,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
             <div className="max-w-md">
                 <h4 className="font-bold text-slate-800">Neutral Baseline</h4>
                 <p className="text-sm text-slate-500 mt-1">
-                    Teach Pozi what your "Resting Face" looks like. This improves accuracy by filtering out natural features (like heavy eyelids) from fatigue scores.
+                    Teach Mae what your "Resting Face" looks like. This improves accuracy by filtering out natural features (like heavy eyelids) from fatigue scores.
                 </p>
             </div>
             <button 

@@ -2,7 +2,7 @@
 import { StateCheck, FacialBaseline } from '../types';
 import { encryptData, decryptData } from './encryptionService';
 
-const DB_NAME = 'pozimind_db';
+const DB_NAME = 'maeple_db';
 const STORE_NAME = 'state_checks';
 const BASELINE_STORE_NAME = 'facial_baseline';
 const DB_VERSION = 2; // Incremented for new store

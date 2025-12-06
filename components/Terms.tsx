@@ -19,12 +19,12 @@ const Terms: React.FC = () => {
             <h2 className="text-xl font-bold">Medical Disclaimer</h2>
           </div>
           <div className="prose prose-slate max-w-none text-slate-600 bg-rose-50 p-6 rounded-xl border border-rose-100">
-            <p className="font-medium">POZIMIND is not a medical device.</p>
+            <p className="font-medium">MAEPLE is not a medical device.</p>
             <p>
-              The content, insights, and AI-generated suggestions provided by POZIMIND are for informational and self-reflection purposes only. 
+              The content, insights, and AI-generated suggestions provided by MAEPLE are for informational and self-reflection purposes only. 
               They do not constitute medical advice, diagnosis, or treatment. Always seek the advice of your physician or qualified health provider 
               with any questions you may have regarding a medical condition. Never disregard professional medical advice or delay in seeking it 
-              because of something you have read on POZIMIND.
+              because of something you have read on MAEPLE.
             </p>
           </div>
         </section>
@@ -39,12 +39,12 @@ const Terms: React.FC = () => {
           </div>
           <div className="space-y-4 text-slate-600">
             <p>
-              Welcome to POZIMIND, provided by <strong>Poziverse</strong> ("Company", "we", "us", "our"). 
+              Welcome to MAEPLE, provided by <strong>Poziverse</strong> ("Company", "we", "us", "our"). 
               By accessing or using our application, you agree to be bound by these Terms.
             </p>
             <h3 className="font-bold text-slate-800 mt-4">1. Use of Service</h3>
             <p>
-              You agree to use POZIMIND only for lawful purposes. You represent that you are of legal age to form a binding contract.
+              You agree to use MAEPLE only for lawful purposes. You represent that you are of legal age to form a binding contract.
             </p>
             <h3 className="font-bold text-slate-800 mt-4">2. AI Technology</h3>
             <p>
@@ -53,7 +53,7 @@ const Terms: React.FC = () => {
             </p>
             <h3 className="font-bold text-slate-800 mt-4">3. Intellectual Property</h3>
             <p>
-              All content, features, and functionality of POZIMIND are the exclusive property of Poziverse.
+              All content, features, and functionality of MAEPLE are the exclusive property of Poziverse.
             </p>
           </div>
         </section>
@@ -72,7 +72,7 @@ const Terms: React.FC = () => {
             </p>
             <h3 className="font-bold text-slate-800 mt-4">Data Storage</h3>
             <p>
-              POZIMIND operates with a "Local-First" philosophy. Your journal entries and personal settings are stored locally in your browser's 
+              MAEPLE operates with a "Local-First" philosophy. Your journal entries and personal settings are stored locally in your browser's 
               storage. We do not maintain a central database of your private journals.
             </p>
             <h3 className="font-bold text-slate-800 mt-4">External APIs</h3>

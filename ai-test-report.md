@@ -1,4 +1,4 @@
-# POZIMIND AI Providers Test Report
+# MAEPLE AI Providers Test Report
 
 Generated: 2025-12-06T17:36:35.490Z
 

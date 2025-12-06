@@ -1,9 +1,9 @@
 
-# POZIMIND Setup Guide
+# MAEPLE Setup Guide
 
-Welcome to POZIMIND—a professional, neuro-affirming health intelligence engine. This guide will help you get up and running quickly, with pride in every step.
+Welcome to MAEPLE—a professional, neuro-affirming health intelligence engine. This guide will help you get up and running quickly, with pride in every step.
 
-This guide will help you get POZIMIND up and running on your local machine.
+This guide will help you get MAEPLE up and running on your local machine.
 
 
 ## Prerequisites
@@ -19,8 +19,8 @@ This guide will help you get POZIMIND up and running on your local machine.
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/genpozi/pozimind.git
-cd pozimind
+git clone https://github.com/genpozi/maeple.git
+cd maeple
 npm install
 ```
 
@@ -60,7 +60,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### 5. Grant Permissions
 
-POZIMIND needs:
+MAEPLE needs:
 - **Camera** permission (for Bio-Mirror state checks)
 - **Microphone** permission (for voice journaling and Live Coach)
 
@@ -158,7 +158,7 @@ Clear browser data to reset the app completely.
 
 ### Privacy Note
 
-POZIMIND runs entirely in your browser. Your data:
+MAEPLE runs entirely in your browser. Your data:
 - ✅ Never leaves your device (except API calls to Gemini)
 - ✅ Is encrypted locally for sensitive biometric data
 - ✅ Can be cleared anytime in Settings
@@ -172,7 +172,7 @@ Once setup is complete:
 2. Configure your bio-context in **Settings**.
 3. Set up Bio-Mirror baseline calibration.
 4. Start your first journal entry!
-5. Explore the [DEV_REFERENCE.md](./DEV_REFERENCE.md) if you want to contribute or extend POZIMIND.
+5. Explore the [DEV_REFERENCE.md](./DEV_REFERENCE.md) if you want to contribute or extend MAEPLE.
 
 ## Need Help?
 

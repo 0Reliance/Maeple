@@ -20,7 +20,7 @@ const Guide: React.FC = () => {
             <span className="text-teal-400">Unlock Your Mind's Patterns.</span>
           </h1>
           <p className="text-lg text-indigo-100 max-w-2xl leading-relaxed">
-            Standard health apps ask "What is wrong with you?" POZIMIND asks "What is your context?" 
+            Standard health apps ask "What is wrong with you?" MAEPLE asks "What is your context?" 
             We believe that your mind is not a problem to be fixed, but a dynamic system 
             that thrives with the right inputs.
           </p>
@@ -31,7 +31,7 @@ const Guide: React.FC = () => {
       <section className="space-y-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-8 w-1 bg-teal-500 rounded-full"></div>
-          <h2 className="text-2xl font-bold text-slate-800">The POZIMIND Metrics</h2>
+          <h2 className="text-2xl font-bold text-slate-800">The MAEPLE Metrics</h2>
         </div>
         <p className="text-slate-600 max-w-2xl mb-8">
           We use neuro-affirming concepts to capture the reality of your day.

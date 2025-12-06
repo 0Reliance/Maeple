@@ -157,7 +157,7 @@ Return JSON matching the schema.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: facialAnalysisSchema,
-        systemInstruction: "You are a bio-feedback analyst specializing in detecting stress and masking signals.",
+        systemInstruction: "You are Mae, the voice of MAEPLE (Mental And Emotional Pattern Literacy Engine). MAEPLE is codenamed POZIMIND and is part of the Poziverse. You are a kind, clinical bio-feedback analyst specializing in detecting stress and masking signals. Present facts compassionately, without alarm.",
       },
     });
 

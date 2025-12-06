@@ -148,14 +148,14 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({ entries
   return (
     <div className="space-y-6 animate-fadeIn">
       
-      {/* Phase 3: Pozi's Strategy Deck */}
+      {/* Phase 3: Mae's Strategy Deck */}
       {strategies.length > 0 && (
           <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
              <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full translate-x-10 -translate-y-10 blur-2xl"></div>
              
              <div className="flex items-center gap-2 mb-4 relative z-10">
                   <Compass className="text-teal-200" size={24} />
-                  <h3 className="font-bold text-xl">Pozi's Strategy Deck</h3>
+                  <h3 className="font-bold text-xl">Mae's Strategy Deck</h3>
                   <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">For Today</span>
              </div>
 
@@ -345,7 +345,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({ entries
                         <p className="text-rose-900 font-medium">{hormonalContext.cognitiveImpact}</p>
                     </div>
                     <div className="bg-white/60 p-3 rounded-xl border border-rose-100/50">
-                        <p className="text-xs font-bold uppercase text-rose-400 mb-1">Pozi's Advice</p>
+                        <p className="text-xs font-bold uppercase text-rose-400 mb-1">Mae's Advice</p>
                         <p className="text-rose-900 text-sm">{hormonalContext.advice}</p>
                     </div>
                 </div>

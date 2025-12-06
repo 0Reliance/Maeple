@@ -1,4 +1,4 @@
-// AI Providers Test Script for POZIMIND
+// AI Providers Test Script for MAEPLE
 // Tests all AI adapters with mock data to verify functionality
 
 const fs = require('fs');
@@ -308,7 +308,7 @@ class AIProviderTester {
   generateReport() {
     const report = [];
     
-    report.push('# POZIMIND AI Providers Test Report\n');
+    report.push('# MAEPLE AI Providers Test Report\n');
     report.push(`Generated: ${this.results.timestamp}\n`);
     
     // Summary
