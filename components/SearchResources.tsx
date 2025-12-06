@@ -1,22 +1,30 @@
 import React, { useState } from 'react';
-import { Search, Globe, ArrowRight, Loader2 } from 'lucide-react';
-import { searchHealthInfo } from '../services/geminiService';
+import { Search, Globe, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { searchHealthInfo, isAIConfigured } from '../services/geminiService';
 
 const SearchResources: React.FC = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{text: string, grounding: any} | null>(null);
+  const [results, setResults] = useState<{text: string | null, grounding?: any} | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
     
     setLoading(true);
+    setError(null);
     try {
       const data = await searchHealthInfo(query);
-      setResults(data);
+      if (data === null) {
+        setError('AI search not configured. Go to Settings to add an API key.');
+        setResults(null);
+      } else {
+        setResults(data);
+      }
     } catch (err) {
       console.error(err);
+      setError('Search failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -47,7 +55,14 @@ const SearchResources: React.FC = () => {
         </form>
       </div>
 
-      {results && (
+      {error && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+          <AlertCircle className="text-amber-600" size={20} />
+          <p className="text-amber-800">{error}</p>
+        </div>
+      )}
+
+      {results && results.text && (
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
            <div className="prose prose-slate max-w-none mb-6">
              <p className="whitespace-pre-wrap leading-relaxed text-slate-700">{results.text}</p>

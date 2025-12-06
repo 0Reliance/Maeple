@@ -1,0 +1,93 @@
+{
+  "timestamp": "2025-12-06T17:37:28.216Z",
+  "files": [
+    {
+      "path": "assets/components-CQEYm2xx.js",
+      "size": 514865,
+      "sizeFormatted": "502.8 KB",
+      "gzipSize": 133709,
+      "gzipSizeFormatted": "130.58 KB",
+      "type": "javascript"
+    },
+    {
+      "path": "assets/ai-AACLz7mC.js",
+      "size": 245188,
+      "sizeFormatted": "239.44 KB",
+      "gzipSize": 42060,
+      "gzipSizeFormatted": "41.07 KB",
+      "type": "javascript"
+    },
+    {
+      "path": "assets/vendor-CZFfU7IE.js",
+      "size": 139885,
+      "sizeFormatted": "136.61 KB",
+      "gzipSize": 44911,
+      "gzipSizeFormatted": "43.86 KB",
+      "type": "javascript"
+    },
+    {
+      "path": "assets/index-mYqz34OK.js",
+      "size": 63522,
+      "sizeFormatted": "62.03 KB",
+      "gzipSize": 16927,
+      "gzipSizeFormatted": "16.53 KB",
+      "type": "javascript"
+    },
+    {
+      "path": "assets/index-ChBT5Smt.css",
+      "size": 47785,
+      "sizeFormatted": "46.67 KB",
+      "gzipSize": 8080,
+      "gzipSizeFormatted": "7.89 KB",
+      "type": "stylesheet"
+    },
+    {
+      "path": "sw.js",
+      "size": 6945,
+      "sizeFormatted": "6.78 KB",
+      "gzipSize": 2015,
+      "gzipSizeFormatted": "1.97 KB",
+      "type": "javascript"
+    },
+    {
+      "path": "index.html",
+      "size": 1200,
+      "sizeFormatted": "1.17 KB",
+      "gzipSize": 638,
+      "gzipSizeFormatted": "638 Bytes",
+      "type": "html"
+    }
+  ],
+  "totalSize": 1019390,
+  "totalGzipSize": 248340,
+  "recommendations": [
+    {
+      "type": "minification",
+      "severity": "medium",
+      "file": "assets/ai-AACLz7mC.js",
+      "message": "JavaScript file could benefit from additional minification.",
+      "size": 245188
+    },
+    {
+      "type": "large-file",
+      "severity": "high",
+      "file": "assets/components-CQEYm2xx.js",
+      "message": "Large file detected (502.8 KB). Consider code splitting or lazy loading.",
+      "size": 514865
+    },
+    {
+      "type": "minification",
+      "severity": "medium",
+      "file": "assets/components-CQEYm2xx.js",
+      "message": "JavaScript file could benefit from additional minification.",
+      "size": 514865
+    },
+    {
+      "type": "minification",
+      "severity": "medium",
+      "file": "assets/vendor-CZFfU7IE.js",
+      "message": "JavaScript file could benefit from additional minification.",
+      "size": 139885
+    }
+  ]
+}

@@ -2,11 +2,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Volume2, X, Activity } from 'lucide-react';
 import { getAIClient } from '../services/geminiService';
+import { canUseAudio } from '../services/ai';
 import { Modality, LiveServerMessage } from '@google/genai';
 
 const LiveCoach: React.FC = () => {
   const [isActive, setIsActive] = useState(false);
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+  const [statusNote, setStatusNote] = useState<string>('Tap the mic, allow access, and start talking.');
+  const audioCapable = canUseAudio();
   
   // Refs for audio handling to avoid re-renders
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -36,14 +39,27 @@ const LiveCoach: React.FC = () => {
   };
 
   const startSession = async () => {
+    if (!audioCapable) {
+      setStatus('error');
+      setStatusNote('Audio provider not configured. Add a Gemini key in Settings → AI Providers.');
+      return;
+    }
+
     setStatus('connecting');
+    setStatusNote('Requesting microphone and starting Pozi Live...');
     try {
       const ai = getAIClient();
+      if (!ai) {
+        setStatus('error');
+        setStatusNote('Gemini key missing. Add VITE_GEMINI_API_KEY or configure in Settings → AI Providers.');
+        return;
+      }
       
       // Setup Audio Contexts
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       audioContextRef.current = new AudioContextClass({ sampleRate: 24000 });
       const inputCtx = new AudioContextClass({ sampleRate: 16000 });
+      await Promise.all([audioContextRef.current.resume?.(), inputCtx.resume?.()]);
       
       // Get Mic Stream
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -75,6 +91,7 @@ const LiveCoach: React.FC = () => {
           onopen: () => {
             console.log("Live session opened");
             setStatus('connected');
+            setStatusNote('Listening... speak naturally. Tap X to end.');
             setIsActive(true);
             
             // Start streaming input audio
@@ -146,6 +163,7 @@ const LiveCoach: React.FC = () => {
           onerror: (err) => {
             console.error("Session error", err);
             setStatus('error');
+            setStatusNote('Could not connect to Pozi Live. Check your key and try again.');
             cleanup();
           }
         }
@@ -155,6 +173,7 @@ const LiveCoach: React.FC = () => {
     } catch (e) {
       console.error("Failed to start live session", e);
       setStatus('error');
+      setStatusNote('Mic permission granted, but live session failed. Verify API key and network.');
       cleanup();
     }
   };
@@ -192,8 +211,9 @@ const LiveCoach: React.FC = () => {
 
         <div className="relative z-10 text-center space-y-8">
             <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight">Pozi Live Coach</h2>
-                <p className="text-indigo-200">Talk to Pozi about your patterns and capacity.</p>
+              <h2 className="text-2xl font-bold tracking-tight">Pozi Live Coach</h2>
+              <p className="text-indigo-200">Talk to Pozi about your patterns and capacity.</p>
+              <p className="text-xs text-indigo-100/80">Provider: Gemini Live. Allow mic; if no audio, check your Gemini key.</p>
             </div>
 
             <div className="relative inline-flex">
@@ -202,12 +222,12 @@ const LiveCoach: React.FC = () => {
                  )}
                  
                  <button 
-                    onClick={isActive ? cleanup : startSession}
-                    disabled={status === 'connecting'}
+                  onClick={isActive ? cleanup : startSession}
+                  disabled={status === 'connecting' || !audioCapable}
                     className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-xl
-                        ${isActive 
-                            ? 'bg-red-500 hover:bg-red-600 ring-4 ring-red-500/30' 
-                            : 'bg-teal-500 hover:bg-teal-600 ring-4 ring-teal-500/30'
+                    ${isActive 
+                      ? 'bg-red-500 hover:bg-red-600 ring-4 ring-red-500/30' 
+                      : 'bg-teal-500 hover:bg-teal-600 ring-4 ring-teal-500/30'
                         }
                     `}
                  >
@@ -225,6 +245,9 @@ const LiveCoach: React.FC = () => {
                 {status === 'error' && (
                     <span className="text-sm text-red-300">Connection Failed. Try again.</span>
                 )}
+              {statusNote && status !== 'connected' && (
+                <span className="text-xs text-indigo-100 text-center block">{statusNote}</span>
+              )}
             </div>
         </div>
     </div>

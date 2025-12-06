@@ -1,26 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { LayoutDashboard, BookHeart, MessagesSquare, Search as SearchIcon, Image as ImageIcon, Menu, Settings as SettingsIcon, Compass, ShieldCheck, Map, FileText, Camera } from 'lucide-react';
 import JournalEntry from './components/JournalEntry';
 import HealthMetricsDashboard from './components/HealthMetricsDashboard';
 import TimelineEntry from './components/TimelineEntry';
-import LiveCoach from './components/LiveCoach';
 import SearchResources from './components/SearchResources';
-import VisionBoard from './components/VisionBoard';
-import StateCheckWizard from './components/StateCheckWizard';
-import Settings from './components/Settings';
 import Guide from './components/Guide';
 import Terms from './components/Terms';
 import Roadmap from './components/Roadmap';
-import ClinicalReport from './components/ClinicalReport';
 import MobileNav from './components/MobileNav';
+
+// Lazy load heavy components for better performance
+const LiveCoach = React.lazy(() => import('./components/LiveCoach'));
+const VisionBoard = React.lazy(() => import('./components/VisionBoard'));
+const StateCheckWizard = React.lazy(() => import('./components/StateCheckWizard'));
+const Settings = React.lazy(() => import('./components/Settings'));
+const ClinicalReport = React.lazy(() => import('./components/ClinicalReport'));
 import { getEntries, saveEntry } from './services/storageService';
 import { HealthEntry, View, WearableDataPoint } from './types';
+import { initializeAI } from './services/ai';
+import swManager from './src/swRegistration.ts';
 
 function App() {
   const [view, setView] = useState<View>(View.JOURNAL); // Default to Journal for Mobile-First capture
   const [entries, setEntries] = useState<HealthEntry[]>([]);
   const [wearableData, setWearableData] = useState<WearableDataPoint[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [aiInitialized, setAiInitialized] = useState(false);
+
+  // Initialize AI services on app startup
+  useEffect(() => {
+    initializeAI()
+      .then(() => setAiInitialized(true))
+      .catch((error) => {
+        console.warn('AI initialization failed (non-critical):', error);
+        setAiInitialized(true); // Still mark as initialized - app works without AI
+      });
+  }, []);
 
   useEffect(() => {
     setEntries(getEntries());
@@ -168,15 +183,35 @@ function App() {
               </div>
             )}
             
-            {view === View.BIO_MIRROR && <StateCheckWizard />}
-            {view === View.LIVE_COACH && <LiveCoach />}
-            {view === View.VISION && <VisionBoard />}
+            {view === View.BIO_MIRROR && (
+              <Suspense fallback={<div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>}>
+                <StateCheckWizard />
+              </Suspense>
+            )}
+            {view === View.LIVE_COACH && (
+              <Suspense fallback={<div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>}>
+                <LiveCoach />
+              </Suspense>
+            )}
+            {view === View.VISION && (
+              <Suspense fallback={<div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>}>
+                <VisionBoard />
+              </Suspense>
+            )}
             {view === View.SEARCH && <SearchResources />}
-            {view === View.SETTINGS && <Settings onDataSynced={handleWearableSync} />}
+            {view === View.SETTINGS && (
+              <Suspense fallback={<div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>}>
+                <Settings onDataSynced={handleWearableSync} />
+              </Suspense>
+            )}
             {view === View.GUIDE && <Guide />}
             {view === View.TERMS && <Terms />}
             {view === View.ROADMAP && <Roadmap />}
-            {view === View.CLINICAL && <ClinicalReport entries={entries} wearableData={wearableData} />}
+            {view === View.CLINICAL && (
+              <Suspense fallback={<div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>}>
+                <ClinicalReport entries={entries} wearableData={wearableData} />
+              </Suspense>
+            )}
           </div>
         </div>
       </main>

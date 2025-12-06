@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { wearableManager } from '../services/wearables/manager';
 import { ProviderType } from '../services/wearables/types';
-import { Activity, Check, Loader2, RefreshCw, Smartphone, Calendar, Save, Camera, ScanFace, HeartHandshake, Phone } from 'lucide-react';
+import { Activity, Check, Loader2, RefreshCw, Smartphone, Calendar, Save, Camera, ScanFace, HeartHandshake, Phone, Bot } from 'lucide-react';
 import { WearableDataPoint, UserSettings } from '../types';
 import { getUserSettings, saveUserSettings } from '../services/storageService';
 import BioCalibration from './BioCalibration';
+import AIProviderSettings from './AIProviderSettings';
 
 interface Props {
   onDataSynced: (data: WearableDataPoint[]) => void;
@@ -148,6 +149,11 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
             Customize your biological context and connect external devices to build a complete digital phenotype.
         </p>
       </div>
+
+      {/* AI Provider Configuration */}
+      <section className="space-y-4">
+        <AIProviderSettings />
+      </section>
 
       {/* Safety Plan Configuration */}
       <section className="space-y-4">

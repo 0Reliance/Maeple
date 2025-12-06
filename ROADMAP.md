@@ -68,3 +68,15 @@ This document tracks the evolution of POZIMIND from a simple journal to a clinic
 ---
 
 **Status:** Alpha Release v1.1 Ready. All planned features implemented.
+
+## 🟡 Phase 12: Multi-Provider AI Platform (IN PROGRESS)
+- [x] Add adapter architecture with retry/health helpers.
+- [x] Implement Gemini adapter (text/vision/image/search/stream) and wire router.
+- [x] Implement OpenAI adapter (text/vision/image) and register in router.
+- [x] Scaffold Anthropic, Perplexity, OpenRouter, Ollama, Z.ai adapters and register stubs.
+- [x] Refactor `geminiService` and `geminiVisionService` to route via `aiRouter` with graceful Gemini fallback.
+- [x] Wire audio routing entry point (router + `canUseAudio`), still Gemini Live-only in UI.
+- [ ] Add provider health/fallback chain and tests.
+- [ ] Enable audio provider selection (OpenAI/others) in Live Coach.
+
+**Status:** Multi-provider layer shipped with Gemini + OpenAI; other adapters scaffolded; audio routing plumbed but UI still Gemini-only.

@@ -116,6 +116,15 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
 
   return (
     <div className="space-y-6">
+      {/* Quick guidance for the capture flow */}
+      <div className="bg-indigo-50 border border-indigo-100 text-indigo-800 rounded-2xl p-4 shadow-sm">
+        <p className="text-sm font-semibold mb-1">How to capture:</p>
+        <ul className="text-sm text-indigo-700 list-disc pl-5 space-y-1">
+          <li>Slide your capacity bars to set today’s baseline.</li>
+          <li>Tap the mic to speak or type a quick note.</li>
+          <li>Hit <span className="font-semibold">Capture</span> to analyze and save.</li>
+        </ul>
+      </div>
       
       {/* Phase 3: Immediate Strategy Feedback Overlay */}
       {lastStrategies.length > 0 && (
@@ -194,7 +203,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
           
           <div className="absolute bottom-4 right-4 flex items-center gap-3">
             <span className="text-xs text-slate-400 font-medium mr-2 hidden sm:inline-block">
-                Tap mic to speak
+                Tap mic to speak or keep typing
             </span>
             <RecordVoiceButton onTranscript={handleTranscript} isDisabled={isProcessing} />
           </div>
@@ -227,6 +236,9 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
               </>
             )}
           </button>
+          {(!text && !isProcessing) && (
+            <span className="text-xs text-slate-400 ml-3">Add a quick note or voice snippet to enable Capture.</span>
+          )}
         </div>
       </div>
     </div>

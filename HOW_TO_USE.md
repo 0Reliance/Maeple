@@ -6,6 +6,10 @@ Welcome to POZIMIND. This tool is designed to help you move from **Symptom Surve
 
 This guide will walk you through the core features and how to use them to prevent burnout and thrive.
 
+> **New (Beta v5):** AI is now multi-provider. Gemini is the default; you can add OpenAI, Anthropic, Perplexity, OpenRouter, local Ollama, or Z.ai under **Settings → AI Providers**. Keys are stored encrypted locally, and the router will gracefully fall back to Gemini if others are disabled or fail.
+
+> **Voice tips:** When using Pozi Live or the Journal mic, allow microphone access. In Pozi Live you should see “Listening…” after tapping the mic; if not, confirm your Gemini key is set.
+
 ---
 
 ## 1. The Core Philosophy

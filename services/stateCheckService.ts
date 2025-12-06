@@ -38,11 +38,15 @@ export const saveStateCheck = async (
 ): Promise<string> => {
   const db = await openDB();
   
+  // Generate ID if not provided
+  const id = data.id || `state_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
   // Encrypt the analysis data before storage
   const { cipher, iv } = await encryptData(data.analysis);
   
   const record = {
     ...data,
+    id, // Ensure ID is always present
     analysisCipher: cipher, // Store encrypted analysis
     iv: iv,
     imageBlob: imageBlob || null, // Store raw image blob
@@ -57,7 +61,7 @@ export const saveStateCheck = async (
     const store = transaction.objectStore(STORE_NAME);
     const request = store.put(record);
 
-    request.onsuccess = () => resolve(data.id as string);
+    request.onsuccess = () => resolve(id); // Return guaranteed ID
     request.onerror = () => reject(request.error);
   });
 };

@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "analyze": "node scripts/analyze-bundle.cjs",
+    "build:analyze": "npm run build && npm run analyze",
+    "test:ai": "node scripts/test-ai-providers.cjs",
+    "test:all": "npm run build && npm run analyze && npm run test:ai"
   },
   "dependencies": {
     "@google/genai": "latest",
@@ -18,6 +22,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@types/node": "^24.10.1",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@types/uuid": "^9.0.8",
@@ -25,6 +30,7 @@
     "autoprefixer": "^10.4.18",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
+    "terser": "^5.44.1",
     "typescript": "^5.2.2",
     "vite": "^5.1.6"
   }
