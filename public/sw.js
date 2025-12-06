@@ -1,7 +1,7 @@
-// POZIMIND Service Worker for Offline Support
-const CACHE_NAME = 'pozimind-v1.0.0';
-const STATIC_CACHE = 'pozimind-static-v1.0.0';
-const DYNAMIC_CACHE = 'pozimind-dynamic-v1.0.0';
+// MAEPLE Service Worker for Offline Support
+const CACHE_NAME = 'maeple-v1.0.0';
+const STATIC_CACHE = 'maeple-static-v1.0.0';
+const DYNAMIC_CACHE = 'maeple-dynamic-v1.0.0';
 
 // Critical assets to cache for offline functionality
 const STATIC_ASSETS = [
@@ -145,15 +145,15 @@ self.addEventListener('push', (event) => {
   console.log('[SW] Push notification received:', event.data);
   
   const options = {
-    body: event.data?.body || 'New notification from POZIMIND',
+    body: event.data?.body || 'New notification from MAEPLE',
     icon: '/icon-192x192.png',
     badge: '/badge-72x72.png',
-    tag: 'pozimind-notification',
+    tag: 'maeple-notification',
     renotify: true
   };
   
   event.waitUntil(
-    self.registration.showNotification(event.data?.title || 'POZIMIND', options)
+    self.registration.showNotification(event.data?.title || 'MAEPLE', options)
   );
 });
 
@@ -211,7 +211,7 @@ async function syncAISettings() {
 // IndexedDB helpers for offline queue
 async function getQueuedEntries() {
   return new Promise((resolve) => {
-    const request = indexedDB.open('pozimind-offline', 1);
+    const request = indexedDB.open('maeple-offline', 1);
     
     request.onsuccess = () => {
       const db = request.result;
@@ -226,7 +226,7 @@ async function getQueuedEntries() {
 
 async function removeQueuedEntry(id) {
   return new Promise((resolve) => {
-    const request = indexedDB.open('pozimind-offline', 1);
+    const request = indexedDB.open('maeple-offline', 1);
     
     request.onsuccess = () => {
       const db = request.result;

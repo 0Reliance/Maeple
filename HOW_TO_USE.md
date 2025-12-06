@@ -1,24 +1,24 @@
 
 
-# How to Use POZIMIND
-> *Your Neuro-Affirming, Professional Companion for Pattern Literacy*
+# How to Use MAEPLE
+> *Your Kind, Trustworthy Companion for Pattern Literacy*
 
 
-Welcome to POZIMIND. This is more than an app—it’s a movement to help you move from **Symptom Surveillance** (“I feel broken”) to **Pattern Literacy** (“I am running at high capacity in a low-resource environment”).
+Welcome to MAEPLE. This is more than an app—it's a movement to help you move from **Symptom Surveillance** ("I feel broken") to **Pattern Literacy** ("I am running at high capacity in a low-resource environment").
 
-POZIMIND is built for real-world impact, clinical reliability, and privacy-first care. Every feature is designed to empower you with actionable insights, not just data.
+MAEPLE is built for real-world impact, clinical reliability, and privacy-first care. Every feature is designed to empower you with actionable insights, not just data.
 
 This guide will walk you through the core features and how to use them to prevent burnout and thrive.
 
 > **New (Beta v5):** AI is now multi-provider. Gemini is the default; you can add OpenAI, Anthropic, Perplexity, OpenRouter, local Ollama, or Z.ai under **Settings → AI Providers**. Keys are stored encrypted locally, and the router will gracefully fall back to Gemini if others are disabled or fail.
 
-> **Voice tips:** When using Pozi Live or the Journal mic, allow microphone access. In Pozi Live you should see “Listening…” after tapping the mic; if not, confirm your Gemini key is set.
+> **Voice tips:** When using Mae Live or the Journal mic, allow microphone access. In Mae Live you should see "Listening…" after tapping the mic; if not, confirm your Gemini key is set.
 
 ---
 
 ## 1. The Core Philosophy
 
-POZIMIND tracks **Context**, not just symptoms. To get the most out of it, you need to track three dimensions:
+MAEPLE tracks **Context**, not just symptoms. To get the most out of it, you need to track three dimensions:
 1.  **Capacity (Spoons):** How much energy do you *actually* have available?
 2.  **Demand (Load):** What is costing you energy? (Sensory noise, Masking, Task switching).
 3.  **Output (Mood):** How do you feel as a result?
@@ -77,7 +77,7 @@ Visit the **Pattern Dashboard** once a week to spot trends.
 | :--- | :--- |
 | **Smart Journal** | Capturing the "Why" behind your mood. |
 | **Bio-Mirror** | Reality-checking your physical stress levels. |
-| **Pozi Live Coach** | Verbal processing when you are too overwhelmed to type. |
+| **Mae Live Coach** | Verbal processing when you are too overwhelmed to type. |
 | **Visual Therapy** | Visualizing your feelings when words fail you. |
 | **Clinical Report** | Generating a PDF for your therapist/doctor. |
 

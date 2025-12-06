@@ -81,7 +81,7 @@ const Roadmap: React.FC = () => {
       <header className="bg-gradient-to-r from-teal-900 to-slate-900 text-white p-10 rounded-3xl shadow-xl relative overflow-hidden">
          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 rounded-full blur-[100px] opacity-20 translate-x-1/2 -translate-y-1/2"></div>
          <div className="relative z-10">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">The POZIMIND Epic</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">The MAEPLE Epic</h1>
             <p className="text-emerald-100 text-lg max-w-2xl">
                 Our 10-Phase roadmap to transform mental health tracking from 
                 <strong> Reactive Symptom Logging</strong> to <strong> Predictive Capacity Modeling</strong>.

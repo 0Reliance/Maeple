@@ -82,8 +82,8 @@ function App() {
       {/* Mobile Top Header (Branding Only) */}
       <div className="md:hidden bg-white/90 backdrop-blur-md border-b border-slate-100 p-4 flex justify-center items-center sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-teal-200 shadow-lg">P</div>
-          <span className="font-bold text-slate-800 tracking-tight">POZIMIND</span>
+          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-teal-200 shadow-lg">M</div>
+          <span className="font-bold text-slate-800 tracking-tight">MAEPLE</span>
         </div>
       </div>
 
@@ -93,8 +93,8 @@ function App() {
         mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
       }`}>
         <div className="p-8 hidden md:flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-teal-100 text-lg">P</div>
-          <span className="text-2xl font-bold text-slate-800 tracking-tight">POZIMIND</span>
+          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-teal-100 text-lg">M</div>
+          <span className="text-2xl font-bold text-slate-800 tracking-tight">MAEPLE</span>
         </div>
 
         <nav className="px-4 space-y-1.5 mt-16 md:mt-4 flex-1 overflow-y-auto no-scrollbar">
@@ -137,13 +137,13 @@ function App() {
           <header className="mb-4 md:mb-8 print:hidden">
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
               {view === View.DASHBOARD && "Pattern Dashboard"}
-              {view === View.JOURNAL && "PoziMind Journal"}
+              {view === View.JOURNAL && "MAEPLE Journal"}
               {view === View.BIO_MIRROR && "Bio-Mirror Check"}
-              {view === View.LIVE_COACH && "Pozi Live Companion"}
+              {view === View.LIVE_COACH && "Mae Live Companion"}
               {view === View.VISION && "Visual Therapy"}
               {view === View.SEARCH && "Health Resources"}
               {view === View.SETTINGS && "Settings & Devices"}
-              {view === View.GUIDE && "Welcome to Poziverse"}
+              {view === View.GUIDE && "Welcome to MAEPLE"}
               {view === View.TERMS && "Terms & Conditions"}
               {view === View.ROADMAP && "Product Roadmap"}
               {view === View.CLINICAL && "Clinical Tools"}
@@ -152,13 +152,13 @@ function App() {
               {view === View.DASHBOARD && `Tracking ${entries.length} patterns. Identifying gaps between capacity and demand.`}
               {view === View.JOURNAL && "Capture your context. Track spoons, sensory load, and flow states."}
               {view === View.BIO_MIRROR && "Objectively analyze your physical signs of stress and masking."}
-              {view === View.LIVE_COACH && "Real-time, voice-first reflection with your neuro-affirming companion."}
+              {view === View.LIVE_COACH && "Real-time, voice-first reflection with Mae, your neuro-affirming companion."}
               {view === View.VISION && "Visualize your state of mind with generative art."}
               {view === View.SEARCH && "Grounded knowledge base for health queries."}
               {view === View.SETTINGS && "Configure your biological context and wearable integrations."}
-              {view === View.GUIDE && "Understanding the PoziMind method."}
+              {view === View.GUIDE && "Understanding the MAEPLE method."}
               {view === View.TERMS && "Legal information and privacy policy."}
-              {view === View.ROADMAP && "The 10-Phase Epic Plan to transform tracking."}
+              {view === View.ROADMAP && "The evolution of MAEPLE to transform tracking."}
               {view === View.CLINICAL && "Generate professional reports for your healthcare team."}
             </p>
           </header>

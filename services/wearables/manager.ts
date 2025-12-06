@@ -4,7 +4,7 @@ import { MockWearableAdapter } from './mockAdapter';
 import { WearableDataPoint } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
-const STORAGE_KEY = "healthflow_wearable_config";
+const STORAGE_KEY = "maeple_wearable_config";
 
 class WearableManager {
   private adapters: Map<ProviderType, WearableAdapter> = new Map();

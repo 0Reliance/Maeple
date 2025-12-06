@@ -1,25 +1,25 @@
 
 
-# POZIMIND: The Pattern Literacy Engine
-> *Beta v5 | Multi-provider AI | Powered by Poziverse*
+# MAEPLE: Mental And Emotional Pattern Literacy Engine
+> *Beta v5 | Multi-provider AI | Part of Poziverse*
 
 ---
 
 ## 🌟 Mission & Vision
 
-**POZIMIND** is a world-class, neuro-affirming health intelligence engine. Our mission is to empower every user—neurodivergent and neurotypical alike—to move beyond “Symptom Surveillance” (“How broken are you?”) and embrace “Pattern Literacy” (“What is your context?”). We believe in a future where self-understanding, proactive care, and privacy-first technology enable everyone to thrive.
+**MAEPLE** (Mental And Emotional Pattern Literacy Engine) is a world-class, neuro-affirming health intelligence engine, brought to you by Mae, your kind and trustworthy clinical companion. Our mission is to empower every user—neurodivergent and neurotypical alike—to move beyond "Symptom Surveillance" ("How broken are you?") and embrace "Pattern Literacy" ("What is your context?"). We believe in a future where self-understanding, proactive care, and privacy-first technology enable everyone to thrive.
 
-**Vision:** To become the global standard for digital phenotype engines—bridging subjective experience and objective signals, and providing actionable, context-aware insights for self-care, clinical support, and community well-being.
+**Vision:** To become the global standard for digital phenotype engines—bridging subjective experience and objective signals, and providing actionable, context-aware insights for self-care, clinical support, and community well-being. MAEPLE is codenamed by Pozi, part of the Poziverse.
 
 ---
 
 ## 🚀 Professional Product
 
-POZIMIND is built with pride, care, and a relentless focus on quality. Every feature, from multi-provider AI routing to privacy-first biometric analysis, is designed for real-world impact and clinical-grade reliability. This is not a demo—it’s a professional product, ready for real users and real lives.
+MAEPLE is built with pride, care, and a relentless focus on quality. Every feature, from multi-provider AI routing to privacy-first biometric analysis, is designed for real-world impact and clinical-grade reliability. This is not a demo—it's a professional product, ready for real users and real lives.
 
 ---
 
-POZIMIND now uses a multi-provider AI router (Gemini 2.5 + OpenAI live; Anthropic/Perplexity/OpenRouter/Ollama/Z.ai scaffolded) to track multi-dimensional capacity, predict burnout trajectories, and provide context-aware coaching with graceful fallback.
+MAEPLE now uses a multi-provider AI router (Gemini 2.5 + OpenAI live; Anthropic/Perplexity/OpenRouter/Ollama/Z.ai scaffolded) to track multi-dimensional capacity, predict burnout trajectories, and provide context-aware coaching with graceful fallback.
 
 ## 🌟 Core Features
 
@@ -44,7 +44,7 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
 
 ### 5. Visual Therapy & Live Coach
 *   **Visual Therapy:** Context-aware generative art for emotional processing.
-*   **Live Coach:** Voice-first companion using Gemini Live API (audio routing path is wired; UI still Gemini-only).
+*   **Live Coach:** Voice-first companion using Gemini Live API with Mae's kind, clinical tone (audio routing path is wired; UI currently Gemini-only).
 
 ### 6. Mobile-First Architecture
 *   **Thumb Zone Navigation:** Sticky bottom bar for quick capture on mobile.
@@ -71,8 +71,8 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
 
 1. **Clone**
    ```bash
-   git clone https://github.com/genpozi/pozimind.git
-   cd pozimind
+   git clone https://github.com/genpozi/maeple.git
+   cd maeple
    ```
 
 2. **Install**
@@ -98,7 +98,7 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
 
 ## 📱 Mobile Testing Guide
 
-POZIMIND behaves differently depending on the device context to optimize for neurodivergent needs (Focus vs Capture).
+MAEPLE behaves differently depending on the device context to optimize for neurodivergent needs (Focus vs Capture).
 
 **To test Mobile View in Chrome DevTools:**
 1.  Open Developer Tools (F12).
@@ -117,7 +117,7 @@ POZIMIND behaves differently depending on the device context to optimize for neu
 
 ## 📦 Deployment
 
-POZIMIND is a modern, production-ready SPA. Deploy in minutes to Vercel, Netlify, or your own static host:
+MAEPLE is a modern, production-ready SPA. Deploy in minutes to Vercel, Netlify, or your own static host:
 
 ### Vercel / Netlify
 1. Connect your GitHub repository.
@@ -136,7 +136,7 @@ POZIMIND is a modern, production-ready SPA. Deploy in minutes to Vercel, Netlify
 
 
 ### 🔐 Privacy & Security
-POZIMIND is **privacy-first** by design:
+MAEPLE is **privacy-first** by design:
 - **Local-First:** All data (journal, biometric, settings) is stored locally in your browser (LocalStorage & IndexedDB).
 - **Encryption:** Sensitive biometric data is encrypted with AES-GCM before saving.
 - **No Cloud Storage:** Data is sent to AI providers *only* for processing and is never stored on our servers.

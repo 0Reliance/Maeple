@@ -1,4 +1,4 @@
-# POZIMIND - Comprehensive Code Analysis & Issues Report
+# MAEPLE - Comprehensive Code Analysis & Issues Report
 **Date**: December 6, 2025
 **Analysis Type**: Full Codebase Review for Production Readiness
 
@@ -220,8 +220,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'POZIMIND',
-        short_name: 'POZIMIND',
+        name: 'MAEPLE',
+        short_name: 'MAEPLE',
         description: 'Pattern literacy for neurodivergent minds',
         theme_color: '#0f172a',
         icons: [/* ... */]
@@ -593,7 +593,7 @@ Before deploying to production:
 
 ## 10. CONCLUSION
 
-POZIMIND is a **feature-complete, well-architected application** with solid fundamentals. The codebase demonstrates:
+MAEPLE is a **feature-complete, well-architected application** with solid fundamentals. The codebase demonstrates:
 - Strong TypeScript usage
 - Clean component architecture
 - Privacy-first design

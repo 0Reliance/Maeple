@@ -38,8 +38,8 @@ export class OpenRouterAdapter extends BaseAIAdapter {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${this.config.apiKey}`,
-            "HTTP-Referer": "https://pozimind.app",
-            "X-Title": "POZIMIND"
+            "HTTP-Referer": "https://maeple.app",
+            "X-Title": "MAEPLE"
           },
           body: JSON.stringify({
             model: "anthropic/claude-3.5-sonnet", // Default high-quality model
@@ -90,8 +90,8 @@ export class OpenRouterAdapter extends BaseAIAdapter {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${this.config.apiKey}`,
-            "HTTP-Referer": "https://pozimind.app",
-            "X-Title": "POZIMIND"
+            "HTTP-Referer": "https://maeple.app",
+            "X-Title": "MAEPLE"
           },
           body: JSON.stringify({
             model: "anthropic/claude-3.5-sonnet",
@@ -144,8 +144,8 @@ export class OpenRouterAdapter extends BaseAIAdapter {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${this.config.apiKey}`,
-            "HTTP-Referer": "https://pozimind.app",
-            "X-Title": "POZIMIND"
+            "HTTP-Referer": "https://maeple.app",
+            "X-Title": "MAEPLE"
           },
           body: JSON.stringify({
             model: "anthropic/claude-3.5-sonnet",

@@ -1,4 +1,4 @@
-// Bundle Analysis Script for POZIMIND
+// Bundle Analysis Script for MAEPLE
 // Analyzes the built bundle for size optimization opportunities
 
 const fs = require('fs');
@@ -9,7 +9,7 @@ const DIST_DIR = path.join(__dirname, '../dist');
 const ANALYSIS_FILE = path.join(__dirname, '../bundle-analysis.json');
 
 function analyzeBundle() {
-  console.log('🔍 Analyzing POZIMIND bundle...\n');
+  console.log('🔍 Analyzing MAEPLE bundle...\n');
 
   if (!fs.existsSync(DIST_DIR)) {
     console.error('❌ Dist directory not found. Run `npm run build` first.');

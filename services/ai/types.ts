@@ -1,7 +1,8 @@
 /**
- * POZIMIND AI Provider Types
+ * MAEPLE AI Provider Types
  * 
  * Simple type system for multi-provider LLM support.
+ * Part of MAEPLE (Mental And Emotional Pattern Literacy Engine), codenamed by Pozi, part of Poziverse.
  */
 
 // Supported AI Providers

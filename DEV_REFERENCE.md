@@ -1,7 +1,7 @@
 
-# POZIMIND Developer Quick Reference
+# MAEPLE Developer Quick Reference
 
-Welcome to the POZIMIND codebase—a professional, world-class product built for neuro-affirming digital health. This reference is your guide to contributing, extending, and deploying with pride.
+Welcome to the MAEPLE codebase—a professional, world-class product built for neuro-affirming digital health. This reference is your guide to contributing, extending, and deploying with pride.
 
 
 ## 🚀 Daily Commands

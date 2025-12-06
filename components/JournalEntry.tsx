@@ -138,7 +138,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
 
               <div className="flex items-center gap-2 mb-2">
                   <Compass size={24} className="text-teal-200" />
-                  <h3 className="text-xl font-bold">Pozi's Strategy Deck</h3>
+                  <h3 className="text-xl font-bold">Mae's Strategy Deck</h3>
               </div>
               
               {lastReasoning && (
@@ -212,7 +212,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         <div className="mt-2 flex justify-between items-center px-1 border-t border-slate-100 pt-4">
           <div className="flex items-center gap-2 text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-full">
             <Sparkles size={14} />
-            <span className="text-xs font-bold uppercase tracking-wide">Pozi AI Analysis</span>
+            <span className="text-xs font-bold uppercase tracking-wide">Mae AI Analysis</span>
           </div>
 
           <button

@@ -2,6 +2,7 @@
  * AI Settings Service
  * 
  * Manages AI provider configuration.
+ * Note: MAEPLE is codenamed POZIMIND and is part of the Poziverse.
  */
 
 import { encryptData, decryptData } from '../encryptionService';
@@ -12,8 +13,8 @@ import {
   AI_PROVIDERS,
 } from './types';
 
-const SETTINGS_KEY = 'pozimind_ai_settings';
-const ENCRYPTED_KEYS_PREFIX = 'pozimind_ai_key_';
+const SETTINGS_KEY = 'maeple_ai_settings';
+const ENCRYPTED_KEYS_PREFIX = 'maeple_ai_key_';
 
 const DEFAULT_SETTINGS: AISettings = {
   providers: [],
