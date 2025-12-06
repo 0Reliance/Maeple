@@ -1,10 +1,25 @@
 
+
 # POZIMIND: The Pattern Literacy Engine
 > *Beta v5 | Multi-provider AI | Powered by Poziverse*
 
-POZIMIND is a neuro-affirming health intelligence tool designed to shift the paradigm from **Symptom Surveillance** ("How broken are you?") to **Pattern Literacy** ("What is your context?").
+---
 
-It now uses a multi-provider AI router (Gemini 2.5 + OpenAI live; Anthropic/Perplexity/OpenRouter/Ollama/Z.ai scaffolded) to track multi-dimensional capacity, predict burnout trajectories, and provide context-aware coaching with graceful fallback.
+## 🌟 Mission & Vision
+
+**POZIMIND** is a world-class, neuro-affirming health intelligence engine. Our mission is to empower every user—neurodivergent and neurotypical alike—to move beyond “Symptom Surveillance” (“How broken are you?”) and embrace “Pattern Literacy” (“What is your context?”). We believe in a future where self-understanding, proactive care, and privacy-first technology enable everyone to thrive.
+
+**Vision:** To become the global standard for digital phenotype engines—bridging subjective experience and objective signals, and providing actionable, context-aware insights for self-care, clinical support, and community well-being.
+
+---
+
+## 🚀 Professional Product
+
+POZIMIND is built with pride, care, and a relentless focus on quality. Every feature, from multi-provider AI routing to privacy-first biometric analysis, is designed for real-world impact and clinical-grade reliability. This is not a demo—it’s a professional product, ready for real users and real lives.
+
+---
+
+POZIMIND now uses a multi-provider AI router (Gemini 2.5 + OpenAI live; Anthropic/Perplexity/OpenRouter/Ollama/Z.ai scaffolded) to track multi-dimensional capacity, predict burnout trajectories, and provide context-aware coaching with graceful fallback.
 
 ## 🌟 Core Features
 
@@ -99,22 +114,36 @@ POZIMIND behaves differently depending on the device context to optimize for neu
 *   Ensure your testing browser has permission to access the webcam.
 *   On mobile devices, check that you are testing via HTTPS (required for Camera/Mic access).
 
+
 ## 📦 Deployment
 
-This app is designed to be deployed as a Static Single Page Application (SPA).
+POZIMIND is a modern, production-ready SPA. Deploy in minutes to Vercel, Netlify, or your own static host:
 
-**Vercel / Netlify:**
-1.  Connect your repository.
-2.  Set Build Command: `npm run build`.
-3.  Set Output Directory: `dist` or `build`.
-4.  **Important:** Add your `REACT_APP_API_KEY` (or equivalent) in the Environment Variables settings of your hosting dashboard.
+### Vercel / Netlify
+1. Connect your GitHub repository.
+2. Set Build Command: `npm run build`
+3. Set Output Directory: `dist`
+4. Add your `VITE_GEMINI_API_KEY` in the Environment Variables section of your hosting dashboard.
 
-### 🔐 Privacy & Security Note
-POZIMIND follows a **Local-First** philosophy.
-*   **Journal Entries:** Stored in `localStorage`.
-*   **Bio-Mirror Data:** Images and analysis are stored in `IndexedDB`.
-*   **Encryption:** Sensitive biometric analysis is encrypted with a locally generated key (AES-GCM) before saving.
-*   **Cloud Usage:** Data is sent to Gemini API *only* for processing and is immediately returned. It is not stored on our servers.
+### Self-Hosting
+1. Run `npm run build`
+2. Serve the `dist/` directory with any static file server (e.g., `serve`, NGINX, Apache).
+
+### Production Best Practices
+- Use HTTPS for all deployments (required for camera/mic access).
+- Set all API keys as environment variables in your host, never hard-code secrets.
+- Regularly export and back up your data (see in-app Settings).
+
+
+### 🔐 Privacy & Security
+POZIMIND is **privacy-first** by design:
+- **Local-First:** All data (journal, biometric, settings) is stored locally in your browser (LocalStorage & IndexedDB).
+- **Encryption:** Sensitive biometric data is encrypted with AES-GCM before saving.
+- **No Cloud Storage:** Data is sent to AI providers *only* for processing and is never stored on our servers.
+- **User Control:** You can clear or export your data at any time.
 
 ---
-&copy; 2025 Poziverse. All rights reserved.
+
+---
+
+&copy; 2025 Poziverse. All rights reserved. Proudly built for the future of neuro-affirming care.

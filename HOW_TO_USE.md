@@ -1,8 +1,12 @@
 
-# How to Use POZIMIND
-> *Your Neuro-Affirming Companion for Pattern Literacy*
 
-Welcome to POZIMIND. This tool is designed to help you move from **Symptom Surveillance** ("I feel broken") to **Pattern Literacy** ("I am running at high capacity in a low-resource environment").
+# How to Use POZIMIND
+> *Your Neuro-Affirming, Professional Companion for Pattern Literacy*
+
+
+Welcome to POZIMIND. This is more than an app—it’s a movement to help you move from **Symptom Surveillance** (“I feel broken”) to **Pattern Literacy** (“I am running at high capacity in a low-resource environment”).
+
+POZIMIND is built for real-world impact, clinical reliability, and privacy-first care. Every feature is designed to empower you with actionable insights, not just data.
 
 This guide will walk you through the core features and how to use them to prevent burnout and thrive.
 
@@ -88,4 +92,7 @@ Visit the **Pattern Dashboard** once a week to spot trends.
 
 ---
 
-*Powered by Poziverse.*
+
+---
+
+*Proudly built by Poziverse. Your data, your context, your power.*

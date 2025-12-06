@@ -89,7 +89,7 @@ export interface WearableDataPoint {
   provider: ProviderType;
   syncedAt: string; // ISO
   metrics: StandardizedDailyMetric;
-  rawSourceData?: any; // For debugging
+  rawSourceData?: unknown; // For debugging
 }
 
 export interface ChatMessage {

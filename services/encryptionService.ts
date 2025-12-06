@@ -33,7 +33,7 @@ const importKey = async (jwkStr: string) => {
   );
 };
 
-export const encryptData = async (data: any): Promise<{ cipher: string; iv: string }> => {
+export const encryptData = async (data: unknown): Promise<{ cipher: string; iv: string }> => {
   const key = await getKey();
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(JSON.stringify(data));
@@ -50,7 +50,7 @@ export const encryptData = async (data: any): Promise<{ cipher: string; iv: stri
   };
 };
 
-export const decryptData = async (cipher: string, iv: string): Promise<any> => {
+export const decryptData = async (cipher: string, iv: string): Promise<unknown> => {
   try {
     const key = await getKey();
     const decrypted = await window.crypto.subtle.decrypt(

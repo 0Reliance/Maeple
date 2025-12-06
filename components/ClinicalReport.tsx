@@ -19,10 +19,10 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
   // 1. Calculate Average Profile
   const avgProfile = useMemo(() => {
     if (entries.length === 0) return null;
-    const sums: any = { focus: 0, social: 0, structure: 0, emotional: 0, physical: 0, sensory: 0, executive: 0 };
+    const sums: Record<string, number> = { focus: 0, social: 0, structure: 0, emotional: 0, physical: 0, sensory: 0, executive: 0 };
     entries.forEach(e => {
         Object.keys(sums).forEach(k => {
-            sums[k] += (e.neuroMetrics.capacity as any)[k] || 0;
+            sums[k] += (e.neuroMetrics.capacity as Record<string, number>)[k] || 0;
         });
     });
     const result = Object.keys(sums).map(k => ({

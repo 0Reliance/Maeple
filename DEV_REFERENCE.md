@@ -1,4 +1,8 @@
+
 # POZIMIND Developer Quick Reference
+
+Welcome to the POZIMIND codebase—a professional, world-class product built for neuro-affirming digital health. This reference is your guide to contributing, extending, and deploying with pride.
+
 
 ## 🚀 Daily Commands
 
@@ -198,29 +202,20 @@ className="text-slate-600"                      // Body
 className="text-sm text-slate-500"             // Caption
 ```
 
-## 🚢 Deployment
 
-```bash
-# Build
-npm run build
+## 📦 Deployment
 
-# Output directory
-ls -la dist/
+See [README.md](./README.md#deployment) for full deployment instructions. Always set environment variables securely on your hosting platform. Use HTTPS for all production deployments.
 
-# Deploy to static hosting
-# (Vercel, Netlify, GitHub Pages, etc.)
-
-# Remember to set environment variables on hosting platform!
-```
 
 ## 📚 Documentation Files
 
-- `README.md` - Project overview & features
-- `SETUP.md` - Complete setup guide
-- `HOW_TO_USE.md` - User guide
-- `ROADMAP.md` - Feature roadmap (all complete!)
-- `CHANGELOG.md` - Recent changes
-- `DEV_REFERENCE.md` - This file
+- [README.md](./README.md) — Project overview, mission, features, deployment
+- [SETUP.md](./SETUP.md) — Complete setup guide
+- [HOW_TO_USE.md](./HOW_TO_USE.md) — User guide and best practices
+- [ROADMAP.md](./ROADMAP.md) — Feature roadmap (all complete!)
+- [CHANGELOG.md](./CHANGELOG.md) — Recent changes
+- [DEV_REFERENCE.md](./DEV_REFERENCE.md) — This file
 
 ## 🤝 Contributing
 
@@ -232,5 +227,12 @@ ls -la dist/
 
 ---
 
+
+---
+
 **Questions?** Check SETUP.md or README.md
 **Need help?** Open a GitHub issue
+
+---
+
+*Proudly built for the future of neuro-affirming care. Every contribution matters.*

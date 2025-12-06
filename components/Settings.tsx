@@ -79,7 +79,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
     setTimeout(() => setSettingsSaved(false), 2000);
   };
 
-  const ProviderCard = ({ id, name, icon: Icon }: { id: ProviderType, name: string, icon: any }) => {
+  const ProviderCard = ({ id, name, icon: Icon }: { id: ProviderType, name: string, icon: React.ComponentType }) => {
     const config = configs[id];
     const isConnected = !!config?.isConnected;
     const isLoading = loading === id;

@@ -12,7 +12,7 @@ interface Props {
 
 const MobileNav: React.FC<Props> = ({ currentView, onNavigate, onToggleMenu, isMenuOpen }) => {
   
-  const NavItem = ({ view, icon: Icon, label, isAction = false }: { view?: View, icon: any, label: string, isAction?: boolean }) => {
+  const NavItem = ({ view, icon: Icon, label, isAction = false }: { view?: View, icon: React.ComponentType, label: string, isAction?: boolean }) => {
     const isActive = view === currentView;
     const isMenuTrigger = !view;
     

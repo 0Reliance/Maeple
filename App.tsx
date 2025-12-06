@@ -63,7 +63,7 @@ function App() {
     setMobileMenuOpen(false);
   };
 
-  const NavButton = ({ targetView, icon: Icon, label }: { targetView: View; icon: any; label: string }) => (
+  const NavButton = ({ targetView, icon: Icon, label }: { targetView: View; icon: React.ComponentType; label: string }) => (
     <button
       onClick={() => handleViewChange(targetView)}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${

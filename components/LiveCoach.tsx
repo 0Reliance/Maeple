@@ -16,7 +16,7 @@ const LiveCoach: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const sessionRef = useRef<any>(null);
+  const sessionRef = useRef<MediaStream | null>(null);
   const nextStartTimeRef = useRef<number>(0);
 
   // Helper to convert float32 audio to PCM16
@@ -56,7 +56,7 @@ const LiveCoach: React.FC = () => {
       }
       
       // Setup Audio Contexts
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       audioContextRef.current = new AudioContextClass({ sampleRate: 24000 });
       const inputCtx = new AudioContextClass({ sampleRate: 16000 });
       await Promise.all([audioContextRef.current.resume?.(), inputCtx.resume?.()]);
@@ -89,7 +89,7 @@ const LiveCoach: React.FC = () => {
         },
         callbacks: {
           onopen: () => {
-            console.log("Live session opened");
+            // ...existing code...
             setStatus('connected');
             setStatusNote('Listening... speak naturally. Tap X to end.');
             setIsActive(true);
@@ -157,7 +157,7 @@ const LiveCoach: React.FC = () => {
             }
           },
           onclose: () => {
-            console.log("Session closed");
+            // ...existing code...
             cleanup();
           },
           onerror: (err) => {

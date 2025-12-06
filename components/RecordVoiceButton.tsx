@@ -17,11 +17,11 @@ interface RecordVoiceButtonProps {
 const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({ onTranscript, isDisabled = false }) => {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
     // Browser compatibility check
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = (window as typeof window & { webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition || (window as typeof window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
 
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -38,7 +38,7 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({ onTranscript, isD
         setIsListening(false);
       };
 
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         // Ignore 'no-speech' errors as they just mean silence
         if (event.error !== 'no-speech') {
           console.error("Speech recognition error", event.error);
@@ -47,7 +47,7 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({ onTranscript, isD
         setIsListening(false);
       };
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
