@@ -146,12 +146,12 @@ const Guide: React.FC = () => {
              <div className="flex gap-6 items-start">
                 <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xl shrink-0">4</div>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                    <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
                         Identify the Gap <Activity size={16} className="text-indigo-500" />
                     </h3>
                     <p className="text-slate-600">
                         In the Dashboard, look for the gap between <strong>Capacity (Green)</strong> and <strong>Demand (Orange)</strong>.
-                        If Demand exceeds Capacity for >3 days, prioritize recovery.
+                        If Demand exceeds Capacity for {'>'}3 days, prioritize recovery.
                     </p>
                 </div>
             </div>

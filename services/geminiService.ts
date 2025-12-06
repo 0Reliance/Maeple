@@ -1,8 +1,35 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { ParsedResponse, CapacityProfile } from "../types";
+import { aiRouter } from "./ai";
 
-// Standardize API Key retrieval
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Validate and retrieve API Key - returns null if not available
+const getApiKey = (): string | null => {
+  const envKey = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GEMINI_API_KEY)
+    || process.env.VITE_GEMINI_API_KEY
+    || process.env.API_KEY;
+
+  if (!envKey) {
+    console.warn(
+      "Gemini API Key not found. AI features will be limited. " +
+      "Add VITE_GEMINI_API_KEY to your .env file or configure in Settings."
+    );
+    return null;
+  }
+  return envKey;
+};
+
+// Lazy-loaded AI client - may be null if no API key
+let _ai: GoogleGenAI | null = null;
+const getAI = (): GoogleGenAI | null => {
+  if (_ai) return _ai;
+  const apiKey = getApiKey();
+  if (!apiKey) return null;
+  _ai = new GoogleGenAI({ apiKey });
+  return _ai;
+};
+
+// Check if AI is available
+export const isAIConfigured = (): boolean => !!getApiKey();
 
 // Schema for structured health parsing
 const healthEntrySchema: Schema = {
@@ -119,6 +146,29 @@ export const parseJournalEntry = async (text: string, capacityProfile: CapacityP
       4. Generate 3 specific neuro-affirming strategies for the next 2 hours.
     `;
 
+    // Prefer router (multi-provider); fallback to direct Gemini client
+    const routerResult = await aiRouter.chat({
+      messages: [
+        { role: 'system', content: systemInstruction },
+        { role: 'user', content: prompt },
+      ],
+      responseFormat: 'json',
+      temperature: 0.7,
+    });
+
+    if (routerResult?.content) {
+      try {
+        return JSON.parse(routerResult.content) as ParsedResponse;
+      } catch (parseErr) {
+        console.warn('Router JSON parse failed, falling back to Gemini SDK', parseErr);
+      }
+    }
+
+    const ai = getAI();
+    if (!ai) {
+      return getDefaultParsedResponse(text);
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
@@ -136,16 +186,57 @@ export const parseJournalEntry = async (text: string, capacityProfile: CapacityP
     return JSON.parse(textResponse) as ParsedResponse;
   } catch (error) {
     console.error("Parsing error:", error);
-    throw error;
+    return getDefaultParsedResponse(text);
   }
 };
 
 /**
+ * Default response when AI is not available
+ */
+const getDefaultParsedResponse = (text: string): ParsedResponse => ({
+  moodScore: 3,
+  moodLabel: "Recorded",
+  medications: [],
+  symptoms: [],
+  neuroMetrics: {
+    sensoryLoad: 5,
+    contextSwitches: 0,
+    maskingScore: 5,
+  },
+  activityTypes: [],
+  strengths: [],
+  summary: text.slice(0, 200) + (text.length > 200 ? '...' : ''),
+  analysisReasoning: "AI analysis not configured. Go to Settings → AI Providers to enable intelligent analysis.",
+  strategies: [{
+    id: "setup-ai",
+    title: "Enable AI Analysis",
+    action: "Configure an AI provider in Settings to get personalized insights.",
+    type: "EXECUTIVE",
+    relevanceScore: 1,
+  }],
+});
+
+/**
  * Performs a grounded search for health information.
  * Uses Gemini 2.5 Flash with Google Search tool.
+ * Returns null if AI is not configured.
  */
 export const searchHealthInfo = async (query: string) => {
   try {
+    // Prefer router
+    const routed = await aiRouter.search({ query });
+    if (routed) {
+      return {
+        text: routed.content,
+        grounding: routed.sources,
+      };
+    }
+
+    const ai = getAI();
+    if (!ai) {
+      return null;
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: query,
@@ -156,13 +247,13 @@ export const searchHealthInfo = async (query: string) => {
 
     return {
       text: response.text,
-      grounding: response.candidates?.[0]?.groundingMetadata?.groundingChunks
+      grounding: response.candidates?.[0]?.groundingMetadata?.groundingChunks,
     };
   } catch (error) {
     console.error("Search error:", error);
-    throw error;
+    return null;
   }
 };
 
 // Export the AI instance for Live API usage in components
-export const getAIClient = () => ai;
+export const getAIClient = (): GoogleGenAI | null => getAI();

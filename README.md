@@ -1,10 +1,10 @@
 
 # POZIMIND: The Pattern Literacy Engine
-> *Alpha Release v1.1 | Powered by Poziverse*
+> *Beta v5 | Multi-provider AI | Powered by Poziverse*
 
 POZIMIND is a neuro-affirming health intelligence tool designed to shift the paradigm from **Symptom Surveillance** ("How broken are you?") to **Pattern Literacy** ("What is your context?").
 
-It uses Google's Gemini 2.5 models to track multi-dimensional capacity, predict burnout trajectories, and provide context-aware coaching.
+It now uses a multi-provider AI router (Gemini 2.5 + OpenAI live; Anthropic/Perplexity/OpenRouter/Ollama/Z.ai scaffolded) to track multi-dimensional capacity, predict burnout trajectories, and provide context-aware coaching with graceful fallback.
 
 ## 🌟 Core Features
 
@@ -13,7 +13,7 @@ Replaces linear "spoons" with a 7-point capacity grid (Focus, Social, Sensory, E
 
 ### 2. Bio-Mirror (State Check) 📸
 **New in v1.1:** An objective reality check for your nervous system.
-*   **Vision AI:** Analyzes selfies for Jaw Tension, Eye Fatigue, and Masking signals.
+*   **Vision AI:** Analyzes selfies for Jaw Tension, Eye Fatigue, and Masking signals (routes through the AI router; falls back to Gemini if others are disabled).
 *   **Baseline Calibration:** Teaches the AI your unique "resting face" to improve accuracy and reduce false positives for neurodivergent flat affect.
 *   **Longitudinal Trends:** Visualizes how masking effort correlates with physical tension over time.
 *   **Comparison Engine:** Compares your subjective mood log vs. objective physical signs to detect dissociation or high-functioning burnout.
@@ -29,7 +29,7 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
 
 ### 5. Visual Therapy & Live Coach
 *   **Visual Therapy:** Context-aware generative art for emotional processing.
-*   **Live Coach:** Voice-first companion using Gemini Live API for verbal processing.
+*   **Live Coach:** Voice-first companion using Gemini Live API (audio routing path is wired; UI still Gemini-only).
 
 ### 6. Mobile-First Architecture
 *   **Thumb Zone Navigation:** Sticky bottom bar for quick capture on mobile.
@@ -39,52 +39,47 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
 
 *   **Frontend**: React 18, TypeScript, Tailwind CSS
 *   **AI Intelligence**: 
-    *   `gemini-2.5-flash` (Reasoning & Parsing)
-    *   `gemini-2.5-flash-image` (Visual Therapy & Bio-Mirror)
-    *   `gemini-2.5-flash-native-audio-preview` (Live Coach)
+    *   Multi-provider router: Gemini + OpenAI adapters live; Anthropic, Perplexity, OpenRouter, Ollama, Z.ai adapters scaffolded
+    *   `gemini-2.5-flash` (Reasoning & Parsing default, also used for search tool)
+    *   `gemini-2.5-flash-image` (Visual Therapy & Bio-Mirror fallback)
+    *   `gemini-2.5-flash-native-audio-preview` (Live Coach; audio path wired for future providers)
+    *   `gpt-4o-mini` / `gpt-4o` / `gpt-image-1` (OpenAI text, vision, image)
 *   **Visualization**: Recharts
 *   **Storage**: IndexedDB (via `idb` wrapper) & LocalStorage.
 *   **Security**: Web Crypto API (AES-GCM) for biometric data encryption.
 
-## 🚀 Installation & Setup
+## 🚀 Installation & Setup (Beta v5)
 
-### Prerequisites
-*   Node.js v18+
-*   A Google Cloud Project with the Gemini API enabled.
-*   An API Key with access to the models listed above.
+**New users?** → See the complete [SETUP.md](./SETUP.md).
 
-### Steps
+### Quick Start
 
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/poziverse/pozimind.git
-    cd pozimind
-    ```
+1. **Clone**
+   ```bash
+   git clone https://github.com/genpozi/pozimind.git
+   cd pozimind
+   ```
 
-2.  **Install Dependencies**
-    ```bash
-    npm install react react-dom @google/genai lucide-react recharts uuid
-    # Note: Ensure you have a build system like Vite or Create React App set up
-    ```
+2. **Install**
+   ```bash
+   npm install
+   ```
 
-3.  **Configure Environment**
-    Create a `.env` file in the root directory:
-    ```env
-    # Your Google GenAI API Key
-    REACT_APP_API_KEY=AIzaSy... 
-    # Or VITE_API_KEY depending on your bundler
-    ```
-    *Note: The app expects `process.env.API_KEY` to be available.*
+3. **Configure env**
+   ```bash
+   cp .env.example .env
+   ```
+   ```env
+   VITE_GEMINI_API_KEY=your_gemini_key
+   ```
+   Other providers (OpenAI, Anthropic, Perplexity, OpenRouter, Ollama, Z.ai) are added in-app under **Settings → AI Providers** and stored encrypted locally.
 
-4.  **Run Development Server**
-    ```bash
-    npm start
-    # or
-    npm run dev
-    ```
+4. **Run**
+   ```bash
+   npm run dev
+   ```
 
-5.  **Access the App**
-    Open `http://localhost:3000`.
+5. **Open** `http://localhost:5173`
 
 ## 📱 Mobile Testing Guide
 
