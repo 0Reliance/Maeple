@@ -1,0 +1,43 @@
+{
+  "name": "MAEPLE - Mental And Emotional Pattern Literacy Engine",
+  "short_name": "MAEPLE",
+  "description": "Your kind, trustworthy companion for understanding patterns, capacity, and well-being. Track your mental and emotional patterns without judgment.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["health", "medical", "lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Journal Entry",
+      "short_name": "Journal",
+      "description": "Log your current state and patterns",
+      "url": "/?view=journal"
+    },
+    {
+      "name": "Bio-Mirror Check",
+      "short_name": "Bio-Mirror",
+      "description": "Quick facial state analysis",
+      "url": "/?view=statecheck"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

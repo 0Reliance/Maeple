@@ -8,6 +8,7 @@ import Guide from './components/Guide';
 import Terms from './components/Terms';
 import Roadmap from './components/Roadmap';
 import MobileNav from './components/MobileNav';
+import OnboardingWizard, { isOnboardingComplete } from './components/OnboardingWizard';
 
 // Lazy load heavy components for better performance
 const LiveCoach = React.lazy(() => import('./components/LiveCoach'));
@@ -18,6 +19,7 @@ const ClinicalReport = React.lazy(() => import('./components/ClinicalReport'));
 import { getEntries, saveEntry } from './services/storageService';
 import { HealthEntry, View, WearableDataPoint } from './types';
 import { initializeAI } from './services/ai';
+import { initNotificationService } from './services/notificationService';
 import swManager from './src/swRegistration.ts';
 
 function App() {
@@ -26,6 +28,7 @@ function App() {
   const [wearableData, setWearableData] = useState<WearableDataPoint[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aiInitialized, setAiInitialized] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(!isOnboardingComplete());
 
   // Initialize AI services on app startup
   useEffect(() => {
@@ -35,6 +38,9 @@ function App() {
         console.warn('AI initialization failed (non-critical):', error);
         setAiInitialized(true); // Still mark as initialized - app works without AI
       });
+    
+    // Initialize notification service
+    initNotificationService();
   }, []);
 
   useEffect(() => {
@@ -106,7 +112,7 @@ function App() {
           <NavButton targetView={View.JOURNAL} icon={BookHeart} label="Smart Journal" />
           <NavButton targetView={View.DASHBOARD} icon={LayoutDashboard} label="Pattern Dashboard" />
           <NavButton targetView={View.BIO_MIRROR} icon={Camera} label="Bio-Mirror (State Check)" />
-          <NavButton targetView={View.LIVE_COACH} icon={MessagesSquare} label="Pozi Live" />
+          <NavButton targetView={View.LIVE_COACH} icon={MessagesSquare} label="Mae Live" />
           <NavButton targetView={View.VISION} icon={ImageIcon} label="Visual Therapy" />
           <NavButton targetView={View.CLINICAL} icon={FileText} label="Clinical Report" />
           <NavButton targetView={View.GUIDE} icon={Compass} label="Guide & Vision" />
@@ -230,6 +236,11 @@ function App() {
           className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 md:hidden print:hidden"
           onClick={() => setMobileMenuOpen(false)}
         ></div>
+      )}
+
+      {/* Onboarding Wizard */}
+      {showOnboarding && (
+        <OnboardingWizard onComplete={() => setShowOnboarding(false)} />
       )}
     </div>
   );

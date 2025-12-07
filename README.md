@@ -1,7 +1,7 @@
 
 
 # MAEPLE: Mental And Emotional Pattern Literacy Engine
-> *Beta v5 | Multi-provider AI | Part of Poziverse*
+> *v1.2.0 | Multi-provider AI | PWA-Ready | Part of Poziverse*
 
 ---
 
@@ -52,7 +52,7 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
 
 ## 🛠️ Tech Stack
 
-*   **Frontend**: React 18, TypeScript, Tailwind CSS
+*   **Frontend**: React 18, TypeScript, Tailwind CSS, Vite
 *   **AI Intelligence**: 
     *   Multi-provider router: Gemini + OpenAI adapters live; Anthropic, Perplexity, OpenRouter, Ollama, Z.ai adapters scaffolded
     *   `gemini-2.5-flash` (Reasoning & Parsing default, also used for search tool)
@@ -60,8 +60,33 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
     *   `gemini-2.5-flash-native-audio-preview` (Live Coach; audio path wired for future providers)
     *   `gpt-4o-mini` / `gpt-4o` / `gpt-image-1` (OpenAI text, vision, image)
 *   **Visualization**: Recharts
-*   **Storage**: IndexedDB (via `idb` wrapper) & LocalStorage.
-*   **Security**: Web Crypto API (AES-GCM) for biometric data encryption.
+*   **Storage**: IndexedDB (via `idb` wrapper) & LocalStorage
+*   **Security**: Web Crypto API (AES-GCM) for biometric data encryption
+*   **Testing**: Vitest + React Testing Library (41 tests)
+*   **Wearables**: Oura Ring API integration (OAuth2)
+
+### 7. PWA & Installable App 📱
+MAEPLE is now a full Progressive Web App (PWA):
+*   **Install to Home Screen:** Add MAEPLE to your device like a native app
+*   **Offline Capable:** Core UI loads even without internet
+*   **App-Like Experience:** Full-screen, no browser chrome
+
+### 8. Gentle Reminder System 🔔
+*   **Customizable Notifications:** Set your preferred days and times for journaling reminders
+*   **Inactivity Nudges:** Gentle check-ins after 3+ days of inactivity
+*   **Privacy-Respecting:** All notification settings stored locally
+
+### 9. Data Portability 💾
+*   **Full Export:** Download all your data as encrypted JSON backup
+*   **Import & Restore:** Restore from backups on any device
+*   **Storage Stats:** See how much space your data uses
+*   **Clear All:** Complete data deletion with confirmation
+
+### 10. Onboarding Experience 🌱
+*   **5-Step Welcome:** New users are guided through MAEPLE's mission and features
+*   **Meet Mae:** Introduction to your clinical companion
+*   **Privacy First:** Clear explanation of local-only data storage
+*   **Quick Start:** Get journaling in under a minute
 
 ## 🚀 Installation & Setup (Beta v5)
 
@@ -95,6 +120,25 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
    ```
 
 5. **Open** `http://localhost:5173`
+
+### Testing
+
+MAEPLE includes a comprehensive test suite (41 tests) covering analytics, encryption, and core services:
+
+```bash
+# Run tests once
+npm run test:run
+
+# Run tests in watch mode
+npm run test
+
+# Run with coverage
+npm run test:coverage
+```
+
+**Test Coverage:**
+- `analytics.test.ts` (27 tests): Insights generation, daily strategies, burnout trajectory, cognitive load, cycle phase calculations
+- `encryption.test.ts` (14 tests): Base64 utilities, key management, data encoding, security model validation
 
 ## 📱 Mobile Testing Guide
 

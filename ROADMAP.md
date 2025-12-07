@@ -67,16 +67,35 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 
 ---
 
-**Status:** Alpha Release v1.1 Ready. All planned features implemented.
+**Status:** Release v1.2.0 Ready. All core features + quality improvements implemented.
 
-## 🟡 Phase 12: Multi-Provider AI Platform (IN PROGRESS)
+## 🟢 Phase 12: Multi-Provider AI Platform (COMPLETED)
 - [x] Add adapter architecture with retry/health helpers.
 - [x] Implement Gemini adapter (text/vision/image/search/stream) and wire router.
 - [x] Implement OpenAI adapter (text/vision/image) and register in router.
 - [x] Scaffold Anthropic, Perplexity, OpenRouter, Ollama, Z.ai adapters and register stubs.
 - [x] Refactor `geminiService` and `geminiVisionService` to route via `aiRouter` with graceful Gemini fallback.
 - [x] Wire audio routing entry point (router + `canUseAudio`), still Gemini Live-only in UI.
-- [ ] Add provider health/fallback chain and tests.
+
+## 🟢 Phase 13: Quality & User Experience (COMPLETED)
+- [x] Data Export/Import Service (`exportService.ts`) - Full backup/restore with encryption.
+- [x] Data Management UI in Settings - Export, import, storage stats, clear all.
+- [x] Testing Framework (`vitest.config.ts`, `tests/setup.ts`) - Vitest + React Testing Library.
+- [x] Analytics Test Suite (`analytics.test.ts`) - 27 tests for insights, burnout, cognitive load.
+- [x] Encryption Test Suite (`encryption.test.ts`) - 14 tests for security validation.
+- [x] Onboarding Wizard (`OnboardingWizard.tsx`) - 5-step first-run experience.
+- [x] PWA Enhancement (`manifest.json`, icons, meta tags) - Installable app experience.
+- [x] Notification System (`notificationService.ts`, `NotificationSettings.tsx`) - Gentle reminders.
+- [x] Real Wearable Integration (`ouraAdapter.ts`) - Oura Ring v2 API with OAuth2.
+
+---
+
+## 🟡 Phase 14: Future Enhancements (PLANNED)
+- [ ] Add provider health/fallback chain and comprehensive tests.
 - [ ] Enable audio provider selection (OpenAI/others) in Live Coach.
+- [ ] Expand wearable support (Fitbit, Apple Health, Garmin).
+- [ ] Community features (anonymized pattern sharing).
+- [ ] Therapist portal for clinical collaboration.
+- [ ] Machine learning model for personalized burnout prediction.
 
 **Status:** Multi-provider layer shipped with Gemini + OpenAI; other adapters scaffolded; audio routing plumbed but UI still Gemini-only.
