@@ -1,11 +1,31 @@
 
-import { StateCheck, FacialBaseline } from '../types';
+import { StateCheck, FacialBaseline, FacialAnalysis } from '../types';
 import { encryptData, decryptData } from './encryptionService';
 
 const DB_NAME = 'maeple_db';
 const STORE_NAME = 'state_checks';
 const BASELINE_STORE_NAME = 'facial_baseline';
 const DB_VERSION = 2; // Incremented for new store
+
+// Default/fallback analysis when decryption fails
+const defaultAnalysis: FacialAnalysis = {
+  primaryEmotion: 'unknown',
+  confidence: 0,
+  eyeFatigue: 0,
+  jawTension: 0,
+  maskingScore: 0,
+  signs: [],
+};
+
+// Type guard to check if decrypted data is a valid FacialAnalysis
+const isFacialAnalysis = (data: unknown): data is FacialAnalysis => {
+  return (
+    data !== null &&
+    typeof data === 'object' &&
+    'primaryEmotion' in data &&
+    'confidence' in data
+  );
+};
 
 // Open DB Helper
 const openDB = (): Promise<IDBDatabase> => {
@@ -81,7 +101,8 @@ export const getStateCheck = async (id: string): Promise<StateCheck | null> => {
       }
 
       // Decrypt
-      const analysis = await decryptData(record.analysisCipher, record.iv);
+      const decrypted = await decryptData(record.analysisCipher, record.iv);
+      const analysis = isFacialAnalysis(decrypted) ? decrypted : defaultAnalysis;
       
       resolve({
         id: record.id,
@@ -111,15 +132,14 @@ export const getRecentStateChecks = async (limit: number = 7): Promise<StateChec
       const results: StateCheck[] = [];
       for (const rec of sorted) {
           try {
-              const analysis = await decryptData(rec.analysisCipher, rec.iv);
-              if (analysis) {
-                  results.push({
-                      id: rec.id,
-                      timestamp: rec.timestamp,
-                      analysis: analysis,
-                      userNote: rec.userNote
-                  });
-              }
+              const decrypted = await decryptData(rec.analysisCipher, rec.iv);
+              const analysis = isFacialAnalysis(decrypted) ? decrypted : defaultAnalysis;
+              results.push({
+                  id: rec.id,
+                  timestamp: rec.timestamp,
+                  analysis: analysis,
+                  userNote: rec.userNote
+              });
           } catch (e) {
               console.error("Failed to decrypt record", rec.id);
           }

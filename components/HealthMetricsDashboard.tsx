@@ -15,6 +15,19 @@ interface HealthMetricsDashboardProps {
   wearableData?: WearableDataPoint[];
 }
 
+// Type for chart data points
+interface ChartDataPoint {
+  rawDate: string;
+  date: string;
+  mood: number | null;
+  spoons: number | null;
+  sensory: number | null;
+  hrv: number | null;
+  sleep: number | null;
+  cycleDay: number | null;
+  isLuteal: boolean;
+}
+
 /**
  * HealthMetricsDashboard
  * 
@@ -72,7 +85,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({ entries
 
   // 1. Generate Date Range (Last 14 days for clarity)
   const today = new Date();
-  const dateMap = new Map<string, unknown>();
+  const dateMap = new Map<string, ChartDataPoint>();
   
   for (let i = 13; i >= 0; i--) {
     const d = new Date();
@@ -110,8 +123,8 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({ entries
   // 2. Populate Journal Data
   entries.forEach(e => {
       const dateStr = new Date(e.timestamp).toISOString().split('T')[0];
-      if (dateMap.has(dateStr)) {
-          const curr = dateMap.get(dateStr);
+      const curr = dateMap.get(dateStr);
+      if (curr) {
           curr.mood = e.mood;
           curr.spoons = e.neuroMetrics?.spoonLevel || 5;
           curr.sensory = e.neuroMetrics?.sensoryLoad || 0;
@@ -120,9 +133,9 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({ entries
 
   // 3. Populate Wearable Data
   wearableData.forEach(w => {
-      if (dateMap.has(w.date)) {
-          const curr = dateMap.get(w.date);
-          curr.hrv = w.metrics.biometrics?.hrvMs;
+      const curr = dateMap.get(w.date);
+      if (curr) {
+          curr.hrv = w.metrics.biometrics?.hrvMs ?? null;
           if (w.metrics.sleep?.totalDurationSeconds) {
               curr.sleep = parseFloat((w.metrics.sleep.totalDurationSeconds / 3600).toFixed(1));
           }
@@ -132,10 +145,10 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({ entries
   const chartData = Array.from(dateMap.values());
 
   // Stats
-  const validSpoons = chartData.filter(d => d.spoons !== null);
+  const validSpoons = chartData.filter((d): d is ChartDataPoint & { spoons: number } => d.spoons !== null);
   const avgSpoons = validSpoons.length ? (validSpoons.reduce((acc, curr) => acc + curr.spoons, 0) / validSpoons.length).toFixed(1) : '-';
   
-  const validMood = chartData.filter(d => d.mood !== null);
+  const validMood = chartData.filter((d): d is ChartDataPoint & { mood: number } => d.mood !== null);
   const avgMood = validMood.length ? (validMood.reduce((acc, curr) => acc + curr.mood, 0) / validMood.length).toFixed(1) : '-';
 
   // Count top strengths

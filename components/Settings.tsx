@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { wearableManager } from '../services/wearables/manager';
 import { ProviderType } from '../services/wearables/types';
-import { Activity, Check, Loader2, RefreshCw, Smartphone, Calendar, Save, Camera, ScanFace, HeartHandshake, Phone, Bot, Download, Upload, Trash2, HardDrive, AlertTriangle, Bell, Cloud } from 'lucide-react';
+import { Activity, Check, Loader2, RefreshCw, Smartphone, Calendar, Save, Camera, ScanFace, HeartHandshake, Phone, Bot, Download, Upload, Trash2, HardDrive, AlertTriangle, Bell, Cloud, LucideIcon } from 'lucide-react';
 import { WearableDataPoint, UserSettings } from '../types';
 import { getUserSettings, saveUserSettings } from '../services/storageService';
 import { exportAllData, downloadExport, clearAllData, importData, readFileAsText, ImportResult } from '../services/exportService';
@@ -82,7 +82,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
     setTimeout(() => setSettingsSaved(false), 2000);
   };
 
-  const ProviderCard = ({ id, name, icon: Icon }: { id: ProviderType, name: string, icon: React.ComponentType }) => {
+  const ProviderCard = ({ id, name, icon: Icon }: { id: ProviderType, name: string, icon: LucideIcon }) => {
     const config = configs[id];
     const isConnected = !!config?.isConnected;
     const isLoading = loading === id;

@@ -1,6 +1,41 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, Square, AlertCircle, Loader2 } from 'lucide-react';
 
+// Web Speech API type declarations
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message?: string;
+}
+
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onstart: ((this: SpeechRecognitionInstance, ev: Event) => void) | null;
+  onend: ((this: SpeechRecognitionInstance, ev: Event) => void) | null;
+  onerror: ((this: SpeechRecognitionInstance, ev: SpeechRecognitionErrorEvent) => void) | null;
+  onresult: ((this: SpeechRecognitionInstance, ev: SpeechRecognitionEvent) => void) | null;
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognitionInstance;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
+
 interface RecordVoiceButtonProps {
   /** Callback when a sentence is transcribed */
   onTranscript: (text: string) => void;
@@ -17,14 +52,14 @@ interface RecordVoiceButtonProps {
 const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({ onTranscript, isDisabled = false }) => {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   useEffect(() => {
     // Browser compatibility check
-    const SpeechRecognition = (window as typeof window & { webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition || (window as typeof window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
+    if (SpeechRecognitionClass) {
+      const recognition = new SpeechRecognitionClass();
       recognition.continuous = false; // Capture one distinct thought/sentence at a time for better accuracy
       recognition.interimResults = true;
       recognition.lang = 'en-US';
@@ -38,7 +73,7 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({ onTranscript, isD
         setIsListening(false);
       };
 
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.onerror = (event) => {
         // Ignore 'no-speech' errors as they just mean silence
         if (event.error !== 'no-speech') {
           console.error("Speech recognition error", event.error);
@@ -47,7 +82,7 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({ onTranscript, isD
         setIsListening(false);
       };
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
+      recognition.onresult = (event) => {
         let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {

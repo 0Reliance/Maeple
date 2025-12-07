@@ -16,14 +16,15 @@
     "test:all": "npm run build && npm run analyze && npm run test:ai"
   },
   "dependencies": {
-    "@google/genai": "latest",
+    "@google/genai": "^0.14.0",
     "@supabase/supabase-js": "^2.86.2",
     "idb": "^8.0.0",
     "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.12.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",

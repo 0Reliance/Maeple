@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, BookHeart, MessagesSquare, Camera, Menu } from 'lucide-react';
+import { LayoutDashboard, BookHeart, MessagesSquare, Camera, Menu, LucideIcon } from 'lucide-react';
 import { View } from '../types';
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
 
 const MobileNav: React.FC<Props> = ({ currentView, onNavigate, onToggleMenu, isMenuOpen }) => {
   
-  const NavItem = ({ view, icon: Icon, label, isAction = false }: { view?: View, icon: React.ComponentType, label: string, isAction?: boolean }) => {
+  const NavItem = ({ view, icon: Icon, label, isAction = false }: { view?: View, icon: LucideIcon, label: string, isAction?: boolean }) => {
     const isActive = view === currentView;
     const isMenuTrigger = !view;
     

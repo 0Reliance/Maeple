@@ -117,7 +117,10 @@ class AISettingsService {
       }
       const { cipher, iv } = JSON.parse(stored);
       const decrypted = await decryptData(cipher, iv);
-      return decrypted?.apiKey || null;
+      if (decrypted && typeof decrypted === 'object' && 'apiKey' in decrypted) {
+        return (decrypted as { apiKey: string }).apiKey || null;
+      }
+      return null;
     } catch (error) {
       return null;
     }

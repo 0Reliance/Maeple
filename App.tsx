@@ -1,5 +1,5 @@
-import React, { useState, useEffect, Suspense } from 'react';
-import { LayoutDashboard, BookHeart, MessagesSquare, Search as SearchIcon, Image as ImageIcon, Menu, Settings as SettingsIcon, Compass, ShieldCheck, Map, FileText, Camera } from 'lucide-react';
+import React, { useEffect, Suspense } from 'react';
+import { LayoutDashboard, BookHeart, MessagesSquare, Search as SearchIcon, Image as ImageIcon, Settings as SettingsIcon, Compass, ShieldCheck, Map, FileText, Camera, LucideIcon } from 'lucide-react';
 import JournalEntry from './components/JournalEntry';
 import HealthMetricsDashboard from './components/HealthMetricsDashboard';
 import TimelineEntry from './components/TimelineEntry';
@@ -8,7 +8,7 @@ import Guide from './components/Guide';
 import Terms from './components/Terms';
 import Roadmap from './components/Roadmap';
 import MobileNav from './components/MobileNav';
-import OnboardingWizard, { isOnboardingComplete } from './components/OnboardingWizard';
+import OnboardingWizard from './components/OnboardingWizard';
 
 // Lazy load heavy components for better performance
 const LiveCoach = React.lazy(() => import('./components/LiveCoach'));
@@ -16,65 +16,46 @@ const VisionBoard = React.lazy(() => import('./components/VisionBoard'));
 const StateCheckWizard = React.lazy(() => import('./components/StateCheckWizard'));
 const Settings = React.lazy(() => import('./components/Settings'));
 const ClinicalReport = React.lazy(() => import('./components/ClinicalReport'));
-import { getEntries, saveEntry } from './services/storageService';
+
 import { HealthEntry, View, WearableDataPoint } from './types';
-import { initializeAI } from './services/ai';
 import { initNotificationService } from './services/notificationService';
-import { initializeAuth } from './services/authService';
-import { initializeSync, triggerPendingSync } from './services/syncService';
 import swManager from './src/swRegistration.ts';
 
+// Zustand stores
+import { useAppStore, useAuthStore } from './stores';
+
 function App() {
-  const [view, setView] = useState<View>(View.JOURNAL); // Default to Journal for Mobile-First capture
-  const [entries, setEntries] = useState<HealthEntry[]>([]);
-  const [wearableData, setWearableData] = useState<WearableDataPoint[]>([]);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [aiInitialized, setAiInitialized] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(!isOnboardingComplete());
+  // Zustand store state
+  const { 
+    currentView: view, 
+    entries, 
+    wearableData, 
+    mobileMenuOpen, 
+    showOnboarding,
+    setView,
+    toggleMobileMenu,
+    setMobileMenuOpen,
+    addEntry,
+    mergeWearableData,
+    completeOnboarding,
+    initializeApp
+  } = useAppStore();
+  
+  const { initializeAuth } = useAuthStore();
 
-  // Initialize AI services on app startup
+  // Initialize app on startup
   useEffect(() => {
-    initializeAI()
-      .then(() => setAiInitialized(true))
-      .catch((error) => {
-        console.warn('AI initialization failed (non-critical):', error);
-        setAiInitialized(true); // Still mark as initialized - app works without AI
-      });
-    
-    // Initialize notification service
+    initializeApp();
+    initializeAuth();
     initNotificationService();
-    
-    // Initialize auth and sync services
-    initializeAuth()
-      .then(() => {
-        initializeSync();
-        // Trigger sync of any pending changes
-        triggerPendingSync();
-      })
-      .catch((error) => {
-        console.warn('Auth initialization failed (non-critical):', error);
-      });
-  }, []);
-
-  useEffect(() => {
-    setEntries(getEntries());
-  }, []);
+  }, [initializeApp, initializeAuth]);
 
   const handleEntryAdded = (entry: HealthEntry) => {
-    const updated = saveEntry(entry);
-    setEntries(updated);
+    addEntry(entry);
   };
 
   const handleWearableSync = (data: WearableDataPoint[]) => {
-      // Merge new data with existing
-      // Simple dedup by ID
-      const newSet = [...wearableData];
-      data.forEach(d => {
-          if (!newSet.find(existing => existing.id === d.id)) {
-              newSet.push(d);
-          }
-      });
-      setWearableData(newSet);
+    mergeWearableData(data);
   };
 
   const handleViewChange = (newView: View) => {
@@ -82,7 +63,7 @@ function App() {
     setMobileMenuOpen(false);
   };
 
-  const NavButton = ({ targetView, icon: Icon, label }: { targetView: View; icon: React.ComponentType; label: string }) => (
+  const NavButton = ({ targetView, icon: Icon, label }: { targetView: View; icon: LucideIcon; label: string }) => (
     <button
       onClick={() => handleViewChange(targetView)}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
@@ -253,7 +234,7 @@ function App() {
 
       {/* Onboarding Wizard */}
       {showOnboarding && (
-        <OnboardingWizard onComplete={() => setShowOnboarding(false)} />
+        <OnboardingWizard onComplete={completeOnboarding} />
       )}
     </div>
   );
