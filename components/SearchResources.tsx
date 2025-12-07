@@ -2,9 +2,25 @@ import React, { useState } from 'react';
 import { Search, Globe, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { searchHealthInfo, isAIConfigured } from '../services/geminiService';
 
+// Type for search results
+interface GroundingChunk {
+  web?: {
+    uri?: string;
+    title?: string;
+  };
+  text?: string;
+  title?: string;
+  url?: string;
+}
+
+interface SearchResult {
+  text: string | null;
+  grounding?: GroundingChunk[];
+}
+
 const SearchResources: React.FC = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{text: string | null, grounding?: Array<{text: string}>} | null>(null);
+  const [results, setResults] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +36,7 @@ const SearchResources: React.FC = () => {
         setError('AI search not configured. Go to Settings to add an API key.');
         setResults(null);
       } else {
-        setResults(data);
+        setResults(data as SearchResult);
       }
     } catch (err) {
       console.error(err);

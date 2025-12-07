@@ -4,12 +4,18 @@ import { aiRouter } from "./ai";
 
 // Validate and retrieve API Key - returns null if not available
 const getApiKey = (): string | null => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    console.warn("Gemini API Key not found. Vision features will be limited.");
+  const envKey = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GEMINI_API_KEY)
+    || process.env.VITE_GEMINI_API_KEY
+    || process.env.API_KEY;
+
+  if (!envKey) {
+    console.warn(
+      "Gemini API Key not found. Vision features will be limited. " +
+      "Add VITE_GEMINI_API_KEY to your .env file or configure in Settings."
+    );
     return null;
   }
-  return apiKey;
+  return envKey;
 };
 
 // Lazy-loaded AI client

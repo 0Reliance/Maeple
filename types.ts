@@ -45,6 +45,7 @@ export interface CapacityProfile {
   physical: number;   // Movement energy
   sensory: number;    // Noise / Light tolerance
   executive: number;  // Decision making
+  [key: string]: number; // Index signature for dynamic access
 }
 
 export interface NeuroMetrics {

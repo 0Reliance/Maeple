@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Volume2, X, Activity } from 'lucide-react';
 import { getAIClient } from '../services/geminiService';
 import { canUseAudio } from '../services/ai';
-import { Modality, LiveServerMessage } from '@google/genai';
+import { Modality, LiveServerMessage, Session } from '@google/genai';
 
 const LiveCoach: React.FC = () => {
   const [isActive, setIsActive] = useState(false);
@@ -16,7 +16,7 @@ const LiveCoach: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const sessionRef = useRef<MediaStream | null>(null);
+  const sessionRef = useRef<Promise<Session> | null>(null);
   const nextStartTimeRef = useRef<number>(0);
 
   // Helper to convert float32 audio to PCM16
