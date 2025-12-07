@@ -1,7 +1,7 @@
 
 
 # MAEPLE: Mental And Emotional Pattern Literacy Engine
-> *v1.2.0 | Multi-provider AI | PWA-Ready | Part of Poziverse*
+> *v1.3.0 | Multi-provider AI | PWA-Ready | Cloud Sync | Part of Poziverse*
 
 ---
 
@@ -61,6 +61,7 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
     *   `gpt-4o-mini` / `gpt-4o` / `gpt-image-1` (OpenAI text, vision, image)
 *   **Visualization**: Recharts
 *   **Storage**: IndexedDB (via `idb` wrapper) & LocalStorage
+*   **Cloud Sync**: Supabase (PostgreSQL + Auth) for cross-device sync
 *   **Security**: Web Crypto API (AES-GCM) for biometric data encryption
 *   **Testing**: Vitest + React Testing Library (41 tests)
 *   **Wearables**: Oura Ring API integration (OAuth2)
@@ -87,6 +88,13 @@ MAEPLE is now a full Progressive Web App (PWA):
 *   **Meet Mae:** Introduction to your clinical companion
 *   **Privacy First:** Clear explanation of local-only data storage
 *   **Quick Start:** Get journaling in under a minute
+
+### 11. Cloud Sync ☁️
+*   **Cross-Device Access:** Sign in to sync your data across all your devices
+*   **Supabase Backend:** Secure PostgreSQL database with Row Level Security
+*   **Offline-First:** Works without internet, syncs when back online
+*   **User Accounts:** Email/password or magic link authentication
+*   **Automatic Backup:** Your data is safely stored in the cloud
 
 ## 🚀 Installation & Setup (Beta v5)
 

@@ -67,7 +67,7 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 
 ---
 
-**Status:** Release v1.2.0 Ready. All core features + quality improvements implemented.
+**Status:** Release v1.3.0 Ready. Cloud sync with Supabase implemented.
 
 ## 🟢 Phase 12: Multi-Provider AI Platform (COMPLETED)
 - [x] Add adapter architecture with retry/health helpers.
@@ -88,14 +88,23 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 - [x] Notification System (`notificationService.ts`, `NotificationSettings.tsx`) - Gentle reminders.
 - [x] Real Wearable Integration (`ouraAdapter.ts`) - Oura Ring v2 API with OAuth2.
 
+## 🟢 Phase 14: Cloud Sync & Persistence (COMPLETED)
+- [x] Supabase Client (`supabaseClient.ts`) - Connection singleton with config detection.
+- [x] Database Schema (`supabase/schema.sql`) - Full schema with RLS policies.
+- [x] Cloud Storage Service (`supabaseStorage.ts`) - CRUD operations for all data types.
+- [x] Authentication Service (`authService.ts`) - Email/password, magic link, OAuth.
+- [x] Sync Service (`syncService.ts`) - Hybrid local-first with cloud backup.
+- [x] Storage Integration (`storageService.ts`) - Auto-queue changes for sync.
+- [x] Auth Modal (`AuthModal.tsx`) - Sign in/up UI with multiple methods.
+- [x] Cloud Sync Settings (`CloudSyncSettings.tsx`) - Sync status, push/pull controls.
+
 ---
 
-## 🟡 Phase 14: Future Enhancements (PLANNED)
+## 🟡 Phase 15: Future Enhancements (PLANNED)
 - [ ] Add provider health/fallback chain and comprehensive tests.
 - [ ] Enable audio provider selection (OpenAI/others) in Live Coach.
 - [ ] Expand wearable support (Fitbit, Apple Health, Garmin).
 - [ ] Community features (anonymized pattern sharing).
 - [ ] Therapist portal for clinical collaboration.
 - [ ] Machine learning model for personalized burnout prediction.
-
 **Status:** Multi-provider layer shipped with Gemini + OpenAI; other adapters scaffolded; audio routing plumbed but UI still Gemini-only.

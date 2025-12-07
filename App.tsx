@@ -20,6 +20,8 @@ import { getEntries, saveEntry } from './services/storageService';
 import { HealthEntry, View, WearableDataPoint } from './types';
 import { initializeAI } from './services/ai';
 import { initNotificationService } from './services/notificationService';
+import { initializeAuth } from './services/authService';
+import { initializeSync, triggerPendingSync } from './services/syncService';
 import swManager from './src/swRegistration.ts';
 
 function App() {
@@ -41,6 +43,17 @@ function App() {
     
     // Initialize notification service
     initNotificationService();
+    
+    // Initialize auth and sync services
+    initializeAuth()
+      .then(() => {
+        initializeSync();
+        // Trigger sync of any pending changes
+        triggerPendingSync();
+      })
+      .catch((error) => {
+        console.warn('Auth initialization failed (non-critical):', error);
+      });
   }, []);
 
   useEffect(() => {

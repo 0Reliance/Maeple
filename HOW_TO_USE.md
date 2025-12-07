@@ -13,6 +13,8 @@ MAEPLE is built for real-world impact, clinical reliability, and privacy-first c
 
 This guide will walk you through the core features and how to use them to prevent burnout and thrive.
 
+> **New (v1.3.0):** MAEPLE now supports cloud sync with Supabase! Sign in under Settings → Cloud Sync to access your data from any device.
+
 > **New (v1.2.0):** MAEPLE now includes an onboarding wizard, PWA installation, gentle reminders, and full data export/import. First-time users will be guided through a 5-step introduction to MAEPLE's mission.
 
 > **AI Providers:** Gemini is the default; you can add OpenAI, Anthropic, Perplexity, OpenRouter, local Ollama, or Z.ai under **Settings → AI Providers**. Keys are stored encrypted locally, and the router will gracefully fall back to Gemini if others are disabled or fail.
@@ -159,6 +161,33 @@ MAEPLE works as a Progressive Web App—install it like a native app:
 *   **Quick Access:** One tap from your home screen
 *   **Full Screen:** No browser chrome
 *   **Offline Support:** Core UI loads even without internet
+
+---
+
+## 9. Cloud Sync
+
+Access your MAEPLE data from any device with cloud sync:
+
+### Enabling Cloud Sync
+1.  Go to **Settings** → **Cloud Sync**
+2.  Click **Sign In / Sign Up**
+3.  Create an account with email and password, or use a magic link
+4.  Once signed in, your data will sync automatically
+
+### How It Works
+*   **Local-First:** Data is always saved locally first (works offline)
+*   **Background Sync:** Changes sync to the cloud when you're online
+*   **Cross-Device:** Sign in on another device to access your data
+
+### Manual Sync Controls
+*   **Pull:** Download any new data from the cloud
+*   **Sync:** Full bidirectional sync (push + pull)
+*   **Push:** Upload all local data to the cloud
+
+### Privacy & Security
+*   Your data is stored in a secure Supabase database
+*   Row Level Security ensures only you can see your data
+*   Biometric data remains encrypted even in the cloud
 
 ---
 

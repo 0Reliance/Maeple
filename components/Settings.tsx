@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { wearableManager } from '../services/wearables/manager';
 import { ProviderType } from '../services/wearables/types';
-import { Activity, Check, Loader2, RefreshCw, Smartphone, Calendar, Save, Camera, ScanFace, HeartHandshake, Phone, Bot, Download, Upload, Trash2, HardDrive, AlertTriangle, Bell } from 'lucide-react';
+import { Activity, Check, Loader2, RefreshCw, Smartphone, Calendar, Save, Camera, ScanFace, HeartHandshake, Phone, Bot, Download, Upload, Trash2, HardDrive, AlertTriangle, Bell, Cloud } from 'lucide-react';
 import { WearableDataPoint, UserSettings } from '../types';
 import { getUserSettings, saveUserSettings } from '../services/storageService';
 import { exportAllData, downloadExport, clearAllData, importData, readFileAsText, ImportResult } from '../services/exportService';
 import BioCalibration from './BioCalibration';
 import AIProviderSettings from './AIProviderSettings';
 import NotificationSettingsPanel from './NotificationSettings';
+import CloudSyncSettings from './CloudSyncSettings';
 
 interface Props {
   onDataSynced: (data: WearableDataPoint[]) => void;
@@ -338,6 +339,17 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
       {/* AI Provider Configuration */}
       <section className="space-y-4">
         <AIProviderSettings />
+      </section>
+
+      {/* Cloud Sync */}
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <Cloud className="text-teal-500" size={20} />
+          Cloud Sync
+        </h3>
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <CloudSyncSettings />
+        </div>
       </section>
 
       {/* Notification Settings */}
