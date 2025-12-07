@@ -1,6 +1,7 @@
 
 import { WearableConfig, ProviderType, WearableAdapter } from './types';
 import { MockWearableAdapter } from './mockAdapter';
+import { OuraAdapter } from './ouraAdapter';
 import { WearableDataPoint } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -8,11 +9,30 @@ const STORAGE_KEY = "maeple_wearable_config";
 
 class WearableManager {
   private adapters: Map<ProviderType, WearableAdapter> = new Map();
+  private useMockData: boolean = true;
 
   constructor() {
-    // Register adapters
-    this.adapters.set('OURA', new MockWearableAdapter());
+    // Check if real Oura credentials are configured
+    const ouraAdapter = new OuraAdapter();
+    
+    if (ouraAdapter.isConfigured()) {
+      this.adapters.set('OURA', ouraAdapter);
+      this.useMockData = false;
+      console.log('[Wearables] Using real Oura API');
+    } else {
+      // Fall back to mock adapter for development
+      this.adapters.set('OURA', new MockWearableAdapter());
+      console.log('[Wearables] Using mock adapter (no API credentials found)');
+    }
+    
     // Future: this.adapters.set('GOOGLE_FIT', new GoogleFitAdapter());
+  }
+
+  /**
+   * Check if we're using mock data
+   */
+  isMockMode(): boolean {
+    return this.useMockData;
   }
 
   // Configuration Management

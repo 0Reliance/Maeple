@@ -1,5 +1,8 @@
 
 
+
+
+
 # How to Use MAEPLE
 > *Your Kind, Trustworthy Companion for Pattern Literacy*
 
@@ -10,11 +13,11 @@ MAEPLE is built for real-world impact, clinical reliability, and privacy-first c
 
 This guide will walk you through the core features and how to use them to prevent burnout and thrive.
 
-> **New (Beta v5):** AI is now multi-provider. Gemini is the default; you can add OpenAI, Anthropic, Perplexity, OpenRouter, local Ollama, or Z.ai under **Settings → AI Providers**. Keys are stored encrypted locally, and the router will gracefully fall back to Gemini if others are disabled or fail.
+> **New (v1.2.0):** MAEPLE now includes an onboarding wizard, PWA installation, gentle reminders, and full data export/import. First-time users will be guided through a 5-step introduction to MAEPLE's mission.
 
-> **Voice tips:** When using Mae Live or the Journal mic, allow microphone access. In Mae Live you should see "Listening…" after tapping the mic; if not, confirm your Gemini key is set.
+> **AI Providers:** Gemini is the default; you can add OpenAI, Anthropic, Perplexity, OpenRouter, local Ollama, or Z.ai under **Settings → AI Providers**. Keys are stored encrypted locally, and the router will gracefully fall back to Gemini if others are disabled or fail.
 
----
+> **Voice tips:** When using Mae Live or the Journal mic, allow microphone access. In Mae Live you should see "Listening…" after tapping the mic; if not, confirm your Gemini key is set.---
 
 ## 1. The Core Philosophy
 
@@ -89,6 +92,73 @@ Visit the **Pattern Dashboard** once a week to spot trends.
 *   **Your Images:** Selfies are processed in memory. If you choose to save them, they are stored locally on your device.
 *   **Encryption:** Sensitive biometric analysis is encrypted with AES-GCM before being saved to your local database.
 *   **Your Control:** You can clear your data in Settings at any time.
+
+---
+
+## 6. Data Management
+
+MAEPLE gives you full control over your data:
+
+### Export Your Data
+1.  Go to **Settings** → **Data Management**
+2.  Click **Export All Data**
+3.  A JSON file will download containing all your journal entries, state checks, settings, and analytics
+
+### Import / Restore
+1.  Go to **Settings** → **Data Management**
+2.  Click **Import Data**
+3.  Select your backup file
+4.  Choose to **merge** with existing data or **replace** entirely
+
+### Storage Statistics
+*   View how much space your data uses
+*   See counts for journal entries, state checks, and other data
+
+### Clear All Data
+*   Complete data deletion with confirmation prompt
+*   Cannot be undone—export first!
+
+---
+
+## 7. Notifications & Reminders
+
+MAEPLE can gently remind you to check in:
+
+### Setting Up Reminders
+1.  Go to **Settings** → **Notifications**
+2.  Enable notifications (you'll be prompted to allow browser notifications)
+3.  Choose your preferred days (e.g., weekdays only)
+4.  Set your preferred time for daily reminders
+
+### Inactivity Nudges
+*   If you haven't logged anything for 3+ days, Mae will gently check in
+*   These are kind, not demanding—designed for neurodivergent needs
+
+### Disabling Notifications
+*   Toggle off in Settings anytime
+*   Or use your browser/device notification settings
+
+---
+
+## 8. Installing MAEPLE (PWA)
+
+MAEPLE works as a Progressive Web App—install it like a native app:
+
+### On Mobile (iOS/Android)
+1.  Open MAEPLE in your browser
+2.  Tap the **Share** button (iOS) or **Menu** button (Android)
+3.  Select **Add to Home Screen**
+4.  MAEPLE now launches in full-screen mode!
+
+### On Desktop (Chrome/Edge)
+1.  Look for the install icon (➕) in the address bar
+2.  Click **Install**
+3.  MAEPLE opens in its own window
+
+### Benefits
+*   **Quick Access:** One tap from your home screen
+*   **Full Screen:** No browser chrome
+*   **Offline Support:** Core UI loads even without internet
 
 ---
 

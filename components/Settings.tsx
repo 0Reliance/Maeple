@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { wearableManager } from '../services/wearables/manager';
 import { ProviderType } from '../services/wearables/types';
-import { Activity, Check, Loader2, RefreshCw, Smartphone, Calendar, Save, Camera, ScanFace, HeartHandshake, Phone, Bot } from 'lucide-react';
+import { Activity, Check, Loader2, RefreshCw, Smartphone, Calendar, Save, Camera, ScanFace, HeartHandshake, Phone, Bot, Download, Upload, Trash2, HardDrive, AlertTriangle, Bell } from 'lucide-react';
 import { WearableDataPoint, UserSettings } from '../types';
 import { getUserSettings, saveUserSettings } from '../services/storageService';
+import { exportAllData, downloadExport, clearAllData, importData, readFileAsText, ImportResult } from '../services/exportService';
 import BioCalibration from './BioCalibration';
 import AIProviderSettings from './AIProviderSettings';
+import NotificationSettingsPanel from './NotificationSettings';
 
 interface Props {
   onDataSynced: (data: WearableDataPoint[]) => void;
@@ -141,6 +143,189 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
     );
   };
 
+  const DataManagementSection = () => {
+    const [isExporting, setIsExporting] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    const [importResult, setImportResult] = useState<ImportResult | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleExportJSON = async () => {
+      setIsExporting(true);
+      try {
+        await downloadExport();
+      } catch (error) {
+        console.error('Export failed:', error);
+        alert('Export failed. Please try again.');
+      } finally {
+        setIsExporting(false);
+      }
+    };
+
+    const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      
+      setIsImporting(true);
+      setImportResult(null);
+      
+      try {
+        const content = await readFileAsText(file);
+        const result = await importData(content, { mergeEntries: true, overwriteSettings: false });
+        setImportResult(result);
+        
+        if (result.success) {
+          // Give the user a moment to see the result, then reload
+          setTimeout(() => {
+            window.location.reload();
+          }, 2500);
+        }
+      } catch (error) {
+        console.error('Import failed:', error);
+        setImportResult({
+          success: false,
+          imported: { entries: 0, stateChecks: 0, settings: false },
+          errors: ['Failed to read file. Please try again.']
+        });
+      } finally {
+        setIsImporting(false);
+        // Reset file input
+        event.target.value = '';
+      }
+    };
+
+    const handleDeleteAll = async () => {
+      setIsDeleting(true);
+      try {
+        await clearAllData();
+        setShowDeleteConfirm(false);
+        // Reload the page to reset app state
+        window.location.reload();
+      } catch (error) {
+        console.error('Delete failed:', error);
+        alert('Failed to delete data. Please try again.');
+      } finally {
+        setIsDeleting(false);
+      }
+    };
+
+    return (
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <HardDrive className="text-emerald-500" size={20} />
+          Data Management
+        </h3>
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
+          <p className="text-sm text-slate-500">
+            Your data belongs to you. Export your journal entries and state checks for backup or transfer to another device.
+          </p>
+          
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              onClick={handleExportJSON}
+              disabled={isExporting}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50 text-emerald-700 rounded-xl font-medium hover:bg-emerald-100 transition-colors disabled:opacity-50"
+            >
+              {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+              Export Backup
+            </button>
+            
+            <label className={`flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 text-blue-700 rounded-xl font-medium hover:bg-blue-100 transition-colors cursor-pointer ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
+              {isImporting ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+              Import Backup
+              <input 
+                type="file" 
+                accept=".json"
+                onChange={handleImport}
+                disabled={isImporting}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {/* Import Result Feedback */}
+          {importResult && (
+            <div className={`p-4 rounded-xl ${importResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+              {importResult.success ? (
+                <div>
+                  <p className="font-medium flex items-center gap-2">
+                    <Check size={18} />
+                    Import successful!
+                  </p>
+                  <p className="text-sm mt-1">
+                    Imported {importResult.imported.entries} journal {importResult.imported.entries === 1 ? 'entry' : 'entries'}.
+                    {importResult.imported.settings && ' Settings restored.'}
+                  </p>
+                  {importResult.errors.length > 0 && (
+                    <p className="text-xs mt-2 text-amber-700">{importResult.errors.join(' ')}</p>
+                  )}
+                  <p className="text-xs mt-2">Reloading page...</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="font-medium flex items-center gap-2">
+                    <AlertTriangle size={18} />
+                    Import failed
+                  </p>
+                  <ul className="text-sm mt-1 list-disc list-inside">
+                    {importResult.errors.map((err, i) => <li key={i}>{err}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-slate-800">Danger Zone</h4>
+                <p className="text-xs text-slate-400 mt-1">Permanently delete all your data from this browser</p>
+              </div>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors"
+              >
+                <Trash2 size={18} />
+                Delete All
+              </button>
+            </div>
+          </div>
+
+          {/* Delete Confirmation Modal */}
+          {showDeleteConfirm && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-fadeIn">
+                <div className="flex items-center gap-3 text-red-600 mb-4">
+                  <AlertTriangle size={24} />
+                  <h3 className="text-lg font-bold">Delete All Data?</h3>
+                </div>
+                <p className="text-slate-600 mb-6">
+                  This will permanently delete all your journal entries, state checks, settings, and calibration data. This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAll}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isDeleting && <Loader2 size={16} className="animate-spin" />}
+                    Yes, Delete Everything
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
   return (
     <div className="space-y-8 max-w-2xl mx-auto pb-12 animate-fadeIn">
       <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-8 rounded-3xl shadow-xl">
@@ -153,6 +338,17 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
       {/* AI Provider Configuration */}
       <section className="space-y-4">
         <AIProviderSettings />
+      </section>
+
+      {/* Notification Settings */}
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <Bell className="text-indigo-500" size={20} />
+          Reminders & Notifications
+        </h3>
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <NotificationSettingsPanel />
+        </div>
       </section>
 
       {/* Safety Plan Configuration */}
@@ -217,6 +413,9 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
             </button>
         </div>
       </section>
+
+      {/* Data Management Section */}
+      <DataManagementSection />
 
       {/* Biological Context Section */}
       <section className="space-y-4">
