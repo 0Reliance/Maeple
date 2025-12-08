@@ -13,6 +13,18 @@
     "types": [
       "node"
     ],
+    
+    /* Strict Type Checking */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+    /* Disabled: Too many breaking changes for MVP */
+    // "noUncheckedIndexedAccess": true,
+    
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",

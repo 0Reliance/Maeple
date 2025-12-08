@@ -50,7 +50,7 @@ export function canUseAudio(): boolean {
 
 // Audio streaming convenience function
 export async function streamAudio(request: AITextRequest): Promise<AsyncGenerator<string, void, unknown>> {
-  const stream = aiRouter.streamAudio(request);
+  const stream = await aiRouter.streamAudio(request);
   if (!stream) {
     throw new Error('No audio-capable provider available');
   }
