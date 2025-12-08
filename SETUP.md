@@ -144,17 +144,26 @@ The dev server automatically reloads when you edit files. No manual refresh need
 
 ### API Rate Limits
 
-The free Gemini API tier has rate limits:
-- 60 requests per minute
-- Consider adding delays between rapid requests if you hit limits
+MAEPLE includes built-in rate limiting to protect against API quota exhaustion:
+- **55 requests per minute** (with burst buffer)
+- **1400 requests per day**
+- Automatic queuing and retry with exponential backoff
+- View usage stats in browser console: `localStorage.getItem('maeple_rate_limiter_stats')`
 
 ### Data Storage
 
 All data is stored locally in your browser:
-- **LocalStorage**: User settings, journal entries
-- **IndexedDB**: Encrypted Bio-Mirror data, wearable sync data
+- **LocalStorage**: User settings, journal entries, rate limiter stats
+- **IndexedDB**: Encrypted Bio-Mirror data, wearable sync data, offline request queue
 
 Clear browser data to reset the app completely.
+
+### Offline Support
+
+MAEPLE includes offline capabilities:
+- **Service Worker**: Core UI loads even without internet
+- **Offline Queue**: Failed requests are queued and retried when back online
+- **Data Validation**: Corrupted data is automatically sanitized with safe defaults
 
 ### Privacy Note
 
