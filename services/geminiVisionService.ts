@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { FacialAnalysis } from "../types";
 import { aiRouter } from "./ai";
+import { rateLimitedCall } from "./rateLimiter";
 
 // Validate and retrieve API Key - returns null if not available
 const getApiKey = (): string | null => {
@@ -65,10 +66,13 @@ export const generateOrEditImage = async (
       parts.push({ text: prompt });
     }
 
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: { parts },
-    });
+    const response = await rateLimitedCall(() =>
+      ai.models.generateContent({
+        model: model,
+        contents: { parts },
+      }),
+      { priority: 2 } // Image generation is lower priority
+    );
 
     for (const part of response.candidates?.[0]?.content?.parts || []) {
       if (part.inlineData) {
@@ -152,20 +156,23 @@ Return JSON matching the schema.`,
       Return a structured analysis.
     `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: {
-        parts: [
-          { inlineData: { mimeType: "image/png", data: base64Image } },
-          { text: prompt }
-        ]
-      },
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: facialAnalysisSchema,
-        systemInstruction: "You are Mae, the voice of MAEPLE (Mental And Emotional Pattern Literacy Engine). MAEPLE is codenamed POZIMIND and is part of the Poziverse. You are a kind, clinical bio-feedback analyst specializing in detecting stress and masking signals. Present facts compassionately, without alarm.",
-      },
-    });
+    const response = await rateLimitedCall(() =>
+      ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: {
+          parts: [
+            { inlineData: { mimeType: "image/png", data: base64Image } },
+            { text: prompt }
+          ]
+        },
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: facialAnalysisSchema,
+          systemInstruction: "You are Mae, the voice of MAEPLE (Mental And Emotional Pattern Literacy Engine). MAEPLE is codenamed POZIMIND and is part of the Poziverse. You are a kind, clinical bio-feedback analyst specializing in detecting stress and masking signals. Present facts compassionately, without alarm.",
+        },
+      }),
+      { priority: 4 } // Bio-mirror analysis is high priority
+    );
 
     const textResponse = response.text;
     if (!textResponse) throw new Error("No response from AI");

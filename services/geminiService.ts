@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { ParsedResponse, CapacityProfile } from "../types";
 import { aiRouter } from "./ai";
+import { rateLimitedCall } from "./rateLimiter";
 
 // Validate and retrieve API Key - returns null if not available
 const getApiKey = (): string | null => {
@@ -179,16 +180,19 @@ export const parseJournalEntry = async (text: string, capacityProfile: CapacityP
       return getDefaultParsedResponse(text);
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: healthEntrySchema,
-        systemInstruction: systemInstruction,
-        temperature: 0.7, 
-      },
-    });
+    const response = await rateLimitedCall(() => 
+      ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: healthEntrySchema,
+          systemInstruction: systemInstruction,
+          temperature: 0.7, 
+        },
+      }),
+      { priority: 5 } // Journal parsing is high priority
+    );
 
     const textResponse = response.text;
     if (!textResponse) throw new Error("No response from AI");
@@ -247,13 +251,16 @@ export const searchHealthInfo = async (query: string) => {
       return null;
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: query,
-      config: {
-        tools: [{ googleSearch: {} }],
-      },
-    });
+    const response = await rateLimitedCall(() =>
+      ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: query,
+        config: {
+          tools: [{ googleSearch: {} }],
+        },
+      }),
+      { priority: 3 } // Search is medium priority
+    );
 
     return {
       text: response.text,

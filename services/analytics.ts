@@ -28,7 +28,7 @@ export const generateInsights = (entries: HealthEntry[], wearableData: WearableD
   // Helper: Map dates to entries for O(1) lookup
   const entryMap = new Map<string, HealthEntry>();
   entries.forEach(e => {
-      const date = new Date(e.timestamp).toISOString().split('T')[0];
+      const date = new Date(e.timestamp).toISOString().split('T')[0] ?? '';
       // Store the latest entry for that day for simplicity in MVP
       entryMap.set(date, e);
   });
