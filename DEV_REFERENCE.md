@@ -31,16 +31,34 @@ pozimind/
 │   └── ...
 ├── services/           # Business logic
 │   ├── ai/                    # Multi-provider AI layer
-│   │   ├── adapters/          # Provider adapters (Gemini, OpenAI, Anthropic, Perplexity, OpenRouter, Ollama, Z.ai stubs)
+│   │   ├── adapters/          # Provider adapters (Gemini, OpenAI, Anthropic, etc.)
 │   │   ├── router.ts          # Capability routing (text/vision/image/search/audio)
 │   │   ├── settingsService.ts # Encrypted provider config
 │   │   └── types.ts           # AI types & capabilities
-│   ├── geminiService.ts      # AI parsing (routes via aiRouter, Gemini fallback)
-│   ├── geminiVisionService.ts # Vision AI (routes via aiRouter, Gemini fallback)
-│   ├── stateCheckService.ts  # Bio-Mirror storage
-│   ├── storageService.ts     # LocalStorage
-│   ├── analytics.ts          # Pattern engine
-│   └── comparisonEngine.ts   # Subjective vs Objective
+│   ├── geminiService.ts       # AI parsing (rate-limited via rateLimiter)
+│   ├── geminiVisionService.ts # Vision AI (rate-limited via rateLimiter)
+│   ├── stateCheckService.ts   # Bio-Mirror storage
+│   ├── storageService.ts      # LocalStorage
+│   ├── analytics.ts           # Pattern engine
+│   ├── comparisonEngine.ts    # Subjective vs Objective
+│   ├── rateLimiter.ts         # API rate limiting (55/min, 1400/day)
+│   ├── validationService.ts   # Runtime data validation
+│   ├── errorLogger.ts         # Centralized error tracking
+│   ├── offlineQueue.ts        # Offline request queue (IndexedDB)
+│   └── encryptionService.ts   # AES-GCM encryption
+├── stores/              # Zustand state management
+│   ├── appStore.ts            # Main app state (entries, view, etc.)
+│   ├── authStore.ts           # Authentication state
+│   ├── syncStore.ts           # Cloud sync state
+│   └── index.ts               # Store exports
+├── tests/               # Test suites (112 tests)
+│   ├── analytics.test.ts      # Analytics tests (27)
+│   ├── encryption.test.ts     # Encryption tests (14)
+│   ├── validation.test.ts     # Validation tests (27)
+│   ├── rateLimiter.test.ts    # Rate limiter tests (14)
+│   ├── errorLogger.test.ts    # Error logger tests (15)
+│   ├── offlineQueue.test.ts   # Offline queue tests (15)
+│   └── setup.ts               # Test setup
 ├── App.tsx             # Main app component
 ├── types.ts            # TypeScript interfaces
 ├── index.tsx           # Entry point
@@ -86,14 +104,72 @@ VITE_GEMINI_API_KEY=your_key_here
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | React 18 + TypeScript |
-| Build | Vite 5 |
+| Framework | React 18 + TypeScript (strict mode) |
+| State | Zustand 5 (appStore, authStore, syncStore) |
+| Build | Vite 5 (16-chunk code splitting) |
 | Styling | Tailwind CSS 3 |
-| AI | Multi-provider (Gemini + OpenAI shipped; Anthropic/Perplexity/OpenRouter/Ollama/Z.ai adapters scaffolded). Router-enabled for text/vision/image/search/audio; audio UX currently Gemini Live-only. Beta v5 release. |
+| AI | Multi-provider router (Gemini + OpenAI live; others scaffolded) |
 | Storage | LocalStorage + IndexedDB |
 | Encryption | Web Crypto API (AES-GCM) |
 | Icons | Lucide React |
 | Charts | Recharts |
+| Testing | Vitest + React Testing Library (112 tests) |
+
+## 🆕 Core Services
+
+### Rate Limiter (`services/rateLimiter.ts`)
+Queue-based rate limiting for Gemini API calls.
+```typescript
+import { rateLimitedCall } from './services/rateLimiter';
+
+// Wrap any API call
+const result = await rateLimitedCall(() => ai.models.generateContent({...}));
+
+// Check usage stats
+import { getRateLimiterStats } from './services/rateLimiter';
+const stats = getRateLimiterStats(); // { minute: 5, day: 150, lastMinuteReset: ... }
+```
+
+### Validation Service (`services/validationService.ts`)
+Runtime validation for data loaded from storage.
+```typescript
+import { validateHealthEntry, validateUserSettings } from './services/validationService';
+
+// Validates and sanitizes, returns safe defaults for missing/invalid data
+const entry = validateHealthEntry(rawData);
+const settings = validateUserSettings(rawData);
+```
+
+### Error Logger (`services/errorLogger.ts`)
+Centralized error tracking with external endpoint support.
+```typescript
+import { errorLogger, logBoundaryError } from './services/errorLogger';
+
+// Log errors with context
+errorLogger.error('Operation failed', error, { component: 'JournalEntry' });
+
+// In ErrorBoundary
+logBoundaryError(error, { componentStack: errorInfo.componentStack });
+
+// Configure external endpoint (Sentry-like)
+errorLogger.setExternalEndpoint('https://your-error-service.com/api/log');
+```
+
+### Offline Queue (`services/offlineQueue.ts`)
+IndexedDB-backed request queue for offline support.
+```typescript
+import { offlineQueue, withOfflineSupport } from './services/offlineQueue';
+
+// Register handlers for request types
+offlineQueue.registerHandler('journal', async (payload) => {
+  return await api.saveJournal(payload);
+});
+
+// Wrap API calls with offline support
+const result = await withOfflineSupport('journal', payload, async () => {
+  return await api.saveJournal(payload);
+});
+```
 
 ## 🔒 Data Storage
 
@@ -109,7 +185,32 @@ VITE_GEMINI_API_KEY=your_key_here
 - Baseline calibration data
 ```
 
-## 🧪 Testing Checklist
+## 🧪 Testing
+
+MAEPLE has 112 tests across 6 test suites.
+
+```bash
+# Run all tests
+npm run test:run
+
+# Watch mode
+npm run test
+
+# Coverage report
+npm run test:coverage
+```
+
+### Test Suites
+| Suite | Tests | Coverage |
+|-------|-------|----------|
+| analytics.test.ts | 27 | Insights, burnout trajectory, cognitive load |
+| encryption.test.ts | 14 | AES-GCM, key management, encoding |
+| validation.test.ts | 27 | HealthEntry, UserSettings, StateCheck |
+| rateLimiter.test.ts | 14 | Queue, rate limits, stats |
+| errorLogger.test.ts | 15 | Logging, buffer, external endpoints |
+| offlineQueue.test.ts | 15 | IndexedDB queue, handlers |
+
+### Testing Checklist
 
 Before committing major changes:
 
@@ -117,7 +218,10 @@ Before committing major changes:
 # 1. Type check
 npm run build
 
-# 2. Test key flows
+# 2. Run tests
+npm run test:run
+
+# 3. Test key flows
 - [ ] Journal entry submission
 - [ ] State Check capture
 - [ ] Camera/mic permissions
@@ -125,7 +229,7 @@ npm run build
 - [ ] Mobile responsive layout
 - [ ] Error boundary triggers
 
-# 3. Check browser console
+# 4. Check browser console
 - [ ] No errors in console
 - [ ] API calls succeed
 - [ ] No infinite loops
@@ -176,10 +280,12 @@ npm run build
 "gemini-2.5-flash" with googleSearch tool
 ```
 
-### Rate Limits (Free Tier)
-- 60 requests per minute
-- 1500 requests per day
-- Add delays for rapid requests
+### Rate Limits (Implemented)
+MAEPLE includes built-in rate limiting via `rateLimiter.ts`:
+- 55 requests per minute (with 5 burst buffer)
+- 1400 requests per day
+- Automatic queuing and retry with exponential backoff
+- Stats persisted to localStorage
 
 ## 🎨 Styling Conventions
 

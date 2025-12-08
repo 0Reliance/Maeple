@@ -63,7 +63,7 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
 *   **Storage**: IndexedDB (via `idb` wrapper) & LocalStorage
 *   **Cloud Sync**: Supabase (PostgreSQL + Auth) for cross-device sync
 *   **Security**: Web Crypto API (AES-GCM) for biometric data encryption
-*   **Testing**: Vitest + React Testing Library (41 tests)
+*   **Testing**: Vitest + React Testing Library (112 tests)
 *   **Wearables**: Oura Ring API integration (OAuth2)
 
 ### 7. PWA & Installable App 📱
@@ -131,7 +131,7 @@ MAEPLE is now a full Progressive Web App (PWA):
 
 ### Testing
 
-MAEPLE includes a comprehensive test suite (41 tests) covering analytics, encryption, and core services:
+MAEPLE includes a comprehensive test suite (112 tests) covering analytics, encryption, validation, rate limiting, error logging, and offline queue services:
 
 ```bash
 # Run tests once
@@ -144,9 +144,13 @@ npm run test
 npm run test:coverage
 ```
 
-**Test Coverage:**
-- `analytics.test.ts` (27 tests): Insights generation, daily strategies, burnout trajectory, cognitive load, cycle phase calculations
-- `encryption.test.ts` (14 tests): Base64 utilities, key management, data encoding, security model validation
+**Test Coverage (6 test suites):**
+- `analytics.test.ts` (27 tests): Insights generation, daily strategies, burnout trajectory, cognitive load, cycle phase
+- `encryption.test.ts` (14 tests): Base64 utilities, key management, data encoding, security validation
+- `validation.test.ts` (27 tests): HealthEntry, UserSettings, StateCheck, WearableDataPoint validation
+- `rateLimiter.test.ts` (14 tests): Queue-based rate limiting, stats tracking, daily limits
+- `errorLogger.test.ts` (15 tests): Error logging, buffer management, external endpoints
+- `offlineQueue.test.ts` (15 tests): IndexedDB queue, offline support, handler registration
 
 ## 📱 Mobile Testing Guide
 

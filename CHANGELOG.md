@@ -1,4 +1,88 @@
-# POZIMIND Changelog
+# MAEPLE Changelog
+
+## v1.4.0 (December 8, 2025)
+**Status**: ✅ Production Ready
+
+### 🚀 Major Improvements
+
+#### TypeScript Strict Mode
+- Enabled full TypeScript strict mode (`strict: true`, `strictNullChecks`, `strictFunctionTypes`)
+- Fixed all type errors across the codebase
+- Improved type safety and IDE support
+
+#### API Rate Limiting (`services/rateLimiter.ts`)
+- Queue-based rate limiter for Gemini API calls
+- 55 requests/minute, 1400 requests/day limits
+- Automatic retry with exponential backoff
+- Daily usage stats persisted to localStorage
+- Integrated into `geminiService.ts` and `geminiVisionService.ts`
+
+#### Data Validation (`services/validationService.ts`)
+- Runtime validation for all data loaded from localStorage/IndexedDB
+- Type guards and sanitization with safe defaults
+- Validates: HealthEntry, UserSettings, StateCheck, WearableDataPoint, CapacityProfile, NeuroMetrics, FacialAnalysis
+- Prevents corrupted data from crashing the app
+
+#### Error Logging (`services/errorLogger.ts`)
+- Centralized error tracking service
+- In-memory buffer with localStorage persistence
+- Global error and unhandledrejection handlers
+- Support for external endpoints (Sentry-like)
+- Integrated into ErrorBoundary component
+
+#### Offline Queue (`services/offlineQueue.ts`)
+- IndexedDB-backed request queue for offline support
+- Automatic retry when back online
+- Handler registration pattern for different request types
+- `withOfflineSupport()` wrapper for easy integration
+
+#### State Management (Zustand)
+- New stores: `appStore.ts`, `authStore.ts`, `syncStore.ts`
+- Migrated App.tsx state to Zustand
+- Improved code organization and testability
+
+#### Code Splitting
+- Granular chunk splitting in `vite.config.ts`
+- 16 separate chunks (was 1 monolithic bundle)
+- Feature-based chunks: coach, vision, statecheck, settings, clinical, dashboard
+- Library chunks: vendor, icons, ai-sdk, storage, charts
+- Largest chunk: 397KB (charts) - all under 500KB limit
+
+#### Testing Infrastructure
+- 112 tests across 6 test suites
+- Test files: analytics, encryption, validation, rateLimiter, errorLogger, offlineQueue
+- Vitest + React Testing Library
+- Coverage reporting enabled
+
+### 📦 Bundle Analysis
+
+| Chunk | Size | Gzip |
+|-------|------|------|
+| charts | 397 KB | 100 KB |
+| services | 245 KB | 64 KB |
+| vendor | 168 KB | 52 KB |
+| ai-sdk | 148 KB | 24 KB |
+| components | 67 KB | 18 KB |
+| ai-services | 38 KB | 9 KB |
+| feature-settings | 21 KB | 5 KB |
+| icons | 18 KB | 6 KB |
+| feature-dashboard | 17 KB | 5 KB |
+| feature-statecheck | 13 KB | 4 KB |
+| feature-clinical | 9 KB | 3 KB |
+| feature-vision | 7 KB | 2 KB |
+| feature-coach | 6 KB | 3 KB |
+| **Total** | **~1.2 MB** | **~310 KB** |
+
+### 🔧 Fixes
+- Fixed LucideIcon type errors across components
+- Fixed Session type import in LiveCoach
+- Fixed SpeechRecognition types in RecordVoiceButton
+- Fixed grounding types in SearchResources
+- Fixed CapacityProfile index signature
+- Fixed FacialAnalysis type guards in stateCheckService
+- Fixed streamAudio return type in AI service
+
+---
 
 ## Beta v5 (December 6, 2025)
 **Status**: ✅ Ready for beta
