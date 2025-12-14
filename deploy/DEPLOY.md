@@ -49,6 +49,8 @@ Best for performance and scalability.
 4.  **Environment Variables**:
     - `VITE_API_URL`: The URL of your deployed backend (e.g., `https://maeple-api.up.railway.app/api`)
     - `VITE_GEMINI_API_KEY`: Your AI key.
+5.  **Configuration**:
+    - A `vercel.json` file is included in the root to handle SPA routing and API rewrites (if needed). Update the destination URL in `vercel.json` to match your backend URL if you want to use the `/api` proxy feature on Vercel.
 
 ### Backend (Railway / Render)
 
