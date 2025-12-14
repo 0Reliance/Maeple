@@ -106,6 +106,24 @@ export interface AISearchResponse {
   provider: AIProviderType;
 }
 
+// Live/Audio Types
+export interface AILiveConfig {
+  systemInstruction?: string;
+  voice?: string;
+  callbacks: {
+    onOpen?: () => void;
+    onAudioData?: (data: Uint8Array) => void;
+    onTextData?: (text: string) => void;
+    onClose?: () => void;
+    onError?: (error: Error) => void;
+  };
+}
+
+export interface AILiveSession {
+  sendAudio(base64Data: string): Promise<void>;
+  disconnect(): Promise<void>;
+}
+
 // Error classes
 export class AIError extends Error {
   constructor(

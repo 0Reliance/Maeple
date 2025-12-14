@@ -40,7 +40,7 @@ export const saveEntry = (entry: HealthEntry, skipSync = false) => {
   if (existingIndex >= 0) {
     // Update existing entry
     updated = [...entries];
-    updated[existingIndex] = entry;
+    updated[existingIndex] = { ...entry, updatedAt: new Date().toISOString() };
     action = 'update';
   } else {
     // Add new entry

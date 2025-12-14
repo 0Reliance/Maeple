@@ -8,6 +8,8 @@ import {
   AIImageResponse,
   AISearchRequest,
   AISearchResponse,
+  AILiveConfig,
+  AILiveSession,
   AIError,
   AIAuthenticationError,
   AIRateLimitError,
@@ -37,6 +39,45 @@ export abstract class BaseAIAdapter {
       maxRetries: 3,
       ...config,
     };
+    this.loadStats();
+  }
+
+  private loadStats() {
+    try {
+      const stored = localStorage.getItem(`maeple_ai_stats_${this.providerId}`);
+      if (stored) {
+        const stats = JSON.parse(stored);
+        this.requestCount = stats.requestCount || 0;
+        this.errorCount = stats.errorCount || 0;
+        this.lastRequestTime = stats.lastRequestTime || 0;
+      }
+    } catch (e) {
+      console.warn('Failed to load AI stats', e);
+    }
+  }
+
+  private saveStats() {
+    try {
+      const stats = {
+        requestCount: this.requestCount,
+        errorCount: this.errorCount,
+        lastRequestTime: this.lastRequestTime,
+      };
+      localStorage.setItem(`maeple_ai_stats_${this.providerId}`, JSON.stringify(stats));
+    } catch (e) {
+      console.warn('Failed to save AI stats', e);
+    }
+  }
+
+  protected trackRequest() {
+    this.requestCount++;
+    this.lastRequestTime = Date.now();
+    this.saveStats();
+  }
+
+  protected trackError() {
+    this.errorCount++;
+    this.saveStats();
   }
 
   // Methods each concrete adapter must implement
@@ -46,15 +87,32 @@ export abstract class BaseAIAdapter {
   abstract search(request: AISearchRequest): Promise<AISearchResponse>;
   abstract supportsStreaming(): boolean;
   abstract stream?(request: AITextRequest): AsyncGenerator<string, void, unknown>;
+  abstract healthCheck(): Promise<boolean>;
+  connectLive?(config: AILiveConfig): Promise<AILiveSession>;
+
+  public getStats() {
+    return {
+      providerId: this.providerId,
+      requestCount: this.requestCount,
+      errorCount: this.errorCount,
+      lastRequestTime: this.lastRequestTime,
+    };
+  }
+
+  public resetStats() {
+    this.requestCount = 0;
+    this.errorCount = 0;
+    this.lastRequestTime = 0;
+    this.saveStats();
+  }
 
   protected async fetchWithRetry(
     url: string,
     options: RequestInit,
-    retries: number = this.config.maxRetries || 3
+    retries: number = this.config.maxRetries ?? 3
   ): Promise<Response> {
     try {
-      this.requestCount += 1;
-      this.lastRequestTime = Date.now();
+      this.trackRequest();
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
@@ -84,7 +142,7 @@ export abstract class BaseAIAdapter {
 
       return response;
     } catch (error) {
-      this.errorCount += 1;
+      this.trackError();
       if (error instanceof AIError) throw error;
       if (retries > 0) {
         await this.delay(Math.pow(2, (this.config.maxRetries || 3) - retries) * 1000);

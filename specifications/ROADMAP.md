@@ -3,60 +3,89 @@
 This document tracks the evolution of MAEPLE from a simple journal to a clinical-grade digital phenotype engine.
 
 ## 🟢 Phase 1: Multi-Dimensional Capacity (COMPLETED)
+
 - [x] Create `CapacityProfile` interface (Focus, Social, Sensory, etc).
 - [x] Replace single spoon slider with Capacity Grid UI.
 - [x] Update AI prompt to parse Activity Types (`#DeepWork`, `#Social`).
 - [x] Update Timeline Cards to show "Capacity Fingerprint".
 
 ## 🟢 Phase 2: Correlation Engine (COMPLETED)
+
 - [x] Build `services/analytics.ts`.
 - [x] Implement logic to correlate Capacity dimensions with Mood.
 - [x] Create "Pattern Insights" widget in Dashboard.
 
 ## 🟢 Phase 3: Smart Recommendations (COMPLETED)
+
 - [x] Implement `generateDailyStrategy` logic.
 - [x] Create "Mae's Strategy Deck" UI.
 - [x] specific interventions for Sensory Overload and Social Burnout.
 
 ## 🟢 Phase 4: Burnout Trajectory (COMPLETED)
+
 - [x] Create `BurnoutForecast` data model.
 - [x] Implement logic to calculate Demand/Capacity ratio over 7 days.
 - [x] Build "Burnout Forecast" widget with predictive text.
 
 ## 🟢 Phase 5: Cognitive Load (COMPLETED)
+
 - [x] Implement `calculateCognitiveLoad` logic (Context Switch Costing).
 - [x] Visualizing "Efficiency Loss" due to fragmentation.
 
 ## 🟢 Phase 6: Passive Context (COMPLETED)
+
 - [x] Integrate `WearableData` into the Analytics Engine.
 - [x] Correlate Sleep Duration (Objective) with Focus Capacity (Subjective).
 - [x] Correlate HRV with Sensory Tolerance.
 
 ## 🟢 Phase 7: Hormonal Sync 2.0 (COMPLETED)
+
 - [x] Implement `calculateCyclePhase` logic.
 - [x] Create `CyclePhaseContext` interface.
 - [x] Build "Hormonal Weather" widget (predicting Luteal phase risks).
 
 ## 🟢 Phase 8: Masking Detection (COMPLETED)
+
 - [x] Update Gemini System Instruction to analyze Linguistic Tone.
 - [x] Create `maskingScore` metric (1-10).
 - [x] Visualize "Masking Burden" trends on Dashboard.
 
 ## 🟢 Phase 9: Visual Therapy AI (COMPLETED)
+
 - [x] Connect Vision Board to Neuro-Metrics.
 - [x] Generate "Smart Prompts" based on current state (e.g., "Visualize Serenity" if Sensory Load > 8).
 
-## 🟢 Phase 10: Clinical Phenotyping (COMPLETED)
-- [x] Create `ClinicalReport` component.
+## 🟢 Phase 11: Platform Hardening (CURRENT)
+
+- [x] **Routing**: Migrated to `react-router-dom` for proper URL navigation.
+- [x] **AI Stability**: Implemented health checks and usage tracking for all providers.
+- [x] **Data Integrity**: Added schema migration service and robust sync conflict resolution.
+- [x] **Export**: Optimized JSON export to handle large datasets (image exclusion).
+- [x] **Live Coach**: Abstracted audio routing to support multi-provider real-time sessions.
+- [x] **AI Expansion**: Fully implemented Perplexity, OpenRouter, and Ollama adapters.
+
+## 🟡 Phase 12: Wearable Ecosystem (NEXT)
+
+- [ ] **Apple Health**: Native integration via Capacitor.
+- [ ] **Garmin**: OAuth2 integration for real-time stress data.
+- [ ] **Fitbit/Whoop**: Add support for additional providers.
+
+## 🟡 Phase 13: Advanced AI Features
+
+- [ ] **OpenAI Realtime**: Implement `connectLive` for OpenAI.
+- [x] **Perplexity/OpenRouter**: Finalize adapters for research/broad model support.
+- [x] **Local AI**: Optimize Ollama adapter for privacy-first users.
 - [x] Generate Radar Chart for Baseline Capacity.
 - [x] Build Print-to-PDF layout for therapist sharing.
 
 ## 🟢 Phase 11: Mobile Polish (COMPLETED)
+
 - [x] Implement Sticky Bottom Navigation for mobile.
 - [x] Optimize Journal Entry for "Thumb Zone" usage.
 - [x] Refactor responsive layout logic.
 
 ## 🟢 State Check Epic (Bio-Mirror) (COMPLETED)
+
 - [x] Phase 1: Privacy-First Foundation (IndexedDB + Encryption).
 - [x] Phase 2: Neuro-Vision Intelligence (Gemini Integration).
 - [x] Phase 3: Calm Capture Experience (UI/UX).
@@ -70,14 +99,16 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 **Status:** Release v1.3.0 Ready. Cloud sync with Supabase implemented.
 
 ## 🟢 Phase 12: Multi-Provider AI Platform (COMPLETED)
+
 - [x] Add adapter architecture with retry/health helpers.
 - [x] Implement Gemini adapter (text/vision/image/search/stream) and wire router.
 - [x] Implement OpenAI adapter (text/vision/image) and register in router.
-- [x] Scaffold Anthropic, Perplexity, OpenRouter, Ollama, Z.ai adapters and register stubs.
+- [x] Implement Anthropic, Perplexity, OpenRouter, Ollama adapters and register in router.
 - [x] Refactor `geminiService` and `geminiVisionService` to route via `aiRouter` with graceful Gemini fallback.
 - [x] Wire audio routing entry point (router + `canUseAudio`), still Gemini Live-only in UI.
 
 ## 🟢 Phase 13: Quality & User Experience (COMPLETED)
+
 - [x] Data Export/Import Service (`exportService.ts`) - Full backup/restore with encryption.
 - [x] Data Management UI in Settings - Export, import, storage stats, clear all.
 - [x] Testing Framework (`vitest.config.ts`, `tests/setup.ts`) - Vitest + React Testing Library.
@@ -89,6 +120,7 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 - [x] Real Wearable Integration (`ouraAdapter.ts`) - Oura Ring v2 API with OAuth2.
 
 ## 🟢 Phase 14: Cloud Sync & Persistence (COMPLETED)
+
 - [x] Supabase Client (`supabaseClient.ts`) - Connection singleton with config detection.
 - [x] Database Schema (`supabase/schema.sql`) - Full schema with RLS policies.
 - [x] Cloud Storage Service (`supabaseStorage.ts`) - CRUD operations for all data types.
@@ -98,13 +130,21 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 - [x] Auth Modal (`AuthModal.tsx`) - Sign in/up UI with multiple methods.
 - [x] Cloud Sync Settings (`CloudSyncSettings.tsx`) - Sync status, push/pull controls.
 
+## 🟢 Phase 16: UX & Polish (COMPLETED)
+
+- [x] **Mobile-First Navigation**: Unified bottom bar, removed desktop sidebar.
+- [x] **Dark Mode**: Full system/manual theme support.
+- [x] **Visual Feedback**: Typing indicators and loading states for AI.
+- [x] **Accessibility**: ARIA labels and improved contrast.
+
 ---
 
-## 🟡 Phase 15: Future Enhancements (PLANNED)
+## 🟡 Phase 17: Future Enhancements (PLANNED)
+
 - [ ] Add provider health/fallback chain and comprehensive tests.
 - [ ] Enable audio provider selection (OpenAI/others) in Live Coach.
 - [ ] Expand wearable support (Fitbit, Apple Health, Garmin).
 - [ ] Community features (anonymized pattern sharing).
 - [ ] Therapist portal for clinical collaboration.
 - [ ] Machine learning model for personalized burnout prediction.
-**Status:** Multi-provider layer shipped with Gemini + OpenAI; other adapters scaffolded; audio routing plumbed but UI still Gemini-only.
+      **Status:** Multi-provider layer shipped with Gemini + OpenAI; other adapters scaffolded; audio routing plumbed but UI still Gemini-only.

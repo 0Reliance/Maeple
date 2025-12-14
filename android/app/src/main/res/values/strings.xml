@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Maeple</string>
+    <string name="title_activity_main">Maeple</string>
+    <string name="package_name">com.pozimind.maeple</string>
+    <string name="custom_url_scheme">com.pozimind.maeple</string>
+</resources>

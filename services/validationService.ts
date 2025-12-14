@@ -353,3 +353,70 @@ export {
   DEFAULT_USER_SETTINGS,
   DEFAULT_FACIAL_ANALYSIS,
 };
+
+// ============================================
+// INTEGRITY CHECKS
+// ============================================
+
+export interface IntegrityReport {
+  valid: boolean;
+  totalEntries: number;
+  issues: {
+    id: string;
+    type: 'missing_field' | 'invalid_date' | 'duplicate_id' | 'schema_mismatch';
+    details: string;
+  }[];
+}
+
+/**
+ * comprehensive data integrity check
+ */
+export const validateDataIntegrity = (entries: HealthEntry[]): IntegrityReport => {
+  const issues: IntegrityReport['issues'] = [];
+  const seenIds = new Set<string>();
+
+  entries.forEach((entry, index) => {
+    // Check 1: Duplicate IDs
+    if (seenIds.has(entry.id)) {
+      issues.push({
+        id: entry.id,
+        type: 'duplicate_id',
+        details: `Duplicate ID found at index ${index}`,
+      });
+    }
+    seenIds.add(entry.id);
+
+    // Check 2: Invalid Dates
+    const timestamp = new Date(entry.timestamp);
+    if (isNaN(timestamp.getTime())) {
+      issues.push({
+        id: entry.id,
+        type: 'invalid_date',
+        details: `Invalid timestamp: ${entry.timestamp}`,
+      });
+    }
+
+    // Check 3: Schema Mismatch (Critical fields)
+    if (!entry.neuroMetrics || typeof entry.neuroMetrics !== 'object') {
+      issues.push({
+        id: entry.id,
+        type: 'schema_mismatch',
+        details: 'Missing or invalid neuroMetrics',
+      });
+    }
+
+    if (!Array.isArray(entry.activityTypes)) {
+      issues.push({
+        id: entry.id,
+        type: 'schema_mismatch',
+        details: 'activityTypes must be an array',
+      });
+    }
+  });
+
+  return {
+    valid: issues.length === 0,
+    totalEntries: entries.length,
+    issues,
+  };
+};

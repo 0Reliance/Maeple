@@ -4,30 +4,33 @@ This guide covers deploying MAEPLE to various environments.
 
 ## Quick Start Options
 
-| Method | Best For | Complexity |
-|--------|----------|------------|
-| **Static Hosting** | Vercel/Netlify/Cloudflare | ⭐ Easiest |
-| **Docker** | Self-hosted, Portainer | ⭐⭐ Easy |
-| **LXC Container** | Proxmox, low resources | ⭐⭐ Easy |
-| **Manual nginx** | Full control | ⭐⭐⭐ Moderate |
+| Method             | Best For                  | Complexity      |
+| ------------------ | ------------------------- | --------------- |
+| **Static Hosting** | Vercel/Netlify/Cloudflare | ⭐ Easiest      |
+| **Docker**         | Self-hosted, Portainer    | ⭐⭐ Easy       |
+| **LXC Container**  | Proxmox, low resources    | ⭐⭐ Easy       |
+| **Manual nginx**   | Full control              | ⭐⭐⭐ Moderate |
 
 ---
 
 ## 1. Static Hosting (Recommended)
 
 ### Vercel
+
 ```bash
 npm i -g vercel
 vercel
 ```
 
 ### Netlify
+
 ```bash
 npm run build
 # Drag dist/ folder to Netlify dashboard
 ```
 
 ### Cloudflare Pages
+
 1. Connect GitHub repo
 2. Build command: `npm run build`
 3. Output directory: `dist`
@@ -37,20 +40,23 @@ npm run build
 ## 2. Docker Deployment
 
 ### Build and Run
+
 ```bash
 cd deploy
 docker compose up -d
 ```
 
-MAEPLE will be available at `http://localhost:3000`
+MAEPLE will be available at `http://localhost:8080`
 
 ### Manual Docker Build
+
 ```bash
 docker build -f deploy/Dockerfile -t maeple:latest .
-docker run -d -p 3000:80 --name maeple maeple:latest
+docker run -d -p 8080:80 --name maeple maeple:latest
 ```
 
 ### With Traefik (SSL)
+
 Uncomment the Traefik section in `docker-compose.yml` for automatic SSL.
 
 ---
@@ -60,11 +66,14 @@ Uncomment the Traefik section in `docker-compose.yml` for automatic SSL.
 ### Create LXC Container
 
 In Proxmox:
+
 1. **Create CT** → Choose template:
+
    - **Alpine 3.19** (smallest, ~50MB)
    - **Debian 12** (more compatible)
 
 2. **Resources**:
+
    - CPU: 1 core
    - RAM: 256 MB (512 MB for building)
    - Disk: 2 GB
@@ -74,12 +83,14 @@ In Proxmox:
 ### Deploy MAEPLE
 
 **Option A: Build on container**
+
 ```bash
 # Inside the LXC container:
 wget -O- https://raw.githubusercontent.com/genpozi/pozimind/main/deploy/lxc-deploy.sh | bash -s -- --build
 ```
 
 **Option B: Deploy pre-built**
+
 ```bash
 # On your dev machine:
 npm run build
@@ -121,6 +132,7 @@ Before using Cloud Sync, run the schema on your Supabase instance:
 3. Click **Run**
 
 This creates:
+
 - 7 tables with Row Level Security
 - Auto-profile creation trigger
 - Updated_at triggers
@@ -130,16 +142,19 @@ This creates:
 ## 6. SSL/HTTPS
 
 MAEPLE requires HTTPS for:
+
 - Camera access (Bio-Mirror)
 - Microphone access (Voice input)
 - Service Worker (PWA)
 
 ### Options:
+
 - **Cloudflare Tunnel**: Free, easy setup
 - **Let's Encrypt + Caddy**: Auto-renewing certs
 - **Traefik**: Docker-native SSL
 
 ### Caddy Example
+
 ```
 maeple.example.com {
     root * /var/www/maeple
@@ -160,6 +175,7 @@ curl http://your-server/health
 ```
 
 Use this for:
+
 - Load balancer health checks
 - Container orchestration
 - Uptime monitoring
@@ -169,6 +185,7 @@ Use this for:
 ## 8. Updating MAEPLE
 
 ### Docker
+
 ```bash
 cd deploy
 docker compose pull
@@ -176,6 +193,7 @@ docker compose up -d --build
 ```
 
 ### LXC/Manual
+
 ```bash
 cd /path/to/pozimind
 git pull
@@ -190,6 +208,7 @@ systemctl restart nginx  # or: rc-service nginx restart
 ## Troubleshooting
 
 ### Build fails
+
 ```bash
 # Clear cache and rebuild
 rm -rf node_modules package-lock.json
@@ -198,17 +217,21 @@ npm run build
 ```
 
 ### 404 on page refresh
+
 Ensure nginx/server has SPA fallback:
+
 ```nginx
 try_files $uri $uri/ /index.html;
 ```
 
 ### Camera not working
+
 - Ensure HTTPS is enabled
 - Check browser permissions
 - Some browsers block camera in iframes
 
 ### Cloud Sync not connecting
+
 - Verify Supabase URL is accessible
 - Check anon key is correct
 - Run schema.sql if tables don't exist

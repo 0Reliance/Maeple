@@ -10,13 +10,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production=false
+RUN npm ci
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN npm run build || (echo "Build failed, creating minimal dist" && mkdir -p dist && echo "<h1>MAEPLE</h1>" > dist/index.html)
+RUN npm run build
 
 # Stage 2: Production
 FROM nginx:alpine AS production

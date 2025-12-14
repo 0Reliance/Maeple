@@ -31,7 +31,7 @@ pozimind/
 │   └── ...
 ├── services/           # Business logic
 │   ├── ai/                    # Multi-provider AI layer
-│   │   ├── adapters/          # Provider adapters (Gemini, OpenAI, Anthropic, etc.)
+│   │   ├── adapters/          # Provider adapters (Gemini, OpenAI, Anthropic, Perplexity, OpenRouter, Ollama, Z.ai)
 │   │   ├── router.ts          # Capability routing (text/vision/image/search/audio)
 │   │   ├── settingsService.ts # Encrypted provider config
 │   │   └── types.ts           # AI types & capabilities
@@ -80,7 +80,7 @@ VITE_GEMINI_API_KEY=your_key_here
 ### Smart Journal (`JournalEntry.tsx`)
 - Multi-dimensional capacity tracking
 - Voice input support
-- AI-powered parsing via aiRouter (Gemini + OpenAI now; other providers pending)
+- AI-powered parsing via aiRouter (Supports Gemini, OpenAI, Anthropic, OpenRouter, Ollama)
 
 ### Bio-Mirror (`StateCheckWizard.tsx`)
 - Camera-based facial analysis
@@ -97,7 +97,19 @@ VITE_GEMINI_API_KEY=your_key_here
 
 ### Live Coach (`LiveCoach.tsx`)
 - Voice-first companion
-- Currently Gemini Live Audio only (router audio streaming plumbed; other providers pending)
+- Uses `aiRouter.connectLive()` for provider-agnostic audio streaming
+- Currently supports Gemini Live; extensible for OpenAI Realtime
+
+### Sync Service (`syncService.ts`)
+- Hybrid offline-first strategy
+- "Last Write Wins" conflict resolution using `updatedAt` timestamps
+- Background sync with Supabase
+- Offline queue for pending changes
+
+### Data Migration (`migrationService.ts`)
+- Handles rebrand migration (Pozimind -> Maeple)
+- Manages schema versioning (e.g., backfilling `updatedAt`)
+- Runs automatically on app startup
 - Real-time conversation with inline mic permission/status hints
 
 ## 🛠️ Tech Stack

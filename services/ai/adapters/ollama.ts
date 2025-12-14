@@ -24,18 +24,30 @@ export class OllamaAdapter extends BaseAIAdapter {
     this.baseUrl = config.baseUrl || "http://localhost:11434";
   }
 
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.fetchWithRetry(
+        `${this.baseUrl}/api/tags`,
+        {
+          method: "GET"
+        }
+      );
+      return true;
+    } catch (error) {
+      console.error("Ollama health check failed:", error);
+      return false;
+    }
+  }
+
   async chat(request: AITextRequest): Promise<AITextResponse> {
     try {
-      // Convert messages to Ollama format
-      const systemMessages = request.messages.filter(msg => msg.role === "system");
-      const systemPrompt = systemMessages.length > 0
-        ? systemMessages.map(msg => msg.content).join("\n")
-        : request.systemPrompt || "";
+      const messages = request.messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
 
-      const conversationMessages = request.messages.filter(msg => msg.role !== "system");
-      
       const response = await this.fetchWithRetry(
-        `${this.baseUrl}/api/generate`,
+        `${this.baseUrl}/api/chat`,
         {
           method: "POST",
           headers: {
@@ -43,8 +55,7 @@ export class OllamaAdapter extends BaseAIAdapter {
           },
           body: JSON.stringify({
             model: "llama3.2", // Default local model
-            prompt: this.formatPrompt(conversationMessages),
-            system: systemPrompt || undefined,
+            messages,
             stream: false,
             options: {
               temperature: request.temperature ?? 0.7,
@@ -57,7 +68,7 @@ export class OllamaAdapter extends BaseAIAdapter {
       const data = await response.json();
       
       return {
-        content: data.response || "",
+        content: data.message?.content || "",
         model: data.model || "llama3.2",
         provider: "ollama"
       };
@@ -69,7 +80,7 @@ export class OllamaAdapter extends BaseAIAdapter {
   async vision(request: AIVisionRequest): Promise<AIVisionResponse> {
     try {
       const response = await this.fetchWithRetry(
-        `${this.baseUrl}/api/generate`,
+        `${this.baseUrl}/api/chat`,
         {
           method: "POST",
           headers: {
@@ -77,8 +88,13 @@ export class OllamaAdapter extends BaseAIAdapter {
           },
           body: JSON.stringify({
             model: "llama3.2-vision", // Vision-capable model
-            prompt: request.prompt,
-            images: [request.imageData],
+            messages: [
+              {
+                role: "user",
+                content: request.prompt,
+                images: [request.imageData]
+              }
+            ],
             stream: false,
             options: {
               temperature: 0.7
@@ -90,7 +106,7 @@ export class OllamaAdapter extends BaseAIAdapter {
       const data = await response.json();
       
       return {
-        content: data.response || "",
+        content: data.message?.content || "",
         provider: "ollama",
         model: data.model || "llama3.2-vision"
       };
@@ -115,15 +131,13 @@ export class OllamaAdapter extends BaseAIAdapter {
 
   async *stream(request: AITextRequest): AsyncGenerator<string, void, unknown> {
     try {
-      const systemMessages = request.messages.filter(msg => msg.role === "system");
-      const systemPrompt = systemMessages.length > 0
-        ? systemMessages.map(msg => msg.content).join("\n")
-        : request.systemPrompt || "";
-
-      const conversationMessages = request.messages.filter(msg => msg.role !== "system");
+      const messages = request.messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
       
       const response = await this.fetchWithRetry(
-        `${this.baseUrl}/api/generate`,
+        `${this.baseUrl}/api/chat`,
         {
           method: "POST",
           headers: {
@@ -131,8 +145,7 @@ export class OllamaAdapter extends BaseAIAdapter {
           },
           body: JSON.stringify({
             model: "llama3.2",
-            prompt: this.formatPrompt(conversationMessages),
-            system: systemPrompt || undefined,
+            messages,
             stream: true,
             options: {
               temperature: request.temperature ?? 0.7,
@@ -162,8 +175,8 @@ export class OllamaAdapter extends BaseAIAdapter {
           if (line.trim()) {
             try {
               const parsed = JSON.parse(line);
-              if (parsed.response) {
-                yield parsed.response;
+              if (parsed.message?.content) {
+                yield parsed.message.content;
               }
               if (parsed.done) return;
             } catch (e) {
@@ -177,18 +190,14 @@ export class OllamaAdapter extends BaseAIAdapter {
     }
   }
 
-  private formatPrompt(messages: Array<{ role: string; content: string }>): string {
-    return messages.map(msg => {
-      if (msg.role === 'user') {
-        return `User: ${msg.content}`;
-      } else if (msg.role === 'assistant') {
-        return `Assistant: ${msg.content}`;
-      }
-      return msg.content;
-    }).join('\n\n') + '\n\nAssistant:';
-  }
-
   private handleError(error: any): Error {
+    // If it's already an AIError, it was likely thrown by fetchWithRetry which already tracked it
+    if (error instanceof AIError) {
+      return error;
+    }
+
+    this.trackError();
+
     if (error?.message?.includes('ECONNREFUSED') || error?.message?.includes('fetch')) {
       return new AIError("Ollama server not running. Please start Ollama locally.", "ollama");
     }

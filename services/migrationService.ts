@@ -30,31 +30,85 @@ const IDB_MIGRATIONS = [
  * Safe to call multiple times - only runs once
  */
 export const runMigration = async (): Promise<void> => {
-  // Check if migration already completed
-  const migrationComplete = localStorage.getItem('maeple_migration_complete');
-  if (migrationComplete) {
-    console.log('MAEPLE migration already completed');
-    return;
-  }
-
-  console.log('Starting MAEPLE data migration...');
+  console.log('Starting MAEPLE data migration check...');
 
   try {
-    // 1. Migrate LocalStorage keys
-    await migrateLocalStorage();
+    // 1. Rebrand Migration (One-time)
+    const migrationComplete = localStorage.getItem('maeple_migration_complete');
+    
+    if (!migrationComplete) {
+      console.log('Running rebrand migration (Pozimind -> Maeple)...');
+      
+      // 1. Migrate LocalStorage keys
+      await migrateLocalStorage();
 
-    // 2. Migrate API key prefix (pozimind_ai_key_* → maeple_ai_key_*)
-    await migrateApiKeyPrefix();
+      // 2. Migrate API key prefix (pozimind_ai_key_* → maeple_ai_key_*)
+      await migrateApiKeyPrefix();
 
-    // 3. Migrate IndexedDB databases
-    await migrateIndexedDB();
+      // 3. Migrate IndexedDB databases
+      await migrateIndexedDB();
+      
+      // Mark rebrand migration complete
+      localStorage.setItem('maeple_migration_complete', new Date().toISOString());
+      console.log('Rebrand migration completed successfully');
+    }
 
-    // 4. Mark migration complete
-    localStorage.setItem('maeple_migration_complete', new Date().toISOString());
-    console.log('MAEPLE migration completed successfully');
+    // 4. Run Schema Migrations (Data structure updates) - Always check this
+    await runSchemaMigrations();
+
   } catch (error) {
     console.error('MAEPLE migration error:', error);
     // Don't throw - app should continue to function even if migration fails
+  }
+};
+
+// ============================================
+// SCHEMA MIGRATIONS
+// ============================================
+
+const CURRENT_SCHEMA_VERSION = 1;
+const SCHEMA_VERSION_KEY = 'maeple_schema_version';
+
+const runSchemaMigrations = async () => {
+  const storedVersion = parseInt(localStorage.getItem(SCHEMA_VERSION_KEY) || '0', 10);
+  
+  if (storedVersion >= CURRENT_SCHEMA_VERSION) {
+    return;
+  }
+
+  console.log(`Migrating schema from v${storedVersion} to v${CURRENT_SCHEMA_VERSION}...`);
+
+  // Migration 1: Add updatedAt to all entries
+  if (storedVersion < 1) {
+    await migrateToV1();
+  }
+
+  localStorage.setItem(SCHEMA_VERSION_KEY, CURRENT_SCHEMA_VERSION.toString());
+};
+
+const migrateToV1 = async () => {
+  // Add updatedAt to all entries if missing
+  const entriesJson = localStorage.getItem('maeple_entries');
+  if (entriesJson) {
+    try {
+      const entries = JSON.parse(entriesJson);
+      let updated = false;
+      
+      const migratedEntries = entries.map((entry: any) => {
+        if (!entry.updatedAt) {
+          updated = true;
+          return { ...entry, updatedAt: entry.timestamp }; // Default to timestamp
+        }
+        return entry;
+      });
+
+      if (updated) {
+        localStorage.setItem('maeple_entries', JSON.stringify(migratedEntries));
+        console.log('Schema v1: Added updatedAt to entries');
+      }
+    } catch (e) {
+      console.error('Schema v1 migration failed:', e);
+    }
   }
 };
 

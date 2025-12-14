@@ -24,6 +24,24 @@ export class OpenRouterAdapter extends BaseAIAdapter {
     this.baseUrl = config.baseUrl || "https://openrouter.ai/api/v1";
   }
 
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.fetchWithRetry(
+        `${this.baseUrl}/auth/key`,
+        {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${this.config.apiKey}`
+          }
+        }
+      );
+      return true;
+    } catch (error) {
+      console.error("OpenRouter health check failed:", error);
+      return false;
+    }
+  }
+
   async chat(request: AITextRequest): Promise<AITextResponse> {
     try {
       const messages = request.messages.map(msg => ({
@@ -194,6 +212,13 @@ export class OpenRouterAdapter extends BaseAIAdapter {
   }
 
   private handleError(error: any): Error {
+    // If it's already an AIError, it was likely thrown by fetchWithRetry which already tracked it
+    if (error instanceof AIError) {
+      return error;
+    }
+
+    this.trackError();
+
     if (error?.message?.includes('401') || error?.message?.includes('403')) {
       return new AIError("Invalid OpenRouter API key", "openrouter");
     }

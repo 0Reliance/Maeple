@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 import { BaseAIAdapter, AdapterConfig } from "./base";
 import {
   AITextRequest,
@@ -9,6 +9,8 @@ import {
   AIImageResponse,
   AISearchRequest,
   AISearchResponse,
+  AILiveConfig,
+  AILiveSession,
   AIError,
 } from "../types";
 
@@ -26,6 +28,7 @@ export class GeminiAdapter extends BaseAIAdapter {
   }
 
   async chat(request: AITextRequest): Promise<AITextResponse> {
+    this.trackRequest();
     try {
       const systemMessages = request.messages.filter((m) => m.role === "system");
       const systemInstruction = systemMessages.length > 0
@@ -65,6 +68,7 @@ export class GeminiAdapter extends BaseAIAdapter {
   }
 
   async vision(request: AIVisionRequest): Promise<AIVisionResponse> {
+    this.trackRequest();
     try {
       const response = await this.client.models.generateContent({
         model: "gemini-2.5-flash",
@@ -87,6 +91,7 @@ export class GeminiAdapter extends BaseAIAdapter {
   }
 
   async generateImage(request: AIImageRequest): Promise<AIImageResponse> {
+    this.trackRequest();
     try {
       const parts: any[] = [];
 
@@ -123,6 +128,7 @@ export class GeminiAdapter extends BaseAIAdapter {
   }
 
   async search(request: AISearchRequest): Promise<AISearchResponse> {
+    this.trackRequest();
     try {
       const response = await this.client.models.generateContent({
         model: "gemini-2.5-flash",
@@ -152,32 +158,103 @@ export class GeminiAdapter extends BaseAIAdapter {
     return true;
   }
 
+  async healthCheck(): Promise<boolean> {
+    try {
+      // Lightweight check using countTokens
+      await this.client.models.countTokens({
+        model: "gemini-1.5-flash",
+        contents: "ping",
+      });
+      return true;
+    } catch (error) {
+      console.error("Gemini health check failed:", error);
+      return false;
+    }
+  }
+
+  async connectLive(config: AILiveConfig): Promise<AILiveSession> {
+    this.trackRequest();
+    try {
+      const session = await this.client.live.connect({
+        model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+        config: {
+          responseModalities: [Modality.AUDIO],
+          systemInstruction: config.systemInstruction,
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: config.voice || 'Kore' } }
+          }
+        },
+        callbacks: {
+          onopen: config.callbacks.onOpen,
+          onclose: config.callbacks.onClose,
+          onmessage: (msg: any) => {
+            if (msg.serverContent?.modelTurn?.parts?.[0]?.inlineData) {
+              const base64 = msg.serverContent.modelTurn.parts[0].inlineData.data;
+              const binaryString = atob(base64);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              config.callbacks.onAudioData?.(bytes);
+            }
+          },
+          onerror: (e: any) => {
+            const error = new Error(e.message || 'Unknown Gemini Live error');
+            config.callbacks.onError?.(error);
+          }
+        }
+      });
+
+      return {
+        sendAudio: async (base64Data: string) => {
+          await session.sendRealtimeInput({
+            media: {
+              mimeType: "audio/pcm;rate=16000",
+              data: base64Data
+            }
+          });
+        },
+        disconnect: async () => {
+          // No explicit disconnect in current SDK binding
+        }
+      };
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   async *stream(request: AITextRequest): AsyncGenerator<string, void, unknown> {
-    const systemMessages = request.messages.filter((m) => m.role === "system");
-    const systemInstruction = systemMessages.length > 0
-      ? systemMessages.map((m) => m.content).join("\n")
-      : request.systemPrompt || "";
+    this.trackRequest();
+    try {
+      const systemMessages = request.messages.filter((m) => m.role === "system");
+      const systemInstruction = systemMessages.length > 0
+        ? systemMessages.map((m) => m.content).join("\n")
+        : request.systemPrompt || "";
 
-    const conversationMessages = request.messages.filter((m) => m.role !== "system");
-    const prompt = conversationMessages.map((m) => m.content).join("\n\n");
+      const conversationMessages = request.messages.filter((m) => m.role !== "system");
+      const prompt = conversationMessages.map((m) => m.content).join("\n\n");
 
-    const stream = await this.client.models.generateContentStream({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        systemInstruction,
-        temperature: request.temperature ?? 0.7,
-      },
-    });
+      const stream = await this.client.models.generateContentStream({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          systemInstruction,
+          temperature: request.temperature ?? 0.7,
+        },
+      });
 
-    for await (const chunk of stream) {
-      if (chunk.text) {
-        yield chunk.text;
+      for await (const chunk of stream) {
+        if (chunk.text) {
+          yield chunk.text;
+        }
       }
+    } catch (error) {
+      throw this.handleError(error);
     }
   }
 
   private handleError(error: any): Error {
+    this.trackError();
     const msg = error?.message || "Unknown Gemini error";
     return new AIError(`Gemini error: ${msg}`, "gemini");
   }
