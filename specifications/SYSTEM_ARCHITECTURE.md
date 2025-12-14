@@ -18,12 +18,11 @@ MAEPLE (Mental And Emotional Pattern Literacy Engine) is a neuro-affirming healt
 - **Routing**: React Router DOM
 - **PWA**: Service Worker, Manifest, Installable
 
-### Backend Services (Serverless/Cloud)
+### Backend Services
 
-- **Database**: PostgreSQL (Supabase)
-- **Auth**: Supabase Auth (JWT, RLS)
-- **Storage**: Supabase Storage (for backups/exports)
-- **API**: Node.js/Express (Legacy/Proxy for specific integrations)
+- **Database**: PostgreSQL (Local)
+- **Auth**: Local Auth Service (JWT, bcrypt)
+- **API**: Node.js/Express (REST API)
 
 ### AI Layer
 
@@ -55,19 +54,21 @@ MAEPLE (Mental And Emotional Pattern Literacy Engine) is a neuro-affirming healt
 
 - **Encryption**: AES-GCM 256-bit encryption for sensitive biometric data (Bio-Mirror) before storage.
 - **API Keys**: Stored in `localStorage` (encrypted at rest) or environment variables.
-- **RLS**: Row Level Security policies on Supabase ensure users can only access their own data.
+- **Auth**: JWT-based authentication with secure password hashing.
 
 ## 4. Directory Structure
 
 ```
 /workspaces/Maeple/
-├── components/          # React UI Components
-├── services/            # Business Logic & API Clients
-│   ├── ai/              # AI Router & Adapters
-│   ├── wearables/       # Wearable Integrations
+├── src/
+│   ├── components/      # React UI Components
+│   ├── services/        # Business Logic & API Clients
+│   │   ├── ai/          # AI Router & Adapters
+│   │   ├── wearables/   # Wearable Integrations
+│   │   └── ...
+│   ├── stores/          # Zustand Stores
 │   └── ...
-├── stores/              # Zustand Stores
-├── supabase/            # DB Schema & Migrations
+├── api/                 # Express API Server
 ├── tests/               # Vitest Suites
-└── types.ts             # TypeScript Definitions
+└── local_schema.sql     # Database Schema
 ```

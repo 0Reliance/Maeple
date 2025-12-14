@@ -37,7 +37,7 @@ Abstraction over LocalStorage and IndexedDB.
 
 ### 1.3 Sync Service (`services/syncService.ts`)
 
-Handles synchronization with Supabase.
+Handles synchronization with the Local API.
 
 - `initializeSync()`: Sets up background sync.
 - `triggerPendingSync()`: Forces a sync of queued items.
@@ -45,11 +45,11 @@ Handles synchronization with Supabase.
 
 ## 2. External Integrations
 
-### 2.1 Supabase (Database & Auth)
+### 2.1 Local API (Database & Auth)
 
-- **Endpoint**: Managed via `supabase-js` client.
-- **Auth**: Handles Sign Up, Sign In, Magic Link, OAuth.
-- **Database**: PostgreSQL via REST/Realtime.
+- **Endpoint**: `/api` (Proxied to `http://localhost:3001`)
+- **Auth**: Handles Sign Up, Sign In, JWT Management.
+- **Database**: PostgreSQL via Express API.
 
 ### 2.2 AI Providers
 

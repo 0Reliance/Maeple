@@ -29,7 +29,7 @@ The central record of a user's state.
 - **provider**: 'OURA' | 'APPLE_HEALTH' | etc.
 - **metrics**: Standardized metrics (HRV, Sleep Duration, Steps).
 
-## 2. Database Schema (Supabase/PostgreSQL)
+## 2. Database Schema (PostgreSQL)
 
 ### `users`
 

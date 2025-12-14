@@ -4,12 +4,12 @@
 
 ## 1. Project Context
 
-MAEPLE started as a local-only prototype and evolved into a "Production-Ready Enterprise Full-Stack System". The transition involved moving from pure LocalStorage to a hybrid Sync model with Supabase.
+MAEPLE started as a local-only prototype and evolved into a "Production-Ready Enterprise Full-Stack System". The transition involved moving from pure LocalStorage to a hybrid Sync model with a Local API.
 
 ## 2. Key Decisions
 
 - **Client-Side AI**: We moved away from a heavy backend proxy for AI to client-side adapters (Gemini, OpenAI, etc.) to reduce latency and server costs, using `AIRouter` to manage keys and fallbacks.
-- **Supabase**: Chosen for its "Backend-as-a-Service" capabilities (Auth, DB, Realtime) to speed up development compared to a custom Express backend.
+- **Local API**: We reverted from Supabase to a custom Express + PostgreSQL backend to ensure full control over the data stack and simplify the local development environment.
 - **Mobile-First Navigation**: The desktop sidebar was removed in v1.5.0 to unify the codebase and focus on a single, polished navigation experience.
 - **Zustand**: Chosen over Redux for simplicity and bundle size.
 
@@ -29,4 +29,4 @@ MAEPLE started as a local-only prototype and evolved into a "Production-Ready En
 
 - **Specs**: `/workspaces/Maeple/specifications/`
 - **Archive**: `/workspaces/Maeple/archive/`
-- **Source**: `/workspaces/Maeple/src/` (and root `components/`, `services/`, `stores/`)
+- **Source**: `/workspaces/Maeple/src/`

@@ -1,0 +1,17 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --only=production
+
+# Copy API source
+COPY api ./api
+COPY .env.example ./.env
+
+# Expose port
+EXPOSE 3001
+
+# Start server
+CMD ["node", "api/index.cjs"]
