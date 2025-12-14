@@ -15,4 +15,8 @@ psql -U postgres -c "ALTER USER maeple_user CREATEDB;" || true
 # Initialize schema
 psql -U postgres -d maeple -f local_schema.sql || true
 
+# Grant permissions to maeple_user
+psql -U postgres -d maeple -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO maeple_user;" || true
+psql -U postgres -d maeple -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO maeple_user;" || true
+
 echo "Database setup complete."
