@@ -1,5 +1,29 @@
 # MAEPLE Changelog
 
+## v2.0.0 (December 14, 2025)
+
+**Status**: ✅ Production Release
+
+### 🚀 Major Architecture Refactor: Local-First & Containerized
+
+- **Supabase Removal**: Completely removed Supabase dependency. The app now runs on a self-contained architecture using a local Express API and PostgreSQL database.
+- **Docker Support**: Added full Docker and Docker Compose support for one-command deployment (`deploy/docker-compose.yml`).
+- **Project Restructuring**: Consolidated all source code into `src/`, moved API to `api/`, and cleaned up root directory.
+
+### 🔒 Security & Stability
+
+- **Authentication Fixes**: Resolved database permission issues for new user registration.
+- **Rate Limiting**: Optimized API rate limits (100 req/15min) to prevent false positives during normal usage while maintaining security.
+- **Database Hardening**: Improved `setup_db.sh` to ensure correct role privileges for the application user.
+
+### 📚 Documentation
+
+- **Deployment Guide**: Added comprehensive `deploy/DEPLOY.md` covering Docker, Vercel, and Railway strategies.
+- **Development Guide**: Updated `DEVELOPMENT.md` with clear steps for the new local stack.
+- **Privacy Policy**: Clarified "Self-Hosted" nature of the application in `README.md`.
+
+---
+
 ## v1.5.0 (Current)
 
 **Status**: 🚧 In Progress
