@@ -2,27 +2,71 @@
 # For local development and simple deployments
 
 services:
-  maeple:
+  proxy:
     build:
       context: ..
-      dockerfile: deploy/Dockerfile
-    container_name: maeple-app
+      dockerfile: deploy/Dockerfile.proxy
+    container_name: maeple-proxy
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "8083:8083"
     environment:
       - NODE_ENV=production
+      - PROXY_PORT=8083
+      - API_TARGET=http://maeple-api:3001
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-    labels:
-      # Traefik labels (if using Traefik reverse proxy)
-      - "traefik.enable=true"
-      - "traefik.http.routers.maeple.rule=Host(`maeple.local`)"
-      - "traefik.http.services.maeple.loadbalancer.server.port=80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - maeple-network
+
+  api:
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+    container_name: maeple-api
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - API_PORT=3001
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=maeple
+      - DB_USER=maeple_user
+      - DB_PASSWORD=maeple_beta_2025
+      - JWT_SECRET=maeple-beta-secret-2025-change-in-production
+    depends_on:
+      - postgres
+    networks:
+      - maeple-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: maeple-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=maeple
+      - POSTGRES_USER=maeple_user
+      - POSTGRES_PASSWORD=maeple_beta_2025
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - maeple-network
+
+networks:
+  maeple-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+
 
 # Optional: Add Traefik for reverse proxy with SSL
 #  traefik:
