@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense } from "react";
+import React, { useEffect, Suspense, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -30,6 +30,8 @@ import Roadmap from "./components/Roadmap";
 import MobileNav from "./components/MobileNav";
 import OnboardingWizard from "./components/OnboardingWizard";
 import SyncIndicator from "./components/SyncIndicator";
+import LandingPage from "./components/LandingPage";
+import AuthModal from "./components/AuthModal";
 
 // Lazy load heavy components for better performance
 const HealthMetricsDashboard = React.lazy(
@@ -70,7 +72,8 @@ function AppContent() {
     initializeApp,
   } = useAppStore();
 
-  const { initializeAuth } = useAuthStore();
+  const { initializeAuth, isAuthenticated, isInitialized } = useAuthStore();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Determine current view from path
   const currentPath =
@@ -89,6 +92,30 @@ function AppContent() {
   useEffect(() => {
     setView(view);
   }, [view, setView]);
+
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LandingPage
+          onLogin={() => setIsAuthModalOpen(true)}
+          onRegister={() => setIsAuthModalOpen(true)}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={() => setIsAuthModalOpen(false)}
+        />
+      </>
+    );
+  }
 
   const handleEntryAdded = (entry: HealthEntry) => {
     addEntry(entry);

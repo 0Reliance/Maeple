@@ -1,9 +1,9 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import App from '../../App';
-import { useAppStore } from '../../stores';
-import { View } from '../../types';
+import React from "react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import App from "../../App";
+import { useAppStore, useAuthStore } from "../../stores";
+import { View } from "../../types";
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
@@ -15,19 +15,35 @@ global.ResizeObserver = class ResizeObserver {
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
   constructor() {}
-  observe() { return null; }
-  unobserve() { return null; }
-  disconnect() { return null; }
+  observe() {
+    return null;
+  }
+  unobserve() {
+    return null;
+  }
+  disconnect() {
+    return null;
+  }
 } as any;
 
 // Mock lazy loaded components to avoid suspense issues in tests
-vi.mock('../../components/LiveCoach', () => ({ default: () => <div data-testid="live-coach">Live Coach</div> }));
-vi.mock('../../components/VisionBoard', () => ({ default: () => <div data-testid="vision-board">Vision Board</div> }));
-vi.mock('../../components/StateCheckWizard', () => ({ default: () => <div data-testid="state-check">State Check</div> }));
-vi.mock('../../components/Settings', () => ({ default: () => <div data-testid="settings">Settings</div> }));
-vi.mock('../../components/ClinicalReport', () => ({ default: () => <div data-testid="clinical-report">Clinical Report</div> }));
+vi.mock("../../components/LiveCoach", () => ({
+  default: () => <div data-testid="live-coach">Live Coach</div>,
+}));
+vi.mock("../../components/VisionBoard", () => ({
+  default: () => <div data-testid="vision-board">Vision Board</div>,
+}));
+vi.mock("../../components/StateCheckWizard", () => ({
+  default: () => <div data-testid="state-check">State Check</div>,
+}));
+vi.mock("../../components/Settings", () => ({
+  default: () => <div data-testid="settings">Settings</div>,
+}));
+vi.mock("../../components/ClinicalReport", () => ({
+  default: () => <div data-testid="clinical-report">Clinical Report</div>,
+}));
 
-describe('App Navigation', () => {
+describe("App Navigation", () => {
   beforeEach(() => {
     useAppStore.setState({
       currentView: View.JOURNAL,
@@ -35,51 +51,78 @@ describe('App Navigation', () => {
       wearableData: [],
       mobileMenuOpen: false,
       showOnboarding: false,
-      isInitialized: true
+      isInitialized: true,
     });
-    
+
+    useAuthStore.setState({
+      isAuthenticated: true,
+      isInitialized: true,
+      user: { id: "test-user", email: "test@example.com" } as any,
+      session: {} as any,
+      isLoading: false,
+      error: null,
+      isSupabaseAvailable: true,
+    });
+
     // Reset URL
-    window.history.pushState({}, 'Test page', '/');
+    window.history.pushState({}, "Test page", "/");
   });
 
-  it('renders Journal by default', async () => {
+  it("renders Journal by default", async () => {
     render(<App />);
     await waitFor(() => {
       expect(screen.getByText(/MAEPLE Journal/i)).toBeInTheDocument();
     });
   });
 
-  it('navigates to Dashboard', async () => {
+  it("navigates to Dashboard", async () => {
     render(<App />);
-    
+
     // Find the button in the sidebar
-    const dashboardBtn = screen.getAllByText('Pattern Dashboard')[0];
+    const dashboardBtn = screen.getAllByText("Pattern Dashboard")[0];
     fireEvent.click(dashboardBtn);
-    
+
     await waitFor(() => {
       expect(screen.getAllByText(/Pattern Dashboard/i)[0]).toBeInTheDocument();
     });
   });
 
-  it('navigates to Settings', async () => {
+  it("navigates to Settings", async () => {
     render(<App />);
-    
-    const settingsBtn = screen.getAllByText('Settings')[0];
+
+    const settingsBtn = screen.getAllByText("Settings")[0];
     fireEvent.click(settingsBtn);
-    
+
     await waitFor(() => {
-      expect(screen.getByTestId('settings')).toBeInTheDocument();
+      expect(screen.getByTestId("settings")).toBeInTheDocument();
     });
   });
-  
-  it('navigates to Bio-Mirror', async () => {
+
+  it("navigates to Bio-Mirror", async () => {
     render(<App />);
-    
-    const bioBtn = screen.getAllByText('Bio-Mirror (State Check)')[0];
+
+    const bioBtn = screen.getAllByText("Bio-Mirror (State Check)")[0];
     fireEvent.click(bioBtn);
-    
+
     await waitFor(() => {
-      expect(screen.getByTestId('state-check')).toBeInTheDocument();
+      expect(screen.getByTestId("state-check")).toBeInTheDocument();
+    });
+  });
+
+  it("renders Landing Page when not authenticated", async () => {
+    useAuthStore.setState({
+      isAuthenticated: false,
+      isInitialized: true,
+      user: null,
+      session: null,
+    });
+
+    render(<App />);
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Context-aware intelligence for/i)
+      ).toBeInTheDocument();
+      expect(screen.getAllByText(/Sign In/i)[0]).toBeInTheDocument();
     });
   });
 });
