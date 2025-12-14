@@ -49,7 +49,7 @@ import { HealthEntry, View, WearableDataPoint } from "./types";
 import { viewToPath, pathToView } from "./routes";
 import { initNotificationService } from "./services/notificationService";
 import { initBackgroundSync } from "./services/backgroundSync";
-import swManager from "./src/swRegistration.ts";
+import swManager from "./swRegistration.ts";
 
 // Zustand stores
 import { useAppStore, useAuthStore } from "./stores";

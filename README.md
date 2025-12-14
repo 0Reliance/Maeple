@@ -82,7 +82,7 @@ Predictive cognitive weather based on cycle phase (e.g., warning about Luteal Ph
   - `llama3.2` (Ollama Local)
 - **Visualization**: Recharts
 - **Storage**: IndexedDB (via `idb` wrapper) & LocalStorage
-- **Cloud Sync**: Supabase (PostgreSQL + Auth) for cross-device sync
+- **Server Sync**: Local PostgreSQL + Express API for cross-device sync
 - **Security**: Web Crypto API (AES-GCM) for biometric data encryption
 - **Testing**: Vitest + React Testing Library (180+ tests)
 - **Wearables**: Oura Ring API integration (OAuth2)
@@ -115,17 +115,17 @@ MAEPLE is now a full Progressive Web App (PWA):
 - **Privacy First:** Clear explanation of local-only data storage
 - **Quick Start:** Get journaling in under a minute
 
-### 11. Cloud Sync ☁️
+### 11. Server Sync ☁️
 
 - **Cross-Device Access:** Sign in to sync your data across all your devices
-- **Supabase Backend:** Secure PostgreSQL database with Row Level Security
+- **Local Backend:** Secure PostgreSQL database with Express API
 - **Offline-First:** Works without internet, syncs when back online
-- **User Accounts:** Email/password or magic link authentication
-- **Automatic Backup:** Your data is safely stored in the cloud
+- **User Accounts:** Email/password authentication
+- **Automatic Backup:** Your data is safely stored in the database
 
 ## 🚀 Installation & Setup (Beta v5)
 
-**New users?** → See the complete [SETUP.md](./SETUP.md).
+**New users?** → See the complete [DEVELOPMENT.md](./DEVELOPMENT.md).
 
 ### Quick Start
 
@@ -208,33 +208,22 @@ MAEPLE behaves differently depending on the device context to optimize for neuro
 
 ## 📦 Deployment
 
-MAEPLE is a modern, production-ready SPA. Deploy in minutes to Vercel, Netlify, or your own static host:
+See the [Deployment Guide](deploy/DEPLOY.md) for detailed instructions on how to deploy MAEPLE using Docker (recommended) or hybrid cloud providers.
 
-### Vercel / Netlify
+### Quick Docker Deployment
 
-1. Connect your GitHub repository.
-2. Set Build Command: `npm run build`
-3. Set Output Directory: `dist`
-4. Add your `VITE_GEMINI_API_KEY` in the Environment Variables section of your hosting dashboard.
-
-### Self-Hosting
-
-1. Run `npm run build`
-2. Serve the `dist/` directory with any static file server (e.g., `serve`, NGINX, Apache).
-
-### Production Best Practices
-
-- Use HTTPS for all deployments (required for camera/mic access).
-- Set all API keys as environment variables in your host, never hard-code secrets.
-- Regularly export and back up your data (see in-app Settings).
+```bash
+cd deploy
+docker-compose up -d --build
+```
 
 ### 🔐 Privacy & Security
 
 MAEPLE is **privacy-first** by design:
 
-- **Local-First:** All data (journal, biometric, settings) is stored locally in your browser (LocalStorage & IndexedDB).
+- **Self-Hosted:** You own your data. It lives in your local PostgreSQL database or your private cloud instance.
 - **Encryption:** Sensitive biometric data is encrypted with AES-GCM before saving.
-- **No Cloud Storage:** Data is sent to AI providers _only_ for processing and is never stored on our servers.
+- **AI Privacy:** Data is sent to AI providers _only_ for processing and is never stored on their servers (subject to provider policies).
 - **User Control:** You can clear or export your data at any time.
 
 ---

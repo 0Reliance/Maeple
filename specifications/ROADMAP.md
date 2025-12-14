@@ -96,7 +96,7 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 
 ---
 
-**Status:** Release v1.3.0 Ready. Cloud sync with Supabase implemented.
+**Status:** Release v2.0.0 Ready. Local API sync implemented.
 
 ## 🟢 Phase 12: Multi-Provider AI Platform (COMPLETED)
 
@@ -119,15 +119,14 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 - [x] Notification System (`notificationService.ts`, `NotificationSettings.tsx`) - Gentle reminders.
 - [x] Real Wearable Integration (`ouraAdapter.ts`) - Oura Ring v2 API with OAuth2.
 
-## 🟢 Phase 14: Cloud Sync & Persistence (COMPLETED)
+## 🟢 Phase 14: Server Sync & Persistence (COMPLETED)
 
-- [x] Supabase Client (`supabaseClient.ts`) - Connection singleton with config detection.
-- [x] Database Schema (`supabase/schema.sql`) - Full schema with RLS policies.
-- [x] Cloud Storage Service (`supabaseStorage.ts`) - CRUD operations for all data types.
-- [x] Authentication Service (`authService.ts`) - Email/password, magic link, OAuth.
-- [x] Sync Service (`syncService.ts`) - Hybrid local-first with cloud backup.
+- [x] Local API Client (`apiClient.ts`) - Connection to Express backend.
+- [x] Database Schema (`local_schema.sql`) - Full PostgreSQL schema.
+- [x] Authentication Service (`authService.ts`) - Email/password via Local API.
+- [x] Sync Service (`syncService.ts`) - Hybrid local-first with server backup.
 - [x] Storage Integration (`storageService.ts`) - Auto-queue changes for sync.
-- [x] Auth Modal (`AuthModal.tsx`) - Sign in/up UI with multiple methods.
+- [x] Auth Modal (`AuthModal.tsx`) - Sign in/up UI.
 - [x] Cloud Sync Settings (`CloudSyncSettings.tsx`) - Sync status, push/pull controls.
 
 ## 🟢 Phase 16: UX & Polish (COMPLETED)

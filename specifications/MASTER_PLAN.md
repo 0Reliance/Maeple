@@ -56,13 +56,13 @@ MAEPLE is a sophisticated neuro-affirming health intelligence platform that has 
 
 ### 1.3 Storage & Sync Services
 
-| Component            | Status     | Findings                       |
-| -------------------- | ---------- | ------------------------------ |
-| LocalStorage         | ✅ Working | Journal entries, settings      |
-| IndexedDB            | ✅ Working | State checks with encryption   |
-| Supabase Integration | ✅ Working | Cloud sync, auth, RLS policies |
-| Offline Queue        | ✅ Good    | IndexedDB-backed request queue |
-| Encryption           | ✅ Solid   | AES-GCM for biometric data     |
+| Component     | Status     | Findings                       |
+| ------------- | ---------- | ------------------------------ |
+| LocalStorage  | ✅ Working | Journal entries, settings      |
+| IndexedDB     | ✅ Working | State checks with encryption   |
+| Server Sync   | ✅ Working | Local API sync, auth           |
+| Offline Queue | ✅ Good    | IndexedDB-backed request queue |
+| Encryption    | ✅ Solid   | AES-GCM for biometric data     |
 
 **Issues Found**:
 
@@ -144,7 +144,7 @@ MAEPLE is a sophisticated neuro-affirming health intelligence platform that has 
 | -------------------- | ------------------ | ------------------------- |
 | API Key Storage      | ✅ Good            | Encrypted in localStorage |
 | Biometric Encryption | ✅ Strong          | AES-GCM 256-bit           |
-| Auth (Supabase)      | ✅ Good            | JWT with RLS              |
+| Auth (Local API)     | ✅ Good            | JWT with bcrypt           |
 | Rate Limiting        | ✅ Implemented     | 55/min, 1400/day          |
 | Input Validation     | ✅ Good            | validationService         |
 | XSS Prevention       | ⚠️ Basic           | React default escaping    |
@@ -442,8 +442,7 @@ MAEPLE is a sophisticated neuro-affirming health intelligence platform that has 
 
 ### Infrastructure
 
-- Supabase Pro plan (~$25/mo)
-- Vercel Pro for deployment (~$20/mo)
+- Local Server (Self-hosted)
 - AI API budgets:
   - Gemini: ~$50/mo (free tier + paid)
   - OpenAI: ~$100/mo
@@ -464,34 +463,35 @@ MAEPLE is a sophisticated neuro-affirming health intelligence platform that has 
 ```
 /workspaces/Maeple/
 ├── components/          # 20 React components
-│   ├── JournalEntry.tsx    # Primary journal input
-│   ├── StateCheckWizard.tsx # Bio-Mirror flow
-│   ├── LiveCoach.tsx       # Voice AI companion
-│   └── ...
-├── services/
-│   ├── ai/              # Multi-provider AI layer
-│   │   ├── adapters/    # 7 provider adapters
-│   │   ├── router.ts    # Capability routing
-│   │   └── types.ts     # AI type definitions
-│   ├── wearables/       # 4 wearable adapters
-│   └── *.ts             # 15 service modules
-├── stores/              # Zustand state stores
+│   src/
+│   ├── components/      # 20 React components
+│   │   ├── JournalEntry.tsx    # Primary journal input
+│   │   ├── StateCheckWizard.tsx # Bio-Mirror flow
+│   │   ├── LiveCoach.tsx       # Voice AI companion
+│   │   └── ...
+│   ├── services/
+│   │   ├── ai/              # Multi-provider AI layer
+│   │   │   ├── adapters/    # 7 provider adapters
+│   │   │   ├── router.ts    # Capability routing
+│   │   │   └── types.ts     # AI type definitions
+│   │   ├── wearables/       # 4 wearable adapters
+│   │   └── *.ts             # 15 service modules
+│   ├── stores/              # Zustand state stores
 ├── tests/               # 112 tests, 6 suites
-├── supabase/            # Database schema
-└── deploy/              # Docker, nginx configs
+├── api/                 # Express API Serveronfigs
 ```
 
 ---
 
 ## Appendix B: Key Decisions Log
 
-| Decision               | Rationale                     | Date     |
-| ---------------------- | ----------------------------- | -------- |
-| Zustand over Redux     | Simpler API, smaller bundle   | Dec 2025 |
-| Supabase over Firebase | PostgreSQL, RLS, pricing      | Dec 2025 |
-| Vite over CRA          | Speed, modern tooling         | Dec 2025 |
-| Multi-provider AI      | Resilience, cost optimization | Dec 2025 |
-| Local-first sync       | Offline support, privacy      | Dec 2025 |
+| Decision                | Rationale                     | Date     |
+| ----------------------- | ----------------------------- | -------- |
+| Zustand over Redux      | Simpler API, smaller bundle   | Dec 2025 |
+| Local API over Supabase | Control, simplicity, cost     | Dec 2025 |
+| Vite over CRA           | Speed, modern tooling         | Dec 2025 |
+| Multi-provider AI       | Resilience, cost optimization | Dec 2025 |
+| Local-first sync        | Offline support, privacy      | Dec 2025 |
 
 ---
 

@@ -1,17 +1,17 @@
 /**
  * MAEPLE Auth Modal
- * 
+ *
  * Sign in/up modal for cloud sync authentication.
  * Supports email/password and magic link.
  */
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   signInWithEmail,
   signUpWithEmail,
   signInWithMagicLink,
   AuthError,
-} from '../services/authService';
+} from "../services/authService";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,13 +19,17 @@ interface AuthModalProps {
   onSuccess: () => void;
 }
 
-type AuthMode = 'signin' | 'signup' | 'magic';
+type AuthMode = "signin" | "signup" | "magic";
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const [mode, setMode] = useState<AuthMode>('signin');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
+const AuthModal: React.FC<AuthModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+}) => {
+  const [mode, setMode] = useState<AuthMode>("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
@@ -38,12 +42,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
     setLoading(true);
 
     try {
-      if (mode === 'magic') {
+      if (mode === "magic") {
         const { error } = await signInWithMagicLink(email);
         if (error) throw new Error(error.message);
         setMagicLinkSent(true);
-      } else if (mode === 'signup') {
-        const { user, error } = await signUpWithEmail(email, password, displayName);
+      } else if (mode === "signup") {
+        const { user, error } = await signUpWithEmail(
+          email,
+          password,
+          displayName
+        );
         if (error) throw new Error(error.message);
         if (user) {
           onSuccess();
@@ -58,16 +66,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
+      console.error("Auth error:", err);
+      setError(err instanceof Error ? err.message : "Authentication failed");
     } finally {
       setLoading(false);
     }
   };
 
   const resetForm = () => {
-    setEmail('');
-    setPassword('');
-    setDisplayName('');
+    setEmail("");
+    setPassword("");
+    setDisplayName("");
     setError(null);
     setMagicLinkSent(false);
   };
@@ -78,14 +87,28 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-white">
-            {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Magic Link'}
+            {mode === "signin"
+              ? "Sign In"
+              : mode === "signup"
+              ? "Create Account"
+              : "Magic Link"}
           </h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -94,17 +117,33 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
         {magicLinkSent ? (
           <div className="text-center py-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <svg
+                className="w-8 h-8 text-emerald-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">Check your email!</h3>
+            <h3 className="text-lg font-medium text-white mb-2">
+              Check your email!
+            </h3>
             <p className="text-slate-400 text-sm">
-              We sent a magic link to <strong className="text-white">{email}</strong>.
-              Click the link to sign in.
+              We sent a magic link to{" "}
+              <strong className="text-white">{email}</strong>. Click the link to
+              sign in.
             </p>
             <button
-              onClick={() => { resetForm(); setMode('signin'); }}
+              onClick={() => {
+                resetForm();
+                setMode("signin");
+              }}
               className="mt-6 text-teal-400 hover:text-teal-300 text-sm"
             >
               Back to sign in
@@ -120,7 +159,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
             )}
 
             {/* Display Name (signup only) */}
-            {mode === 'signup' && (
+            {mode === "signup" && (
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">
                   Display Name
@@ -151,7 +190,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
             </div>
 
             {/* Password (not for magic link) */}
-            {mode !== 'magic' && (
+            {mode !== "magic" && (
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">
                   Password
@@ -177,48 +216,67 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                   Processing...
                 </span>
-              ) : mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Send Magic Link'}
+              ) : mode === "signin" ? (
+                "Sign In"
+              ) : mode === "signup" ? (
+                "Create Account"
+              ) : (
+                "Send Magic Link"
+              )}
             </button>
 
             {/* Mode Switchers */}
             <div className="pt-4 border-t border-slate-700 space-y-2 text-center text-sm">
-              {mode === 'signin' && (
+              {mode === "signin" && (
                 <>
                   <button
                     type="button"
-                    onClick={() => { resetForm(); setMode('signup'); }}
+                    onClick={() => {
+                      resetForm();
+                      setMode("signup");
+                    }}
                     className="text-teal-400 hover:text-teal-300"
                   >
                     Don't have an account? Sign up
                   </button>
-                  <br />
-                  <button
-                    type="button"
-                    onClick={() => { resetForm(); setMode('magic'); }}
-                    className="text-slate-400 hover:text-white"
-                  >
-                    Sign in with magic link instead
-                  </button>
                 </>
               )}
-              {mode === 'signup' && (
+              {mode === "signup" && (
                 <button
                   type="button"
-                  onClick={() => { resetForm(); setMode('signin'); }}
+                  onClick={() => {
+                    resetForm();
+                    setMode("signin");
+                  }}
                   className="text-teal-400 hover:text-teal-300"
                 >
                   Already have an account? Sign in
                 </button>
               )}
-              {mode === 'magic' && (
+              {mode === "magic" && (
                 <button
                   type="button"
-                  onClick={() => { resetForm(); setMode('signin'); }}
+                  onClick={() => {
+                    resetForm();
+                    setMode("signin");
+                  }}
                   className="text-teal-400 hover:text-teal-300"
                 >
                   Sign in with password instead
