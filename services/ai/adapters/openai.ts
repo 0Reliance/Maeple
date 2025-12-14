@@ -31,6 +31,19 @@ export class OpenAIAdapter extends BaseAIAdapter {
     return true;
   }
 
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.fetchWithRetry(`${this.apiBase}/models`, {
+        method: 'GET',
+        headers: this.authHeaders(),
+      });
+      return true;
+    } catch (error) {
+      console.error("OpenAI health check failed:", error);
+      return false;
+    }
+  }
+
   async *stream(request: AITextRequest): AsyncGenerator<string, void, unknown> {
     try {
       const body: any = {
@@ -190,6 +203,13 @@ export class OpenAIAdapter extends BaseAIAdapter {
   }
 
   private handleError(error: any): Error {
+    // If it's already an AIError, it was likely thrown by fetchWithRetry which already tracked it
+    if (error instanceof AIError) {
+      return error;
+    }
+
+    this.trackError();
+
     if (error?.message?.includes('401') || error?.message?.includes('403')) {
       return new AIError("Invalid OpenAI API key", "openai");
     }

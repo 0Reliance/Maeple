@@ -8,6 +8,7 @@
 import { HealthEntry, UserSettings, WearableDataPoint, StateCheck } from '../types';
 import { getEntries, getUserSettings } from './storageService';
 import { getRecentStateChecks } from './stateCheckService';
+import JSZip from 'jszip';
 
 export interface ExportData {
   version: string;
@@ -42,10 +43,18 @@ export interface ImportResult {
 /**
  * Export all user data to a JSON structure
  */
-export const exportAllData = async (): Promise<ExportData> => {
+export const exportAllData = async (includeImages = false): Promise<ExportData> => {
   const entries = getEntries();
   const settings = getUserSettings();
-  const stateChecks = await getRecentStateChecks(1000); // Get all available
+  let stateChecks = await getRecentStateChecks(1000); // Get all available
+  
+  // Strip images if not requested to reduce size and prevent timeouts
+  if (!includeImages) {
+    stateChecks = stateChecks.map(check => {
+      const { imageBase64, ...rest } = check;
+      return rest as StateCheck;
+    });
+  }
   
   // Calculate date range
   let earliest: string | null = null;
@@ -77,10 +86,79 @@ export const exportAllData = async (): Promise<ExportData> => {
 };
 
 /**
+ * Export data as a ZIP file (efficient for large datasets with images)
+ */
+export const exportToZip = async (): Promise<void> => {
+  const zip = new JSZip();
+  const entries = getEntries();
+  const settings = getUserSettings();
+  const stateChecks = await getRecentStateChecks(1000);
+
+  // 1. Add JSON data (stripped of images)
+  const stateChecksMetadata = stateChecks.map(check => {
+    const { imageBase64, ...rest } = check;
+    return {
+      ...rest,
+      imagePath: imageBase64 ? `images/${check.id}.jpg` : undefined
+    };
+  });
+
+  const exportData = {
+    version: '1.0.0',
+    exportedAt: new Date().toISOString(),
+    app: 'MAEPLE',
+    data: {
+      entries,
+      settings,
+      stateChecks: stateChecksMetadata,
+    },
+    metadata: {
+      totalEntries: entries.length,
+      totalStateChecks: stateChecks.length,
+    }
+  };
+
+  zip.file("maeple_data.json", JSON.stringify(exportData, null, 2));
+
+  // 2. Add Images folder
+  const imgFolder = zip.folder("images");
+  if (imgFolder) {
+    stateChecks.forEach(check => {
+      if (check.imageBase64) {
+        // Remove data:image/jpeg;base64, prefix
+        const base64Data = check.imageBase64.split(',')[1];
+        if (base64Data) {
+          imgFolder.file(`${check.id}.jpg`, base64Data, { base64: true });
+        }
+      }
+    });
+  }
+
+  // 3. Generate and download
+  const content = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(content);
+  
+  const date = new Date().toISOString().split('T')[0];
+  const filename = `maeple-full-backup-${date}.zip`;
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+/**
  * Download exported data as a JSON file
  */
-export const downloadExport = async (): Promise<void> => {
-  const data = await exportAllData();
+export const downloadExport = async (includeImages = false): Promise<void> => {
+  if (includeImages) {
+    return exportToZip();
+  }
+
+  const data = await exportAllData(false);
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

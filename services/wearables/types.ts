@@ -1,5 +1,9 @@
-
-export type ProviderType = 'OURA' | 'GOOGLE_FIT' | 'APPLE_HEALTH' | 'GARMIN';
+export type ProviderType =
+  | "OURA"
+  | "GOOGLE_FIT"
+  | "APPLE_HEALTH"
+  | "GARMIN"
+  | "WHOOP";
 
 export interface WearableConfig {
   provider: ProviderType;
@@ -36,15 +40,15 @@ export interface StandardizedDailyMetric {
 // The Contract that all adapters must implement
 export interface WearableAdapter {
   provider: ProviderType;
-  
+
   // Auth Flow
   getAuthUrl(): string;
   exchangeCodeForToken(code: string): Promise<WearableConfig>;
-  
+
   // Data Fetching
   fetchDailyMetrics(
-    config: WearableConfig, 
-    startDate: Date, 
+    config: WearableConfig,
+    startDate: Date,
     endDate: Date
   ): Promise<StandardizedDailyMetric[]>;
 }

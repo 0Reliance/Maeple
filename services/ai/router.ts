@@ -16,6 +16,8 @@ import {
   AIImageResponse,
   AISearchRequest,
   AISearchResponse,
+  AILiveConfig,
+  AILiveSession,
   AI_PROVIDERS,
 } from './types';
 import { BaseAIAdapter } from './adapters/base';
@@ -99,6 +101,26 @@ class AIRouter {
     return this.initialized;
   }
 
+  async checkHealth(): Promise<Record<AIProviderType, boolean>> {
+    const results: Partial<Record<AIProviderType, boolean>> = {};
+    
+    const checks = Array.from(this.adapters.entries()).map(async ([id, adapter]) => {
+      const isHealthy = await adapter.healthCheck();
+      results[id] = isHealthy;
+    });
+
+    await Promise.all(checks);
+    return results as Record<AIProviderType, boolean>;
+  }
+
+  getProviderStats(): Record<AIProviderType, any> {
+    const stats: Partial<Record<AIProviderType, any>> = {};
+    for (const [id, adapter] of this.adapters.entries()) {
+      stats[id] = adapter.getStats();
+    }
+    return stats as Record<AIProviderType, any>;
+  }
+
   hasCapability(capability: AICapability): boolean {
     if (!this.settings) return false;
     return this.settings.providers.some(p => {
@@ -167,9 +189,24 @@ class AIRouter {
     return null;
   }
 
-  resetProviderHealth(providerId: AIProviderType): void {
+  async connectLive(config: AILiveConfig): Promise<AILiveSession> {
+    const adapters = this.getAdaptersForCapability('audio');
+    for (const adapter of adapters) {
+      if (adapter.connectLive) {
+        try {
+          return await adapter.connectLive(config);
+        } catch (error) {
+          console.warn(`Failed to connect live with ${adapter.constructor.name}:`, error);
+          continue;
+        }
+      }
+    }
+    throw new Error('No available AI provider supports live audio.');
+  }
+
+  resetProviderStats(providerId: AIProviderType): void {
     const adapter = this.adapters.get(providerId);
-    adapter?.resetHealth();
+    adapter?.resetStats();
   }
 
   private getAdaptersForCapability(capability: AICapability): BaseAIAdapter[] {

@@ -84,8 +84,9 @@ async function apiRequest<T>(
 
     // Handle response safely with content-type validation
     let data;
+    let responseText = '';
     try {
-      const responseText = await response.text();
+      responseText = await response.text();
       console.log(`[API] Response from ${endpoint}:`, responseText);
       
       // Validate content-type before parsing JSON
@@ -115,13 +116,14 @@ async function apiRequest<T>(
       // Safe JSON parsing with better error messages
       data = responseText ? JSON.parse(responseText) : {};
     } catch (parseError) {
+      const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown parse error';
       console.error(`[API] JSON parse error for ${endpoint}:`, {
-        error: parseError.message,
+        error: errorMessage,
         response: responseText.substring(0, 200)
       });
       return { 
         error: 'Invalid JSON response from server',
-        details: parseError instanceof Error ? parseError.message : 'Unknown parse error',
+        details: errorMessage,
         endpoint
       };
     }

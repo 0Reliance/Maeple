@@ -16,6 +16,50 @@ MAEPLE API is a RESTful Node.js + Express backend with PostgreSQL database, feat
 - **Database**: PostgreSQL with production-ready schema
 - **Error Handling**: Comprehensive error responses with proper HTTP status codes
 
+## 🤖 AI Services
+
+### **AI Router**
+The application uses a centralized `AIRouter` to manage multiple AI providers with automatic fallback and capability routing.
+
+**Supported Providers:**
+- **Gemini**: Text, Vision, Image Gen, Audio (Live)
+- **OpenAI**: Text, Vision, Image Gen
+- **Anthropic**: Text, Vision
+- **Perplexity**: Search (with citations), Chat
+- **OpenRouter**: Text, Vision (Access to 100+ models)
+- **Ollama**: Local Text, Local Vision (Privacy-first)
+- **Z.ai**: Text
+
+#### `getProviderStats()`
+Returns usage statistics for all configured providers.
+
+**Returns:**
+```typescript
+Record<string, {
+  providerId: string;
+  requestCount: number;
+  errorCount: number;
+  lastRequestTime: number;
+}>
+```
+
+#### `connectLive(config)`
+Initiates a real-time audio session with a capable provider (e.g., Gemini Live).
+
+**Config:**
+```typescript
+interface AILiveConfig {
+  systemInstruction?: string;
+  voice?: string;
+  callbacks: {
+    onOpen?: () => void;
+    onAudioData?: (data: Uint8Array) => void;
+    onClose?: () => void;
+    onError?: (error: Error) => void;
+  };
+}
+```
+
 ---
 
 ## 🔐 Authentication

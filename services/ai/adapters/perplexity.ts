@@ -24,6 +24,30 @@ export class PerplexityAdapter extends BaseAIAdapter {
     this.baseUrl = config.baseUrl || "https://api.perplexity.ai";
   }
 
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.fetchWithRetry(
+        `${this.baseUrl}/chat/completions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${this.config.apiKey}`
+          },
+          body: JSON.stringify({
+            model: "llama-3.1-sonar-small-128k-online",
+            messages: [{ role: "user", content: "ping" }],
+            max_tokens: 1
+          })
+        }
+      );
+      return true;
+    } catch (error) {
+      console.error("Perplexity health check failed:", error);
+      return false;
+    }
+  }
+
   async chat(request: AITextRequest): Promise<AITextResponse> {
     try {
       const messages = request.messages.map(msg => ({
@@ -102,10 +126,10 @@ export class PerplexityAdapter extends BaseAIAdapter {
 
       const data = await response.json();
       
-      // Extract citations from Perplexity response
-      const sources = data.citations?.map((citation: any) => ({
-        title: citation.title || "Source",
-        url: citation.url || ""
+      // Extract citations from Perplexity response (array of URLs)
+      const sources = data.citations?.map((url: string, index: number) => ({
+        title: `Source ${index + 1}`,
+        url: url
       })) || [];
 
       return {
@@ -114,6 +138,7 @@ export class PerplexityAdapter extends BaseAIAdapter {
         provider: "perplexity"
       };
     } catch (error) {
+      this.trackError();
       throw this.handleError(error);
     }
   }
@@ -123,6 +148,7 @@ export class PerplexityAdapter extends BaseAIAdapter {
   }
 
   async *stream(request: AITextRequest): AsyncGenerator<string, void, unknown> {
+    this.trackRequest();
     try {
       const messages = request.messages.map(msg => ({
         role: msg.role,
@@ -184,6 +210,13 @@ export class PerplexityAdapter extends BaseAIAdapter {
   }
 
   private handleError(error: any): Error {
+    // If it's already an AIError, it was likely thrown by fetchWithRetry which already tracked it
+    if (error instanceof AIError) {
+      return error;
+    }
+
+    this.trackError();
+    
     if (error?.message?.includes('401') || error?.message?.includes('403')) {
       return new AIError("Invalid Perplexity API key", "perplexity");
     }

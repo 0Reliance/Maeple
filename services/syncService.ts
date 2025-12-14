@@ -43,6 +43,7 @@ let syncListeners: Array<(state: SyncState) => void> = [];
 
 // Pending changes queue (for offline support)
 const PENDING_KEY = 'maeple_pending_sync';
+const LAST_SYNC_KEY = 'maeple_last_sync';
 
 interface PendingChange {
   type: 'entry' | 'settings' | 'stateCheck';
@@ -55,7 +56,15 @@ interface PendingChange {
 // STATE MANAGEMENT
 // ============================================
 
-export const getSyncState = (): SyncState => ({ ...syncState });
+const getLastSyncTime = (): Date | null => {
+  const stored = localStorage.getItem(LAST_SYNC_KEY);
+  return stored ? new Date(stored) : null;
+};
+
+export const getSyncState = (): SyncState => ({ 
+  ...syncState,
+  lastSyncAt: getLastSyncTime() 
+});
 
 export const onSyncStateChange = (callback: (state: SyncState) => void): (() => void) => {
   syncListeners.push(callback);
@@ -66,6 +75,9 @@ export const onSyncStateChange = (callback: (state: SyncState) => void): (() => 
 
 const updateSyncState = (updates: Partial<SyncState>) => {
   syncState = { ...syncState, ...updates };
+  if (updates.lastSyncAt) {
+    localStorage.setItem(LAST_SYNC_KEY, updates.lastSyncAt.toISOString());
+  }
   syncListeners.forEach(cb => cb(syncState));
 };
 
@@ -227,29 +239,53 @@ export const pullFromCloud = async (): Promise<{ success: boolean; count: number
   updateSyncState({ status: 'syncing' });
 
   try {
-    // Get cloud data
-    const cloudEntries = await cloudGetEntries(1000);
+    // Get last sync time
+    const lastSync = localStorage.getItem(LAST_SYNC_KEY);
+
+    // Get cloud data (incremental if possible)
+    const cloudEntries = await cloudGetEntries(1000, lastSync || undefined);
     const cloudSettings = await cloudGetSettings();
 
     // Get local data
     const localEntries = getEntries();
     const localIds = new Set(localEntries.map(e => e.id));
 
-    // Merge: Add cloud entries that don't exist locally
+    // Merge: Add cloud entries that don't exist locally OR are newer
     let addedCount = 0;
-    const entriesToAdd: HealthEntry[] = [];
+    let updatedCount = 0;
+    const entriesToSave: HealthEntry[] = [];
+    const localMap = new Map(localEntries.map(e => [e.id, e]));
     
     for (const cloudEntry of cloudEntries) {
-      if (!localIds.has(cloudEntry.id)) {
-        entriesToAdd.push(cloudEntry);
+      const localEntry = localMap.get(cloudEntry.id);
+      
+      if (!localEntry) {
+        // New entry from cloud
+        entriesToSave.push(cloudEntry);
         addedCount++;
+      } else {
+        // Conflict resolution: Last Write Wins
+        const cloudTime = new Date(cloudEntry.updatedAt || cloudEntry.timestamp).getTime();
+        const localTime = new Date(localEntry.updatedAt || localEntry.timestamp).getTime();
+        
+        // If cloud is newer (by at least 1 second to avoid clock skew issues)
+        if (cloudTime > localTime + 1000) {
+          entriesToSave.push(cloudEntry);
+          updatedCount++;
+        }
       }
     }
     
-    // Bulk save to avoid triggering individual syncs
-    if (entriesToAdd.length > 0) {
-      const merged = [...entriesToAdd, ...localEntries];
-      bulkSaveEntries(merged);
+    // Bulk save if we have changes
+    if (entriesToSave.length > 0) {
+      // Apply updates/inserts to our local map
+      for (const entry of entriesToSave) {
+        localMap.set(entry.id, entry);
+      }
+      
+      // Convert back to array and save
+      const finalEntries = Array.from(localMap.values());
+      bulkSaveEntries(finalEntries);
     }
 
     // Merge settings (cloud wins for now - simple strategy)
@@ -266,7 +302,7 @@ export const pullFromCloud = async (): Promise<{ success: boolean; count: number
       lastSyncAt: new Date(),
     });
 
-    return { success: true, count: addedCount };
+    return { success: true, count: addedCount + updatedCount };
   } catch (error) {
     console.error('Pull from cloud error:', error);
     updateSyncState({

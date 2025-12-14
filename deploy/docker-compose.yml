@@ -2,52 +2,27 @@
 # For local development and simple deployments
 
 services:
-  proxy:
+  maeple-web:
     build:
       context: ..
-      dockerfile: deploy/Dockerfile.proxy
-    container_name: maeple-proxy
+      dockerfile: deploy/Dockerfile
+    container_name: maeple-web
     restart: unless-stopped
     ports:
-      - "8083:8083"
-    environment:
-      - NODE_ENV=production
-      - PROXY_PORT=8083
-      - API_TARGET=http://maeple-api:3001
+      - "8080:80"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
-      timeout: 10s
+      timeout: 3s
       retries: 3
-      start_period: 10s
-    depends_on:
-      api:
-        condition: service_healthy
+      start_period: 5s
     networks:
       - maeple-network
 
-  api:
-    build:
-      context: ../api
-      dockerfile: Dockerfile
-    container_name: maeple-api
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - API_PORT=3001
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=maeple
-      - DB_USER=maeple_user
-      - DB_PASSWORD=maeple_beta_2025
-      - JWT_SECRET=maeple-beta-secret-2025-change-in-production
-    depends_on:
-      - postgres
-    networks:
-      - maeple-network
+networks:
+  maeple-network:
+    driver: bridge
 
-  postgres:
-    image: postgres:15-alpine
     container_name: maeple-db
     restart: unless-stopped
     environment:

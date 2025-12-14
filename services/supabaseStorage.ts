@@ -55,25 +55,32 @@ export const cloudSaveEntry = async (entry: HealthEntry): Promise<void> => {
       notes: entry.notes,
       ai_strategies: entry.aiStrategies,
       ai_reasoning: entry.aiReasoning,
+      updated_at: entry.updatedAt || new Date().toISOString(),
       synced_at: new Date().toISOString(),
     });
 
   if (error) throw error;
 };
 
-export const cloudGetEntries = async (limit = 100): Promise<HealthEntry[]> => {
+export const cloudGetEntries = async (limit = 100, since?: string): Promise<HealthEntry[]> => {
   const client = getSupabaseClient();
   if (!client) throw new Error('Supabase not configured');
   
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('Not authenticated');
 
-  const { data, error } = await client
+  let query = client
     .from('health_entries')
     .select('*')
     .eq('user_id', userId)
     .order('timestamp', { ascending: false })
     .limit(limit);
+
+  if (since) {
+    query = query.gt('updated_at', since);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
 
@@ -93,6 +100,7 @@ export const cloudGetEntries = async (limit = 100): Promise<HealthEntry[]> => {
     notes: row.notes,
     aiStrategies: row.ai_strategies || [],
     aiReasoning: row.ai_reasoning,
+    updatedAt: row.updated_at,
   }));
 };
 

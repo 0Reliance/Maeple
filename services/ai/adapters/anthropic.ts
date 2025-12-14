@@ -24,6 +24,32 @@ export class AnthropicAdapter extends BaseAIAdapter {
     this.baseUrl = config.baseUrl || "https://api.anthropic.com";
   }
 
+  async healthCheck(): Promise<boolean> {
+    try {
+      // Minimal request to check connectivity
+      await this.fetchWithRetry(
+        `${this.baseUrl}/v1/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": this.config.apiKey,
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify({
+            model: "claude-3-haiku-20240307",
+            max_tokens: 1,
+            messages: [{ role: "user", content: "ping" }]
+          })
+        }
+      );
+      return true;
+    } catch (error) {
+      console.error("Anthropic health check failed:", error);
+      return false;
+    }
+  }
+
   async chat(request: AITextRequest): Promise<AITextResponse> {
     try {
       // Convert OpenAI-style messages to Claude format
@@ -211,6 +237,13 @@ export class AnthropicAdapter extends BaseAIAdapter {
   }
 
   private handleError(error: any): Error {
+    // If it's already an AIError, it was likely thrown by fetchWithRetry which already tracked it
+    if (error instanceof AIError) {
+      return error;
+    }
+
+    this.trackError();
+
     if (error?.message?.includes('401') || error?.message?.includes('403')) {
       return new AIError("Invalid Anthropic API key", "anthropic");
     }

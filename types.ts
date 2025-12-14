@@ -1,24 +1,27 @@
-
-import { StandardizedDailyMetric, ProviderType } from './services/wearables/types';
+import {
+  StandardizedDailyMetric,
+  ProviderType,
+} from "./services/wearables/types";
 
 export enum View {
-  JOURNAL = 'JOURNAL',
-  DASHBOARD = 'DASHBOARD',
-  LIVE_COACH = 'LIVE_COACH',
-  SEARCH = 'SEARCH',
-  VISION = 'VISION',
-  BIO_MIRROR = 'BIO_MIRROR',
-  SETTINGS = 'SETTINGS',
-  GUIDE = 'GUIDE',
-  TERMS = 'TERMS',
-  ROADMAP = 'ROADMAP',
-  CLINICAL = 'CLINICAL'
+  JOURNAL = "JOURNAL",
+  DASHBOARD = "DASHBOARD",
+  LIVE_COACH = "LIVE_COACH",
+  SEARCH = "SEARCH",
+  VISION = "VISION",
+  BIO_MIRROR = "BIO_MIRROR",
+  SETTINGS = "SETTINGS",
+  GUIDE = "GUIDE",
+  TERMS = "TERMS",
+  ROADMAP = "ROADMAP",
+  CLINICAL = "CLINICAL",
 }
 
 export interface UserSettings {
   cycleStartDate?: string; // YYYY-MM-DD
   avgCycleLength?: number; // Default 28
   safetyContact?: string; // Phone number or Name for crisis support
+  theme?: "light" | "dark" | "system";
 }
 
 export interface Medication {
@@ -34,17 +37,17 @@ export interface Symptom {
 
 export interface SleepData {
   duration: number; // hours
-  quality: 'Poor' | 'Fair' | 'Good' | 'Excellent';
+  quality: "Poor" | "Fair" | "Good" | "Excellent";
 }
 
 export interface CapacityProfile {
-  focus: number;      // Deep work / Hyperfocus
-  social: number;     // Interaction bandwidth
-  structure: number;  // Meetings / Admin tolerance
-  emotional: number;  // Caregiving / Processing
-  physical: number;   // Movement energy
-  sensory: number;    // Noise / Light tolerance
-  executive: number;  // Decision making
+  focus: number; // Deep work / Hyperfocus
+  social: number; // Interaction bandwidth
+  structure: number; // Meetings / Admin tolerance
+  emotional: number; // Caregiving / Processing
+  physical: number; // Movement energy
+  sensory: number; // Noise / Light tolerance
+  executive: number; // Decision making
   [key: string]: number; // Index signature for dynamic access
 }
 
@@ -61,7 +64,7 @@ export interface StrategyRecommendation {
   id: string;
   title: string;
   action: string;
-  type: 'REST' | 'FOCUS' | 'SOCIAL' | 'SENSORY' | 'EXECUTIVE';
+  type: "REST" | "FOCUS" | "SOCIAL" | "SENSORY" | "EXECUTIVE";
   icon?: string;
   relevanceScore: number;
 }
@@ -78,10 +81,11 @@ export interface HealthEntry {
   activityTypes: string[]; // Phase 1: #DeepWork, #Meeting, #Social, etc.
   strengths: string[]; // Character strengths (Curiosity, Zest, etc.)
   neuroMetrics: NeuroMetrics;
-  sleep?: SleepData; 
+  sleep?: SleepData;
   notes: string;
   aiStrategies?: StrategyRecommendation[]; // Phase 3 AI Generated Strategies
   aiReasoning?: string; // Why the AI flagged what it did
+  updatedAt?: string; // ISO string for sync conflict resolution
 }
 
 export interface WearableDataPoint {
@@ -95,7 +99,7 @@ export interface WearableDataPoint {
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'model';
+  role: "user" | "model";
   text: string;
   sources?: { uri: string; title: string }[];
 }
@@ -118,17 +122,17 @@ export interface ParsedResponse {
 }
 
 export interface BurnoutForecast {
-  riskLevel: 'SUSTAINABLE' | 'MODERATE' | 'CRITICAL';
+  riskLevel: "SUSTAINABLE" | "MODERATE" | "CRITICAL";
   score: number; // 0-100, where >80 is critical
   daysUntilCrash: number | null; // Prediction
   recoveryDaysNeeded: number;
   accumulatedDeficit: number; // Raw load score
-  trend: 'RISING' | 'FALLING' | 'STABLE';
+  trend: "RISING" | "FALLING" | "STABLE";
   description: string;
 }
 
 export interface CyclePhaseContext {
-  phase: 'MENSTRUAL' | 'FOLLICULAR' | 'OVULATORY' | 'LUTEAL';
+  phase: "MENSTRUAL" | "FOLLICULAR" | "OVULATORY" | "LUTEAL";
   day: number;
   length: number;
   cognitiveImpact: string; // e.g. "High Focus", "Brain Fog Risk"
