@@ -33,6 +33,9 @@ import SyncIndicator from "./components/SyncIndicator";
 import LandingPage from "./components/LandingPage";
 import AuthModal from "./components/AuthModal";
 
+import UserMenu from "./components/UserMenu";
+import { Github } from "lucide-react";
+
 // Lazy load heavy components for better performance
 const HealthMetricsDashboard = React.lazy(
   () => import("./components/HealthMetricsDashboard")
@@ -159,11 +162,14 @@ function AppContent() {
           <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-teal-200 shadow-lg">
             M
           </div>
-          <span className="font-bold text-slate-800 tracking-tight">
-            MAEPLE
+          <span className="font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+            MAEPLE <span className="text-xs text-teal-500 font-normal">v0.95</span>
           </span>
         </div>
-        <SyncIndicator />
+        <div className="flex items-center gap-4">
+          <SyncIndicator />
+          <UserMenu />
+        </div>
       </div>
 
       {/* Sidebar Navigation REMOVED for Mobile-First Desktop Experience */}
@@ -182,7 +188,7 @@ function AppContent() {
           <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-teal-100 text-lg">
             M
           </div>
-          <span className="text-2xl font-bold text-slate-800 tracking-tight">
+          <span className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
             MAEPLE
           </span>
         </div>
@@ -227,42 +233,25 @@ function AppContent() {
             icon={Compass}
             label="Guide & Vision"
           />
-
-          <div className="pt-4 mt-4 border-t border-slate-100">
-            <div className="md:hidden px-4 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Tools & Settings
-            </div>
-            <NavButton
-              targetView={View.SEARCH}
-              icon={SearchIcon}
-              label="Resources"
-            />
-            <NavButton
-              targetView={View.ROADMAP}
-              icon={Map}
-              label="Future Roadmap"
-            />
-            <NavButton
-              targetView={View.SETTINGS}
-              icon={SettingsIcon}
-              label="Settings"
-            />
-            <NavButton
-              targetView={View.TERMS}
-              icon={ShieldCheck}
-              label="Terms & Legal"
-            />
-          </div>
         </nav>
 
         <div className="p-6 mt-auto">
-          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl p-5 border border-indigo-100">
+          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl p-5 border border-indigo-100 mb-4">
             <h4 className="font-bold text-indigo-900 text-sm mb-1">
               Powered by Poziverse
             </h4>
             <p className="text-xs text-indigo-600/80 leading-relaxed">
               Context-aware intelligence for neurodivergent minds.
             </p>
+          </div>
+          
+          <div className="flex flex-col items-center gap-3">
+             <a href="https://github.com/poziverse/maeple" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                <Github size={20} />
+             </a>
+             <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest">
+                MAEPLE IS A PART OF THE POZIVERSE
+             </span>
           </div>
         </div>
       </aside>
@@ -276,7 +265,7 @@ function AppContent() {
           <header className="mb-4 md:mb-8 print:hidden">
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                   {view === View.DASHBOARD && "Pattern Dashboard"}
                   {view === View.JOURNAL && "MAEPLE Journal"}
                   {view === View.BIO_MIRROR && "Bio-Mirror Check"}

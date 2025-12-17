@@ -146,6 +146,50 @@ export const generateInsights = (entries: HealthEntry[], wearableData: WearableD
       }
   }
 
+  // 5. Tag Impact Analysis (Context Correlation)
+  const tagStats = new Map<string, { count: number; totalMood: number; totalSpoons: number }>();
+  
+  entries.forEach(e => {
+    e.tags?.forEach(tag => {
+      const current = tagStats.get(tag) || { count: 0, totalMood: 0, totalSpoons: 0 };
+      tagStats.set(tag, {
+        count: current.count + 1,
+        totalMood: current.totalMood + e.mood,
+        totalSpoons: current.totalSpoons + e.neuroMetrics.spoonLevel
+      });
+    });
+  });
+
+  const globalAvgMood = entries.reduce((a, b) => a + b.mood, 0) / entries.length;
+  const globalAvgSpoons = entries.reduce((a, b) => a + b.neuroMetrics.spoonLevel, 0) / entries.length;
+
+  tagStats.forEach((stats, tag) => {
+    if (stats.count >= 3) { // Minimum sample size
+      const avgMood = stats.totalMood / stats.count;
+      const avgSpoons = stats.totalSpoons / stats.count;
+
+      // Check for Drains
+      if (avgSpoons < globalAvgSpoons - 1.5) {
+        insights.push({
+          type: 'WARNING',
+          title: `Capacity Drain: ${tag}`,
+          description: `Entries tagged "${tag}" correlate with ${(globalAvgSpoons - avgSpoons).toFixed(1)} fewer spoons than average.`,
+          score: 7
+        });
+      }
+
+      // Check for Boosts
+      if (avgMood > globalAvgMood + 0.8) {
+        insights.push({
+          type: 'STRENGTH',
+          title: `Mood Boost: ${tag}`,
+          description: `Entries tagged "${tag}" correlate with ${(avgMood - globalAvgMood).toFixed(1)} points higher mood.`,
+          score: 6
+        });
+      }
+    }
+  });
+
   return insights.sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
 };
 

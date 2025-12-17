@@ -4,7 +4,7 @@ This guide explains how to run the full Maeple stack locally, including the Post
 
 ## Prerequisites
 
-- Node.js (v18+)
+- Node.js (v22+)
 - PostgreSQL (v16+)
 - Git
 

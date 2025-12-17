@@ -1,5 +1,37 @@
 # MAEPLE Changelog
 
+## v0.97.0 (Beta) - December 17, 2025
+
+**Status**: ✅ Production Release (Beta)
+
+### 🧠 Pattern Literacy & UX Polish
+
+- **Empty State Handling**: Implemented comprehensive "Cold Start" UI for all dashboards.
+  - **Burnout Widget**: Shows "PENDING DATA" instead of default risk levels.
+  - **Cognitive Load**: Displays educational placeholder until first entry.
+  - **Neuro-Context Timeline**: Added "Waiting for Data" overlay to prevent broken chart rendering.
+  - **Bio-Signal Trends**: Added "Not enough data points" card with guidance.
+- **Bio-Mirror Wizard**: Added "Pro Tip" logic to suggest logging a journal entry first for better masking detection.
+- **Mood Trend**: Added specific empty state for the Analysis Dashboard.
+
+### 🛠️ Infrastructure & Stability
+
+- **Docker Production Build**: Verified and hardened `docker-compose` deployment.
+- **Data Persistence**: Confirmed volume persistence strategy for local PostgreSQL.
+- **Documentation**: Updated System Architecture and API Reference to reflect v2.0.0 architecture changes.
+
+## v2.0.1 (December 17, 2025)
+
+**Status**: ✅ Production Patch
+
+### 🛠️ Infrastructure & Stability
+
+- **Node.js Upgrade**: Upgraded Docker containers to `node:22-alpine` to support Vite 7 and React Router 7 dependencies.
+- **Build Fix**: Resolved `Uncaught ReferenceError: Cannot access 'r' before initialization` by simplifying Vite's chunk splitting strategy.
+- **Runtime Stability**: Added validation for AI JSON responses to prevent crashes when optional fields (medications, symptoms) are missing.
+- **Meta Tags**: Fixed viewport and PWA meta tag warnings in `index.html`.
+- **Deployment**: Updated `SETUP_GUIDE.md` and `MEMORY.md` with new infrastructure details.
+
 ## v2.0.0 (December 14, 2025)
 
 **Status**: ✅ Production Release

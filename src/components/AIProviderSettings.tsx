@@ -59,7 +59,7 @@ const CapabilityBadge: React.FC<{ capability: AICapability }> = ({ capability })
   };
 
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs">
       <CapabilityIcon capability={capability} />
       {names[capability] || capability}
     </span>
@@ -118,28 +118,28 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
       {/* Header */}
       <div
-        className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
+        className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-4">
           <div
             className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              isConfigured ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'
+              isConfigured ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
             }`}
           >
             {getProviderIcon()}
           </div>
           <div>
-            <h4 className="font-bold text-slate-800">{providerInfo.name}</h4>
-            <p className="text-xs text-slate-500 mt-0.5">{providerInfo.description}</p>
+            <h4 className="font-bold text-slate-800 dark:text-slate-100">{providerInfo.name}</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{providerInfo.description}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {isConfigured && (
-            <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+            <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
               <Check size={14} />
               Configured
             </span>
@@ -150,10 +150,10 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="px-4 pb-4 space-y-4 border-t border-slate-100 pt-4">
+        <div className="px-4 pb-4 space-y-4 border-t border-slate-100 dark:border-slate-700 pt-4">
           {/* Capabilities */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
               Capabilities
             </label>
             <div className="flex flex-wrap gap-2">
@@ -165,15 +165,15 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
 
           {/* Enable Toggle */}
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-slate-700">Enable Provider</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Enable Provider</label>
             <button
               onClick={(e) => { e.stopPropagation(); setIsEnabled(!isEnabled); }}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                isEnabled ? 'bg-emerald-500' : 'bg-slate-200'
+                isEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-600'
               }`}
             >
               <span
-                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                className={`absolute top-1 left-1 w-4 h-4 bg-white dark:bg-slate-200 rounded-full transition-transform ${
                   isEnabled ? 'translate-x-6' : ''
                 }`}
               />
@@ -183,7 +183,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
           {/* API Key Input */}
           {needsApiKey && (
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                 API Key
               </label>
               <div className="relative">
@@ -192,7 +192,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder={`Enter your ${providerInfo.name} API key`}
-                  className="w-full p-3 pr-10 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-200 focus:outline-none font-mono text-sm"
+                  className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900/50 focus:outline-none font-mono text-sm text-slate-800 dark:text-slate-200"
                   onClick={(e) => e.stopPropagation()}
                 />
                 <button
@@ -208,7 +208,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
                   href={providerInfo.docsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-indigo-600 hover:underline mt-1 inline-block"
+                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-1 inline-block"
                   onClick={(e) => e.stopPropagation()}
                 >
                   Get API key →
@@ -220,7 +220,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
           {/* Base URL Input (Ollama) */}
           {needsBaseUrl && (
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                 Base URL
               </label>
               <input
@@ -228,7 +228,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
                 placeholder="http://localhost:11434"
-                className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-200 focus:outline-none font-mono text-sm"
+                className="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900/50 focus:outline-none font-mono text-sm text-slate-800 dark:text-slate-200"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
@@ -237,7 +237,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
           {/* Save Message */}
           {saveMessage && (
             <div className={`p-3 rounded-xl flex items-center gap-2 ${
-              saveMessage === 'Saved!' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+              saveMessage === 'Saved!' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300'
             }`}>
               {saveMessage === 'Saved!' ? <Check size={18} /> : <AlertCircle size={18} />}
               <span className="text-sm font-medium">{saveMessage}</span>
@@ -249,7 +249,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
             <button
               onClick={(e) => { e.stopPropagation(); handleSave(); }}
               disabled={isSaving || (needsApiKey && !apiKey && isEnabled)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-xl font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               Save
@@ -257,7 +257,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
             {isConfigured && (
               <button
                 onClick={(e) => { e.stopPropagation(); handleRemove(); }}
-                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors ml-auto"
+                className="flex items-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl font-medium transition-colors ml-auto"
               >
                 <Trash2 size={16} />
                 Remove

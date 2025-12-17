@@ -138,7 +138,7 @@ const NotificationSettingsPanel: React.FC = () => {
           onClick={handleToggleEnabled}
           disabled={permission === 'denied'}
           className={`relative w-14 h-7 rounded-full transition-colors ${
-            settings.enabled ? 'bg-indigo-500' : 'bg-slate-300'
+            settings.enabled ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'
           } ${permission === 'denied' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <span
@@ -153,7 +153,7 @@ const NotificationSettingsPanel: React.FC = () => {
         <>
           {/* Journal Reminder Time */}
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
               <Clock size={16} />
               Daily Reminder Time
             </label>
@@ -161,16 +161,16 @@ const NotificationSettingsPanel: React.FC = () => {
               type="time"
               value={settings.journalReminder.time}
               onChange={(e) => handleTimeChange(e.target.value)}
-              className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+              className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-800 focus:outline-none text-slate-800 dark:text-slate-100"
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               We'll send a gentle reminder at this time
             </p>
           </div>
 
           {/* Days of Week */}
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
               <Calendar size={16} />
               Reminder Days
             </label>
@@ -182,7 +182,7 @@ const NotificationSettingsPanel: React.FC = () => {
                   className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
                     settings.journalReminder.days.includes(index)
                       ? 'bg-indigo-500 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                   }`}
                 >
                   {name.charAt(0)}
@@ -192,19 +192,19 @@ const NotificationSettingsPanel: React.FC = () => {
           </div>
 
           {/* Gentle Nudges */}
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
             <div className="flex items-center gap-3">
               <Sparkles size={20} className="text-amber-500" />
               <div>
-                <p className="font-medium text-slate-800">Gentle Nudges</p>
-                <p className="text-xs text-slate-500">Low-pressure reminders after 3+ days of inactivity</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">Gentle Nudges</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Low-pressure reminders after 3+ days of inactivity</p>
               </div>
             </div>
             
             <button
               onClick={handleGentleNudgesToggle}
               className={`relative w-14 h-7 rounded-full transition-colors ${
-                settings.gentleNudges ? 'bg-amber-500' : 'bg-slate-300'
+                settings.gentleNudges ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <span
@@ -219,7 +219,7 @@ const NotificationSettingsPanel: React.FC = () => {
           <div className="pt-2">
             <button
               onClick={handleTestNotification}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
               {testSent ? (
                 <>
@@ -239,7 +239,7 @@ const NotificationSettingsPanel: React.FC = () => {
 
       {/* Saved Indicator */}
       {saved && (
-        <div className="flex items-center justify-center gap-2 text-green-600 text-sm">
+        <div className="flex items-center justify-center gap-2 text-green-600 dark:text-green-400 text-sm">
           <Check size={16} />
           Settings saved
         </div>

@@ -70,7 +70,7 @@ interface ChartDataPoint {
  * HealthMetricsDashboard
  *
  * Visualization component focused on Neuro-Affirming Metrics:
- * Capacity (Spoons) vs Demand (Sensory Load) vs Biology (Cycle) vs Physiology (HRV).
+ * Bandwidth (Capacity) vs Load (Demand) vs Biology (Cycle) vs Physiology (HRV).
  */
 const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
   entries,
@@ -166,12 +166,12 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
 
   if (!entries || entries.length === 0) {
     return (
-      <div className="bg-white rounded-2xl p-12 text-center border-2 border-dashed border-slate-200">
-        <div className="bg-indigo-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-700">
+        <div className="bg-indigo-50 dark:bg-indigo-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <TrendingUp className="text-indigo-400" size={32} />
         </div>
-        <h3 className="text-lg font-bold text-slate-700">No Data Available</h3>
-        <p className="text-slate-500 mt-2 max-w-sm mx-auto">
+        <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200">No Data Available</h3>
+        <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm mx-auto">
           Start logging to track your Energy Spoons, Sensory Load, and Mood
           patterns.
         </p>
@@ -335,18 +335,22 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
         {/* Phase 4: Burnout Forecast Widget */}
         <div
           className={`rounded-2xl p-6 border shadow-md relative overflow-hidden ${
-            forecast.riskLevel === "CRITICAL"
-              ? "bg-rose-50 border-rose-200"
+            entries.length < 3
+              ? "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
+              : forecast.riskLevel === "CRITICAL"
+              ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800"
               : forecast.riskLevel === "MODERATE"
-              ? "bg-orange-50 border-orange-200"
-              : "bg-indigo-50 border-indigo-200"
+              ? "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800"
+              : "bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800"
           }`}
         >
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-3">
               <div
                 className={`p-3 rounded-xl ${
-                  forecast.riskLevel === "CRITICAL"
+                  entries.length < 3
+                    ? "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                    : forecast.riskLevel === "CRITICAL"
                     ? "bg-rose-500 text-white"
                     : forecast.riskLevel === "MODERATE"
                     ? "bg-orange-500 text-white"
@@ -358,11 +362,13 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
               <div>
                 <h3
                   className={`font-bold text-lg ${
-                    forecast.riskLevel === "CRITICAL"
-                      ? "text-rose-800"
+                    entries.length < 3
+                      ? "text-slate-600 dark:text-slate-400"
+                      : forecast.riskLevel === "CRITICAL"
+                      ? "text-rose-800 dark:text-rose-200"
                       : forecast.riskLevel === "MODERATE"
-                      ? "text-orange-800"
-                      : "text-indigo-800"
+                      ? "text-orange-800 dark:text-orange-200"
+                      : "text-indigo-800 dark:text-indigo-200"
                   }`}
                 >
                   Burnout Trajectory
@@ -370,14 +376,16 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                 <div className="flex items-center gap-2">
                   <span
                     className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      forecast.riskLevel === "CRITICAL"
-                        ? "bg-rose-200 text-rose-800"
+                      entries.length < 3
+                        ? "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                        : forecast.riskLevel === "CRITICAL"
+                        ? "bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200"
                         : forecast.riskLevel === "MODERATE"
-                        ? "bg-orange-200 text-orange-800"
-                        : "bg-indigo-200 text-indigo-800"
+                        ? "bg-orange-200 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200"
+                        : "bg-indigo-200 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200"
                     }`}
                   >
-                    {forecast.riskLevel}
+                    {entries.length < 3 ? "PENDING DATA" : forecast.riskLevel}
                   </span>
                 </div>
               </div>
@@ -385,23 +393,25 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
 
             {forecast.daysUntilCrash !== null && (
               <div className="text-right">
-                <p className="text-xs font-bold uppercase text-slate-500">
+                <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
                   Projected Crash
                 </p>
-                <p className="text-2xl font-bold text-rose-600">
+                <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">
                   {forecast.daysUntilCrash} Days
                 </p>
               </div>
             )}
           </div>
 
-          <p className="text-slate-700 leading-relaxed mb-4 text-sm">
-            {forecast.description}
+          <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-4 text-sm">
+            {entries.length < 3 
+              ? "Need at least 3 days of journal entries to calculate your burnout risk trajectory. Keep logging!" 
+              : forecast.description}
           </p>
 
           {forecast.recoveryDaysNeeded > 0 && (
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-white/50 p-2 rounded-lg w-fit">
-              <BatteryWarning size={14} className="text-orange-500" />
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-white/50 dark:bg-slate-800/50 p-2 rounded-lg w-fit">
+              <BatteryWarning size={14} className="text-orange-500 dark:text-orange-400" />
               <span>
                 Est. Recovery:{" "}
                 <strong>{forecast.recoveryDaysNeeded} Days</strong>
@@ -411,18 +421,18 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
 
           {/* Safety Interceptor */}
           {forecast.riskLevel === "CRITICAL" && (
-            <div className="mt-4 pt-4 border-t border-rose-200">
-              <p className="text-xs font-bold text-rose-500 mb-2 flex items-center gap-1">
+            <div className="mt-4 pt-4 border-t border-rose-200 dark:border-rose-800">
+              <p className="text-xs font-bold text-rose-500 dark:text-rose-400 mb-2 flex items-center gap-1">
                 <AlertTriangle size={12} /> CLINICAL NOTE
               </p>
-              <p className="text-xs text-rose-800 mb-2">
+              <p className="text-xs text-rose-800 dark:text-rose-200 mb-2">
                 Sustained critical load predicts severe burnout. Consider
                 activating your support network.
               </p>
               {userSettings.safetyContact && (
                 <a
                   href={`tel:${userSettings.safetyContact}`}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-200 text-rose-800 rounded-lg text-xs font-bold hover:bg-rose-300 transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200 rounded-lg text-xs font-bold hover:bg-rose-300 dark:hover:bg-rose-800 transition-colors"
                 >
                   <PhoneCall size={12} /> Call Support
                 </a>
@@ -432,28 +442,39 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
         </div>
 
         {/* Phase 5 & 8: Cognitive & Masking Load Widget */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-md">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-md">
+          {/* Empty State for Cognitive Load */}
+          {!cognitiveLoad && !maskingTrend && (
+             <div className="flex flex-col items-center justify-center h-full text-center py-4">
+                <Layers size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
+                <h3 className="font-bold text-slate-500 dark:text-slate-400">Cognitive Load</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  Log your first entry to see your cognitive tax and masking burden.
+                </p>
+             </div>
+          )}
+
           {/* Cognitive Load */}
           {cognitiveLoad && (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Layers size={18} className="text-blue-500" />
-                  <h3 className="font-bold text-slate-800">Cognitive Load</h3>
+                  <Layers size={18} className="text-blue-500 dark:text-blue-400" />
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100">Cognitive Load</h3>
                 </div>
                 <span
                   className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                     cognitiveLoad.state === "FRAGMENTED"
-                      ? "bg-rose-100 text-rose-700"
+                      ? "bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300"
                       : cognitiveLoad.state === "MODERATE"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-emerald-100 text-emerald-700"
+                      ? "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300"
+                      : "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300"
                   }`}
                 >
                   {cognitiveLoad.state}
                 </span>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2">
+              <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 mb-2">
                 <div
                   className={`h-1.5 rounded-full ${
                     cognitiveLoad.efficiencyLoss > 30
@@ -465,7 +486,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                   }}
                 ></div>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 <strong>{cognitiveLoad.switches}</strong> context switches (
                 {cognitiveLoad.efficiencyLoss}% efficiency tax).
               </p>
@@ -474,14 +495,14 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
 
           {/* Phase 8: Masking Burden */}
           {maskingTrend && (
-            <div className="pt-4 border-t border-slate-50">
+            <div className="pt-4 border-t border-slate-50 dark:border-slate-700">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <VenetianMask size={18} className="text-purple-500" />
-                  <h3 className="font-bold text-slate-800">Masking Burden</h3>
+                  <VenetianMask size={18} className="text-purple-500 dark:text-purple-400" />
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100">Masking Burden</h3>
                 </div>
                 {maskingTrend.latest > 6 && (
-                  <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                  <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                     High
                   </span>
                 )}
@@ -489,7 +510,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
 
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2">
+                  <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 mb-2">
                     <div
                       className={`h-1.5 rounded-full ${
                         maskingTrend.latest > 6
@@ -499,23 +520,23 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                       style={{ width: `${maskingTrend.latest * 10}%` }}
                     ></div>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Current Effort: <strong>{maskingTrend.latest}/10</strong>
                   </p>
                 </div>
                 {maskingTrend.diff > 1 ? (
-                  <div className="text-xs font-bold text-rose-500 flex items-center">
+                  <div className="text-xs font-bold text-rose-500 dark:text-rose-400 flex items-center">
                     <TrendingUp size={12} className="mr-1" /> Rising
                   </div>
                 ) : maskingTrend.diff < -1 ? (
-                  <div className="text-xs font-bold text-emerald-500 flex items-center">
+                  <div className="text-xs font-bold text-emerald-500 dark:text-emerald-400 flex items-center">
                     <TrendingDown size={12} className="mr-1" /> Dropping
                   </div>
                 ) : (
-                  <span className="text-xs text-slate-400">Stable</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">Stable</span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-2 italic">
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 italic">
                 High masking correlates with faster spoon depletion.
               </p>
             </div>
@@ -524,10 +545,10 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
 
         {/* Phase 7: Hormonal Weather Widget */}
         {hormonalContext ? (
-          <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-6 border border-rose-100 shadow-md md:col-span-2">
+          <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 rounded-2xl p-6 border border-rose-100 dark:border-rose-800 shadow-md md:col-span-2">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-white text-rose-500 rounded-xl shadow-sm">
+                <div className="p-3 bg-white dark:bg-rose-900/50 text-rose-500 dark:text-rose-300 rounded-xl shadow-sm">
                   {hormonalContext.phase === "LUTEAL" ||
                   hormonalContext.phase === "MENSTRUAL" ? (
                     <CloudFog size={24} />
@@ -536,14 +557,14 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                   )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-rose-900">
+                  <h3 className="font-bold text-lg text-rose-900 dark:text-rose-200">
                     Hormonal Forecast
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-200 text-rose-800">
+                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200">
                       {hormonalContext.phase} Phase
                     </span>
-                    <span className="text-xs text-rose-600 font-medium">
+                    <span className="text-xs text-rose-600 dark:text-rose-400 font-medium">
                       Day {hormonalContext.day}/{hormonalContext.length}
                     </span>
                   </div>
@@ -551,36 +572,36 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
               </div>
 
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold uppercase text-rose-400">
+                <p className="text-xs font-bold uppercase text-rose-400 dark:text-rose-300">
                   Energy Prediction
                 </p>
-                <p className="text-lg font-bold text-rose-700">
+                <p className="text-lg font-bold text-rose-700 dark:text-rose-300">
                   {hormonalContext.energyPrediction}
                 </p>
               </div>
             </div>
 
             <div className="mt-4 grid md:grid-cols-2 gap-4">
-              <div className="bg-white/60 p-3 rounded-xl border border-rose-100/50">
-                <p className="text-xs font-bold uppercase text-rose-400 mb-1">
+              <div className="bg-white/60 dark:bg-slate-800/50 p-3 rounded-xl border border-rose-100/50 dark:border-rose-800/50">
+                <p className="text-xs font-bold uppercase text-rose-400 dark:text-rose-300 mb-1">
                   Cognitive Impact
                 </p>
-                <p className="text-rose-900 font-medium">
+                <p className="text-rose-900 dark:text-rose-200 font-medium">
                   {hormonalContext.cognitiveImpact}
                 </p>
               </div>
-              <div className="bg-white/60 p-3 rounded-xl border border-rose-100/50">
-                <p className="text-xs font-bold uppercase text-rose-400 mb-1">
+              <div className="bg-white/60 dark:bg-slate-800/50 p-3 rounded-xl border border-rose-100/50 dark:border-rose-800/50">
+                <p className="text-xs font-bold uppercase text-rose-400 dark:text-rose-300 mb-1">
                   Mae's Advice
                 </p>
-                <p className="text-rose-900 text-sm">
+                <p className="text-rose-900 dark:text-rose-200 text-sm">
                   {hormonalContext.advice}
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex items-center justify-between text-slate-400 md:col-span-2">
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 flex items-center justify-between text-slate-400 dark:text-slate-500 md:col-span-2">
             <div className="flex items-center gap-3">
               <CloudRain size={24} />
               <span>Hormonal forecasting disabled. Set up in Settings.</span>
@@ -628,111 +649,111 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
               Avg Capacity
             </p>
-            <h4 className="text-3xl font-bold text-slate-800 flex items-baseline gap-1">
+            <h4 className="text-3xl font-bold text-slate-800 dark:text-slate-100 flex items-baseline gap-1">
               {avgSpoons}
-              <span className="text-base font-normal text-slate-400">
+              <span className="text-base font-normal text-slate-400 dark:text-slate-500">
                 /10 Spoons
               </span>
             </h4>
           </div>
-          <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
-            <Zap className="text-emerald-600" size={24} fill="currentColor" />
+          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
+            <Zap className="text-emerald-600 dark:text-emerald-400" size={24} fill="currentColor" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
               Avg Mood
             </p>
-            <h4 className="text-3xl font-bold text-slate-800 flex items-baseline gap-1">
+            <h4 className="text-3xl font-bold text-slate-800 dark:text-slate-100 flex items-baseline gap-1">
               {avgMood}
-              <span className="text-base font-normal text-slate-400">/5</span>
+              <span className="text-base font-normal text-slate-400 dark:text-slate-500">/5</span>
             </h4>
           </div>
-          <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center">
-            <Brain className="text-teal-600" size={24} />
+          <div className="w-12 h-12 bg-teal-50 dark:bg-teal-900/30 rounded-xl flex items-center justify-center">
+            <Brain className="text-teal-600 dark:text-teal-400" size={24} />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
               Top Strength
             </p>
             <h4
-              className="text-xl font-bold text-slate-800 truncate max-w-[150px]"
+              className="text-xl font-bold text-slate-800 dark:text-slate-100 truncate max-w-[150px]"
               title={topStrength}
             >
               {topStrength}
             </h4>
           </div>
-          <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-            <Star className="text-purple-600" size={24} />
+          <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+            <Star className="text-purple-600 dark:text-purple-400" size={24} />
           </div>
         </div>
       </div>
 
       {/* Sleep Architecture Widget */}
       {sleepStats && (
-        <div className="bg-indigo-950 text-white p-6 rounded-2xl shadow-lg border border-indigo-900">
+        <div className="bg-indigo-950 dark:bg-slate-900 text-white p-6 rounded-2xl shadow-lg border border-indigo-900 dark:border-slate-800">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-indigo-900 rounded-xl">
-                <Activity size={24} className="text-indigo-300" />
+              <div className="p-3 bg-indigo-900 dark:bg-slate-800 rounded-xl">
+                <Activity size={24} className="text-indigo-300 dark:text-indigo-400" />
               </div>
               <div>
                 <h3 className="font-bold text-lg">Sleep Architecture</h3>
-                <p className="text-indigo-300 text-sm">7-Day Average</p>
+                <p className="text-indigo-300 dark:text-slate-400 text-sm">7-Day Average</p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-3xl font-bold">
                 {sleepStats.totalHours}
-                <span className="text-lg font-normal text-indigo-400">h</span>
+                <span className="text-lg font-normal text-indigo-400 dark:text-slate-400">h</span>
               </p>
-              <p className="text-xs font-bold uppercase text-indigo-400">
+              <p className="text-xs font-bold uppercase text-indigo-400 dark:text-slate-500">
                 Avg Duration
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-indigo-900/50 p-4 rounded-xl border border-indigo-800">
-              <p className="text-xs font-bold uppercase text-indigo-400 mb-1">
+            <div className="bg-indigo-900/50 dark:bg-slate-800/50 p-4 rounded-xl border border-indigo-800 dark:border-slate-700">
+              <p className="text-xs font-bold uppercase text-indigo-400 dark:text-slate-400 mb-1">
                 Deep Sleep
               </p>
               <p className="text-xl font-bold">{sleepStats.deepPercent}%</p>
-              <div className="w-full bg-indigo-950 h-1.5 rounded-full mt-2">
+              <div className="w-full bg-indigo-950 dark:bg-slate-900 h-1.5 rounded-full mt-2">
                 <div
                   className="bg-indigo-400 h-1.5 rounded-full"
                   style={{ width: `${sleepStats.deepPercent}%` }}
                 ></div>
               </div>
             </div>
-            <div className="bg-indigo-900/50 p-4 rounded-xl border border-indigo-800">
-              <p className="text-xs font-bold uppercase text-indigo-400 mb-1">
+            <div className="bg-indigo-900/50 dark:bg-slate-800/50 p-4 rounded-xl border border-indigo-800 dark:border-slate-700">
+              <p className="text-xs font-bold uppercase text-indigo-400 dark:text-slate-400 mb-1">
                 REM Sleep
               </p>
               <p className="text-xl font-bold">{sleepStats.remPercent}%</p>
-              <div className="w-full bg-indigo-950 h-1.5 rounded-full mt-2">
+              <div className="w-full bg-indigo-950 dark:bg-slate-900 h-1.5 rounded-full mt-2">
                 <div
                   className="bg-purple-400 h-1.5 rounded-full"
                   style={{ width: `${sleepStats.remPercent}%` }}
                 ></div>
               </div>
             </div>
-            <div className="bg-indigo-900/50 p-4 rounded-xl border border-indigo-800">
-              <p className="text-xs font-bold uppercase text-indigo-400 mb-1">
+            <div className="bg-indigo-900/50 dark:bg-slate-800/50 p-4 rounded-xl border border-indigo-800 dark:border-slate-700">
+              <p className="text-xs font-bold uppercase text-indigo-400 dark:text-slate-400 mb-1">
                 Efficiency
               </p>
               <p className="text-xl font-bold">{sleepStats.efficiency}%</p>
-              <div className="w-full bg-indigo-950 h-1.5 rounded-full mt-2">
+              <div className="w-full bg-indigo-950 dark:bg-slate-900 h-1.5 rounded-full mt-2">
                 <div
                   className={`h-1.5 rounded-full ${
                     sleepStats.efficiency > 85
@@ -748,149 +769,107 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
       )}
 
       {/* Main Chart: Neuro-Context Fusion */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
         <div className="mb-6 flex justify-between items-start">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
               Neuro-Context Timeline
             </h3>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Correlating Capacity (Spoons), Sensory Demand, and Biological
               Rhythms.
             </p>
           </div>
           {cycleStart && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-50 text-rose-700 rounded-lg text-xs font-bold border border-rose-100">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-bold border border-rose-100 dark:border-rose-800">
               <AlertTriangle size={14} />
               <span>Cycle Tracking Active</span>
             </div>
           )}
         </div>
 
-        <div className="h-96 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart
-              data={chartData}
-              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="spoonGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#f1f5f9"
-              />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tick={{ fill: "#94a3b8", fontSize: 12 }}
-                dy={10}
-              />
+        <div className="h-96 w-full relative">
+          {entries.length === 0 ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-800/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+              <Activity className="text-slate-300 dark:text-slate-600 mb-4" size={48} />
+              <h4 className="text-lg font-bold text-slate-500 dark:text-slate-400">Waiting for Data</h4>
+              <p className="text-slate-400 dark:text-slate-500 text-sm mt-2 max-w-xs text-center">
+                Your neuro-context timeline will appear here once you log your first entry.
+              </p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart
+                data={chartData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="spoonGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
+                <XAxis 
+                  dataKey="date" 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tick={{fill: '#94a3b8', fontSize: 12}} 
+                  dy={10} 
+                />
+                <YAxis 
+                  yAxisId="left" 
+                  domain={[0, 10]} 
+                  hide 
+                />
+                <YAxis 
+                  yAxisId="right" 
+                  orientation="right" 
+                  domain={[0, 10]} 
+                  hide 
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    borderRadius: '12px', 
+                    border: 'none', 
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)'
+                  }}
+                />
+                <Legend iconType="circle" />
+                
+                {/* Spoons Area */}
+                <Area
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="spoons"
+                  name="Capacity (Spoons)"
+                  stroke="#10b981"
+                  fill="url(#spoonGradient)"
+                  strokeWidth={3}
+                />
 
-              <YAxis yAxisId="left" domain={[0, 10]} hide />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                domain={[0, 100]}
-                hide
-              />
+                {/* Sensory Line */}
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="sensory"
+                  name="Sensory Load"
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: '#f59e0b', strokeWidth: 0 }}
+                />
 
-              <Tooltip
-                contentStyle={{
-                  borderRadius: "12px",
-                  border: "none",
-                  boxShadow: "0 4px 15px -1px rgb(0 0 0 / 0.1)",
-                }}
-                cursor={{ fill: "#f8fafc" }}
-                labelStyle={{
-                  fontWeight: "bold",
-                  color: "#1e293b",
-                  marginBottom: "8px",
-                }}
-              />
-              <Legend
-                verticalAlign="top"
-                height={36}
-                iconType="circle"
-                wrapperStyle={{ paddingBottom: "20px" }}
-              />
-
-              {chartData.map((entry, index) =>
-                entry.isLuteal ? (
-                  <ReferenceArea
-                    key={index}
-                    yAxisId="left"
-                    x1={entry.date}
-                    x2={entry.date}
-                    fill="#fecdd3"
-                    fillOpacity={0.4}
-                    ifOverflow="extendDomain"
-                  />
-                ) : null
-              )}
-
-              <Bar
-                yAxisId="left"
-                dataKey="sensory"
-                name="Sensory Load"
-                fill="#fdba74"
-                radius={[4, 4, 0, 0]}
-                barSize={12}
-              />
-
-              <Area
-                yAxisId="left"
-                type="monotone"
-                dataKey="spoons"
-                name="Spoons (Capacity)"
-                stroke="#10b981"
-                strokeWidth={3}
-                fill="url(#spoonGradient)"
-                activeDot={{ r: 6, strokeWidth: 0 }}
-              />
-
-              <Line
-                yAxisId="left"
-                type="monotone"
-                name="Mood (scaled)"
-                stroke="#6366f1"
-                strokeWidth={2}
-                dot={false}
-                strokeDasharray="5 5"
-                dataKey={(data) => (data.mood ? data.mood * 2 : null)}
-              />
-
-              <Line
-                yAxisId="left"
-                type="monotone"
-                dataKey="sleep"
-                name="Sleep (Hours)"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ r: 3, fill: "#3b82f6" }}
-                connectNulls
-              />
-
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="hrv"
-                name="HRV (Stress)"
-                stroke="#f43f5e"
-                strokeWidth={2}
-                dot={{ r: 3, fill: "#f43f5e" }}
-                connectNulls
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+                {/* Luteal Phase Background Highlight */}
+                {/* Note: Recharts ReferenceArea requires x-axis values. 
+                    For MVP we skip complex background shading or implement custom shape. 
+                */}
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500 justify-center bg-slate-50 p-3 rounded-lg border border-slate-100">
+        <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 justify-center bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
             <span>Green Area = Your Energy Capacity</span>

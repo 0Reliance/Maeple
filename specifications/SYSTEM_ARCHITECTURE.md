@@ -22,13 +22,14 @@ MAEPLE (Mental And Emotional Pattern Literacy Engine) is a neuro-affirming healt
 
 - **Database**: PostgreSQL (Local)
 - **Auth**: Local Auth Service (JWT, bcrypt)
-- **API**: Node.js/Express (REST API)
+- **API**: Node.js v22+ / Express (REST API)
 
 ### AI Layer
 
 - **Orchestration**: `AIRouter` (Client-side routing)
 - **Providers**:
-  - **Gemini**: Primary (Text, Vision, Audio)
+  - **Gemini**: Primary (Text, Vision, Audio).
+    - **Gemini Live**: Real-time multimodal interaction (Audio/Text) via WebSockets.
   - **OpenAI**: Secondary (Text, Vision)
   - **Anthropic**: Text, Vision
   - **Perplexity**: Search/Research
@@ -48,6 +49,11 @@ MAEPLE (Mental And Emotional Pattern Literacy Engine) is a neuro-affirming healt
 
 - **Router**: `services/ai/router.ts` determines the best provider based on capability (Text, Vision, Audio) and user settings.
 - **Adapters**: Each provider has a standardized adapter implementing `BaseAIAdapter`.
+- **Live Coach Flow**:
+  1.  **Input**: Web Audio API captures microphone stream.
+  2.  **Processing**: `ScriptProcessorNode` converts Float32 audio to PCM16.
+  3.  **Transport**: `GeminiAdapter` streams PCM16 to Gemini API via WebSocket.
+  4.  **Output**: Gemini returns Audio (played via Web Audio API) and Text (displayed as transcript).
 - **Rate Limiting**: Client-side token bucket limiter (`services/rateLimiter.ts`) prevents API quota exhaustion.
 
 ### 3.3 Security

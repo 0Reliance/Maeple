@@ -176,9 +176,9 @@ export class GeminiAdapter extends BaseAIAdapter {
     this.trackRequest();
     try {
       const session = await this.client.live.connect({
-        model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+        model: 'gemini-2.0-flash-exp',
         config: {
-          responseModalities: [Modality.AUDIO],
+          responseModalities: [Modality.AUDIO, Modality.TEXT],
           systemInstruction: config.systemInstruction,
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: config.voice || 'Kore' } }
@@ -188,6 +188,7 @@ export class GeminiAdapter extends BaseAIAdapter {
           onopen: config.callbacks.onOpen,
           onclose: config.callbacks.onClose,
           onmessage: (msg: any) => {
+            // Handle Audio
             if (msg.serverContent?.modelTurn?.parts?.[0]?.inlineData) {
               const base64 = msg.serverContent.modelTurn.parts[0].inlineData.data;
               const binaryString = atob(base64);
@@ -196,6 +197,15 @@ export class GeminiAdapter extends BaseAIAdapter {
                 bytes[i] = binaryString.charCodeAt(i);
               }
               config.callbacks.onAudioData?.(bytes);
+            }
+            
+            // Handle Text (Transcript)
+            if (msg.serverContent?.modelTurn?.parts) {
+                for (const part of msg.serverContent.modelTurn.parts) {
+                    if (part.text) {
+                        config.callbacks.onTextData?.(part.text);
+                    }
+                }
             }
           },
           onerror: (e: any) => {

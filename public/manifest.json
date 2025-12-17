@@ -9,7 +9,7 @@
   "orientation": "portrait",
   "scope": "/",
   "lang": "en",
-  "categories": ["health", "medical", "lifestyle", "utilities"],
+  "categories": ["health", "lifestyle", "utilities"],
   "icons": [
     {
       "src": "/icons/icon.svg",

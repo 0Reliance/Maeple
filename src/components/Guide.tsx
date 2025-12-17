@@ -31,62 +31,62 @@ const Guide: React.FC = () => {
       <section className="space-y-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-8 w-1 bg-teal-500 rounded-full"></div>
-          <h2 className="text-2xl font-bold text-slate-800">The MAEPLE Metrics</h2>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">The MAEPLE Metrics</h2>
         </div>
-        <p className="text-slate-600 max-w-2xl mb-8">
+        <p className="text-slate-600 dark:text-slate-300 max-w-2xl mb-8">
           We use neuro-affirming concepts to capture the reality of your day.
         </p>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-emerald-100 text-emerald-700 rounded-lg">
+              <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg">
                 <Zap size={20} />
               </div>
-              <h3 className="font-bold text-slate-800">Spoons (Capacity)</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">Bandwidth (Capacity)</h3>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Your <strong>Energy Budget</strong>. 
-              Unlike "tiredness" (which sleep fixes), low spoons mean you need deep recovery.
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Your <strong>Available Capacity</strong>. 
+              Unlike "tiredness" (which sleep fixes), low bandwidth means you need deep recovery.
               <br/><br/>
               <em>Track this to predict crashes before they happen.</em>
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-orange-100 text-orange-700 rounded-lg">
+              <div className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-lg">
                 <Volume2 size={20} />
               </div>
-              <h3 className="font-bold text-slate-800">Sensory Load</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">Load & Interference</h3>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              The intensity of your environment (noise, lights, crowds). High sensory load drains spoons 
-              faster than hard work.
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              <strong>Load</strong> is the weight on your system (noise, deadlines). 
+              <strong>Interference</strong> is when stress in one area (Sensory) disrupts another (Emotion).
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
+              <div className="p-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg">
                 <EyeOff size={20} />
               </div>
-              <h3 className="font-bold text-slate-800">Masking</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">Noise Generators</h3>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              The effort spent suppressing your natural traits to fit in. High masking is a leading cause 
-              of burnout.
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Hidden costs like <strong>Masking</strong> (suppressing traits) or Perfectionism. 
+              These drain your battery silently in the background.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-rose-100 text-rose-700 rounded-lg">
+              <div className="p-2 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 rounded-lg">
                 <Calendar size={20} />
               </div>
-              <h3 className="font-bold text-slate-800">Biological Context</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">Biological Context</h3>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               We highlight phases (like the Luteal Phase) where executive dysfunction naturally rises, 
               so you can embrace strategy instead of shame.
             </p>
@@ -98,17 +98,17 @@ const Guide: React.FC = () => {
       <section className="space-y-6 pb-12">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-8 w-1 bg-indigo-500 rounded-full"></div>
-          <h2 className="text-2xl font-bold text-slate-800">Getting Started</h2>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Getting Started</h2>
         </div>
 
         <div className="space-y-8">
             <div className="flex gap-6 items-start">
-                <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xl shrink-0">1</div>
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold text-xl shrink-0">1</div>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-2">
                         Set Your Baseline <Zap size={16} className="text-emerald-500" />
                     </h3>
-                    <p className="text-slate-600">
+                    <p className="text-slate-600 dark:text-slate-300">
                         Before journaling, set your <strong>Capacity Slider</strong>. 
                         A mood of "Okay" with 1 Spoon is very different from "Okay" with 10 Spoons.
                     </p>
@@ -116,12 +116,12 @@ const Guide: React.FC = () => {
             </div>
 
             <div className="flex gap-6 items-start">
-                <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xl shrink-0">2</div>
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold text-xl shrink-0">2</div>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-2">
                         Speak Freely <BookHeart size={16} className="text-teal-500" />
                     </h3>
-                    <p className="text-slate-600">
+                    <p className="text-slate-600 dark:text-slate-300">
                          Talk about your day naturally.
                         <em> "I focused for 3 hours (Flow) but the office was loud (Sensory)..."</em>
                         <br/>
@@ -131,12 +131,12 @@ const Guide: React.FC = () => {
             </div>
 
             <div className="flex gap-6 items-start">
-                <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xl shrink-0">3</div>
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold text-xl shrink-0">3</div>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-2">
                         Use the Bio-Mirror <Camera size={16} className="text-indigo-500" />
                     </h3>
-                    <p className="text-slate-600">
+                    <p className="text-slate-600 dark:text-slate-300">
                         When you can't describe how you feel, use the <strong>Bio-Mirror (State Check)</strong>. 
                         It objectively analyzes your face for jaw tension and eye fatigue to validate your burnout.
                     </p>
@@ -144,12 +144,12 @@ const Guide: React.FC = () => {
             </div>
             
              <div className="flex gap-6 items-start">
-                <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xl shrink-0">4</div>
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold text-xl shrink-0">4</div>
                 <div>
-                    <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-2">
                         Identify the Gap <Activity size={16} className="text-indigo-500" />
                     </h3>
-                    <p className="text-slate-600">
+                    <p className="text-slate-600 dark:text-slate-300">
                         In the Dashboard, look for the gap between <strong>Capacity (Green)</strong> and <strong>Demand (Orange)</strong>.
                         If Demand exceeds Capacity for {'>'}3 days, prioritize recovery.
                     </p>

@@ -89,32 +89,32 @@ const Roadmap: React.FC = () => {
          </div>
       </header>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm p-8">
         <div className="space-y-8">
             {phases.map((phase, index) => (
                 <div key={phase.id} className="relative pl-8 md:pl-0">
                     {/* Connector Line */}
                     {index !== phases.length - 1 && (
-                        <div className="absolute left-[11px] md:left-1/2 top-10 bottom-[-32px] w-0.5 bg-slate-100 md:-translate-x-1/2"></div>
+                        <div className="absolute left-[11px] md:left-1/2 top-10 bottom-[-32px] w-0.5 bg-slate-100 dark:bg-slate-700 md:-translate-x-1/2"></div>
                     )}
 
                     <div className="md:flex items-center justify-between gap-8 group">
                         
                         {/* Time & Status (Left) */}
                         <div className="hidden md:block w-1/2 text-right pr-8">
-                            <span className="text-sm font-bold text-slate-400 block mb-1">{phase.time}</span>
+                            <span className="text-sm font-bold text-slate-400 dark:text-slate-500 block mb-1">{phase.time}</span>
                             <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider
-                                ${phase.status === 'DONE' ? 'bg-emerald-100 text-emerald-700' : 
-                                  phase.status === 'NEXT' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}
+                                ${phase.status === 'DONE' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 
+                                  phase.status === 'NEXT' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}
                             `}>
                                 {phase.status}
                             </div>
                         </div>
 
                         {/* Center Icon */}
-                        <div className={`absolute left-0 md:static w-6 h-6 rounded-full border-2 flex items-center justify-center z-10 bg-white
+                        <div className={`absolute left-0 md:static w-6 h-6 rounded-full border-2 flex items-center justify-center z-10 bg-white dark:bg-slate-800
                             ${phase.status === 'DONE' ? 'border-emerald-500 text-emerald-500' : 
-                              phase.status === 'NEXT' ? 'border-indigo-500 text-indigo-500' : 'border-slate-300 text-slate-300'}
+                              phase.status === 'NEXT' ? 'border-indigo-500 text-indigo-500' : 'border-slate-300 dark:border-slate-600 text-slate-300 dark:text-slate-600'}
                         `}>
                             {phase.status === 'DONE' ? <CheckCircle2 size={14} /> : 
                              phase.status === 'NEXT' ? <Zap size={14} fill="currentColor" /> : <Circle size={10} />}
@@ -122,19 +122,19 @@ const Roadmap: React.FC = () => {
 
                         {/* Content (Right) */}
                         <div className="md:w-1/2 md:pl-8">
-                            <h3 className={`text-lg font-bold mb-1 ${phase.status === 'PLANNED' ? 'text-slate-400' : 'text-slate-800'}`}>
+                            <h3 className={`text-lg font-bold mb-1 ${phase.status === 'PLANNED' ? 'text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-100'}`}>
                                 {phase.id}. {phase.title}
                             </h3>
-                            <p className="text-slate-500 text-sm leading-relaxed">
+                            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                                 {phase.desc}
                             </p>
                             
                             {/* Mobile only status */}
                             <div className="md:hidden mt-2 flex items-center gap-3">
-                                <span className="text-xs font-bold text-slate-400">{phase.time}</span>
+                                <span className="text-xs font-bold text-slate-400 dark:text-slate-500">{phase.time}</span>
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full
-                                    ${phase.status === 'DONE' ? 'bg-emerald-100 text-emerald-700' : 
-                                      phase.status === 'NEXT' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}
+                                    ${phase.status === 'DONE' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 
+                                      phase.status === 'NEXT' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}
                                 `}>{phase.status}</span>
                             </div>
                         </div>

@@ -134,43 +134,53 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     }
   };
 
-  const CapacitySlider = ({ label, icon: Icon, value, field, color }: any) => (
-    <div className="flex items-center gap-3 mb-2">
-      <div className={`p-1.5 rounded-lg bg-${color}-50 text-${color}-600`}>
-        <Icon size={14} />
-      </div>
-      <div className="flex-1">
-        <div className="flex justify-between text-xs font-semibold text-slate-500 mb-1">
-          <span>{label}</span>
-          <span>{value}/10</span>
+  const colorStyles: Record<string, { bg: string, text: string, gradient: string, accent: string }> = {
+    blue: { bg: 'bg-blue-100 dark:bg-blue-900/50', text: 'text-blue-600 dark:text-blue-400', gradient: 'from-blue-400 to-blue-500', accent: 'accent-blue-500' },
+    pink: { bg: 'bg-pink-100 dark:bg-pink-900/50', text: 'text-pink-600 dark:text-pink-400', gradient: 'from-pink-400 to-pink-500', accent: 'accent-pink-500' },
+    purple: { bg: 'bg-purple-100 dark:bg-purple-900/50', text: 'text-purple-600 dark:text-purple-400', gradient: 'from-purple-400 to-purple-500', accent: 'accent-purple-500' },
+    cyan: { bg: 'bg-cyan-100 dark:bg-cyan-900/50', text: 'text-cyan-600 dark:text-cyan-400', gradient: 'from-cyan-400 to-cyan-500', accent: 'accent-cyan-500' },
+    indigo: { bg: 'bg-indigo-100 dark:bg-indigo-900/50', text: 'text-indigo-600 dark:text-indigo-400', gradient: 'from-indigo-400 to-indigo-500', accent: 'accent-indigo-500' },
+    rose: { bg: 'bg-rose-100 dark:bg-rose-900/50', text: 'text-rose-600 dark:text-rose-400', gradient: 'from-rose-400 to-rose-500', accent: 'accent-rose-500' },
+    orange: { bg: 'bg-orange-100 dark:bg-orange-900/50', text: 'text-orange-600 dark:text-orange-400', gradient: 'from-orange-400 to-orange-500', accent: 'accent-orange-500' },
+    yellow: { bg: 'bg-yellow-100 dark:bg-yellow-900/50', text: 'text-yellow-600 dark:text-yellow-400', gradient: 'from-yellow-400 to-yellow-500', accent: 'accent-yellow-500' },
+  };
+
+  const CapacitySlider = ({ label, icon: Icon, value, field, color }: any) => {
+    const styles = colorStyles[color] || colorStyles.blue;
+    return (
+    <div className="mb-4">
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex items-center gap-2">
+          <div className={`p-1.5 rounded-full ${styles.bg} ${styles.text}`}>
+            <Icon size={14} />
+          </div>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
         </div>
+        <span className="text-sm font-bold text-slate-900 dark:text-white">{value}/10</span>
+      </div>
+      <div className="relative h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden cursor-pointer group">
+        <div 
+          className={`absolute top-0 left-0 h-full bg-gradient-to-r ${styles.gradient} rounded-full transition-all duration-300`}
+          style={{ width: `${value * 10}%` }}
+        ></div>
+        {/* Invisible range input for interaction */}
         <input
           type="range"
           min="1"
           max="10"
           value={value}
           onChange={(e) => updateCapacity(field, parseInt(e.target.value))}
-          className={`w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-${color}-500`}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
         />
+        {/* Hover effect highlight */}
+        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6">
-      {/* Quick guidance for the capture flow */}
-      <div className="bg-indigo-50 border border-indigo-100 text-indigo-800 rounded-2xl p-4 shadow-sm">
-        <p className="text-sm font-semibold mb-1">How to capture:</p>
-        <ul className="text-sm text-indigo-700 list-disc pl-5 space-y-1">
-          <li>Slide your capacity bars to set today’s baseline.</li>
-          <li>Tap the mic to speak or type a quick note.</li>
-          <li>
-            Hit <span className="font-semibold">Capture</span> to analyze and
-            save.
-          </li>
-        </ul>
-      </div>
-
       {/* Phase 3: Immediate Strategy Feedback Overlay */}
       {lastStrategies.length > 0 && (
         <div className="bg-teal-600 rounded-3xl p-6 text-white shadow-xl animate-fadeIn relative overflow-hidden">
@@ -210,10 +220,10 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         </div>
       )}
 
-      {/* Input Card */}
-      <div className="bg-white p-5 rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-100 relative">
+      {/* Main Input Card */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 border border-slate-100 dark:border-slate-800 relative overflow-hidden">
         {isProcessing && (
-          <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center rounded-3xl">
+          <div className="absolute inset-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm z-20 flex items-center justify-center rounded-[2rem]">
             <AILoadingState
               message="Analyzing your entry..."
               steps={[
@@ -225,53 +235,28 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
           </div>
         )}
 
-        {/* Capacity Grid Header */}
-        <div className="mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-          <button
-            onClick={() => setShowCapacity(!showCapacity)}
-            className="flex items-center justify-between w-full text-left"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
-                <Zap size={18} fill="currentColor" />
-              </div>
-              <div>
-                <span className="block text-sm font-bold text-slate-700">
-                  Daily Capacity Check-in
-                </span>
-                <span className="text-xs text-slate-400 font-medium">
-                  Set your baseline before journaling.
-                </span>
-              </div>
-            </div>
-            {showCapacity ? (
-              <ChevronUp size={18} className="text-slate-400" />
-            ) : (
-              <ChevronDown size={18} className="text-slate-400" />
-            )}
-          </button>
+        {/* Capacity Check-in Section */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+             <div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Daily Capacity Check-in</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Set your baseline before journaling.</p>
+             </div>
+             <button 
+               onClick={() => setShowCapacity(!showCapacity)}
+               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+             >
+                {showCapacity ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+             </button>
+          </div>
 
           {showCapacity && (
-            <div className="mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 animate-fadeIn">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 animate-fadeIn">
               <CapacitySlider
-                label="Deep Focus / Flow"
+                label="Deep Focus"
                 icon={Brain}
                 value={capacity.focus}
                 field="focus"
-                color="indigo"
-              />
-              <CapacitySlider
-                label="Social Bandwidth"
-                icon={Users}
-                value={capacity.social}
-                field="social"
-                color="pink"
-              />
-              <CapacitySlider
-                label="Structure & Admin"
-                icon={LayoutList}
-                value={capacity.structure}
-                field="structure"
                 color="blue"
               />
               <CapacitySlider
@@ -279,80 +264,68 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
                 icon={Heart}
                 value={capacity.emotional}
                 field="emotional"
-                color="rose"
+                color="pink"
               />
               <CapacitySlider
-                label="Sensory Tolerance"
-                icon={Ear}
-                value={capacity.sensory}
-                field="sensory"
-                color="orange"
+                label="Social Battery"
+                icon={Users}
+                value={capacity.social}
+                field="social"
+                color="purple"
               />
               <CapacitySlider
                 label="Executive / Decisions"
                 icon={Zap}
                 value={capacity.executive}
                 field="executive"
-                color="yellow"
+                color="cyan"
               />
             </div>
           )}
         </div>
 
-        <div className="relative">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="What's happening? (e.g., 'Had 3 meetings and now my brain feels fuzzy...')"
-            className="w-full p-4 pb-16 bg-white rounded-2xl resize-none focus:outline-none focus:ring-0 border-b border-transparent focus:border-teal-500/50 transition-all h-40 text-slate-700 placeholder:text-slate-300 text-lg leading-relaxed"
-          />
-
-          <div className="absolute bottom-4 right-4 flex items-center gap-3">
-            <span className="text-xs text-slate-400 font-medium mr-2 hidden sm:inline-block">
-              Tap mic to speak or keep typing
-            </span>
-            <RecordVoiceButton
-              onTranscript={handleTranscript}
-              isDisabled={isProcessing}
+        {/* Input Area */}
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-full opacity-0 group-focus-within:opacity-100 blur transition-opacity duration-500 -z-10"></div>
+          <div className="relative flex items-center bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 focus-within:border-transparent focus-within:bg-white dark:focus-within:bg-slate-900 transition-all shadow-inner">
+            <input
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              placeholder="What's happening?"
+              className="w-full py-4 pl-6 pr-16 bg-transparent border-none focus:ring-0 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 text-lg"
             />
+            
+            <div className="absolute right-2 flex items-center gap-1">
+               <div className="scale-90">
+                  <RecordVoiceButton
+                    onTranscript={handleTranscript}
+                    isDisabled={isProcessing}
+                  />
+               </div>
+            </div>
           </div>
         </div>
 
-        <div className="mt-2 flex justify-between items-center px-1 border-t border-slate-100 pt-4">
-          <div className="flex items-center gap-2 text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-full">
-            <Sparkles size={14} />
-            <span className="text-xs font-bold uppercase tracking-wide">
-              Mae AI Analysis
-            </span>
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            disabled={!text || isProcessing}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all transform active:scale-95 ${
-              !text || isProcessing
-                ? "bg-slate-100 text-slate-300 cursor-not-allowed"
-                : "bg-teal-600 text-white hover:bg-teal-700 shadow-md hover:shadow-lg shadow-teal-200"
-            }`}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 size={20} className="animate-spin" />
-                <span>Parsing...</span>
-              </>
-            ) : (
-              <>
-                <span>Capture</span>
-                <Send size={20} />
-              </>
-            )}
-          </button>
-          {!text && !isProcessing && (
-            <span className="text-xs text-slate-400 ml-3">
-              Add a quick note or voice snippet to enable Capture.
-            </span>
-          )}
-        </div>
+        {/* Action Bar (Hidden if empty to simplify, or minimal) */}
+        {text && (
+            <div className="mt-4 flex justify-end animate-fadeIn">
+                <button
+                    onClick={handleSubmit}
+                    disabled={isProcessing}
+                    className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform flex items-center gap-2"
+                >
+                    <span>Capture Context</span>
+                    <Send size={16} />
+                </button>
+            </div>
+        )}
       </div>
     </div>
   );
