@@ -25,72 +25,7 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        // Improved chunk splitting for better caching
-        manualChunks(id) {
-          // React and core libraries
-          if (
-            id.includes("node_modules/react") ||
-            id.includes("node_modules/react-dom")
-          ) {
-            return "vendor";
-          }
-          // Lucide icons are heavy - put in separate chunk
-          if (id.includes("lucide-react")) {
-            return "icons";
-          }
-          // Google AI library
-          if (id.includes("@google/genai")) {
-            return "ai-sdk";
-          }
-          // IndexedDB library
-          if (id.includes("node_modules/idb")) {
-            return "storage";
-          }
-          // Charting library (if used)
-          if (id.includes("recharts") || id.includes("d3")) {
-            return "charts";
-          }
-          // AI services - separate chunk
-          if (id.includes("services/ai") || id.includes("services/gemini")) {
-            return "ai-services";
-          }
-          // Heavy components - individual chunks for lazy loading
-          if (id.includes("components/LiveCoach")) {
-            return "feature-coach";
-          }
-          if (id.includes("components/VisionBoard")) {
-            return "feature-vision";
-          }
-          if (
-            id.includes("components/StateCheckWizard") ||
-            id.includes("components/StateCheck")
-          ) {
-            return "feature-statecheck";
-          }
-          if (
-            id.includes("components/Settings") ||
-            id.includes("components/AIProvider")
-          ) {
-            return "feature-settings";
-          }
-          if (id.includes("components/ClinicalReport")) {
-            return "feature-clinical";
-          }
-          if (
-            id.includes("components/HealthMetricsDashboard") ||
-            id.includes("components/Analysis")
-          ) {
-            return "feature-dashboard";
-          }
-          // Core services
-          if (id.includes("services/") && !id.includes("node_modules")) {
-            return "services";
-          }
-          // Other components
-          if (id.includes("components/") && !id.includes("node_modules")) {
-            return "components";
-          }
-        },
+        // Let Vite handle chunk splitting automatically to avoid initialization errors
       },
     },
     // Optimize chunk size warning threshold

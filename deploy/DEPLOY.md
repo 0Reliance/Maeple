@@ -1,6 +1,6 @@
 # MAEPLE Deployment Guide
 
-This guide outlines the recommended deployment strategies for the MAEPLE platform (v2.0.0).
+This guide outlines the recommended deployment strategies for the MAEPLE platform (v0.95.0).
 
 ## Architecture Overview
 

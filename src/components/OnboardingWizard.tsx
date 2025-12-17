@@ -46,11 +46,11 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
       icon: <Sparkles size={32} className="text-amber-500" />,
       content: (
         <div className="space-y-4">
-          <p className="text-slate-600 leading-relaxed">
-            MAEPLE helps you understand your unique neurological patterns—not to fix you, but to help you <span className="font-semibold text-slate-800">work with</span> your brain, not against it.
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+            MAEPLE helps you understand your unique neurological patterns—not to fix you, but to help you <span className="font-semibold text-slate-800 dark:text-slate-100">work with</span> your brain, not against it.
           </p>
-          <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
-            <p className="text-amber-800 text-sm flex items-start gap-2">
+          <div className="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-xl border border-amber-100 dark:border-amber-800">
+            <p className="text-amber-800 dark:text-amber-200 text-sm flex items-start gap-2">
               <Heart size={18} className="shrink-0 mt-0.5" />
               <span>Created by and for neurodivergent minds who need a gentler approach to self-tracking.</span>
             </p>
@@ -65,23 +65,23 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
       icon: <Brain size={32} className="text-indigo-500" />,
       content: (
         <div className="space-y-4">
-          <p className="text-slate-600 leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
             Traditional mood trackers ask "What did you do wrong?" MAEPLE asks "What patterns are you noticing?"
           </p>
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-50 p-3 rounded-xl">
-              <div className="flex items-center gap-2 text-slate-700 font-medium mb-1">
+            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
+              <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium mb-1">
                 <Zap size={16} className="text-amber-500" />
                 Capacity Tracking
               </div>
-              <p className="text-xs text-slate-500">Track your 7 capacity dimensions across social, sensory, focus, and more</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Track your 7 capacity dimensions across social, sensory, focus, and more</p>
             </div>
-            <div className="bg-slate-50 p-3 rounded-xl">
-              <div className="flex items-center gap-2 text-slate-700 font-medium mb-1">
+            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
+              <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium mb-1">
                 <Eye size={16} className="text-rose-500" />
                 Bio-Mirror
               </div>
-              <p className="text-xs text-slate-500">AI analysis helps you see what you might not notice about yourself</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">AI analysis helps you see what you might not notice about yourself</p>
             </div>
           </div>
         </div>
@@ -99,14 +99,14 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
               <span className="text-3xl">🌸</span>
             </div>
             <div>
-              <p className="font-bold text-slate-800">Mae</p>
-              <p className="text-sm text-slate-500">Empathetic Pattern Guide</p>
+              <p className="font-bold text-slate-800 dark:text-slate-100">Mae</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Empathetic Pattern Guide</p>
             </div>
           </div>
-          <p className="text-slate-600 leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
             Mae reads your journal entries and helps translate your experiences into actionable strategies—without judgment, without prescriptions, just pattern recognition.
           </p>
-          <p className="text-sm text-slate-500 italic">
+          <p className="text-sm text-slate-500 dark:text-slate-400 italic">
             "You're not broken—you're just running different software."
           </p>
         </div>
@@ -119,21 +119,21 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
       icon: <Shield size={32} className="text-emerald-500" />,
       content: (
         <div className="space-y-4">
-          <p className="text-slate-600 leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
             MAEPLE is <span className="font-semibold">local-first</span>. Your journal entries, capacity data, and patterns never leave your device.
           </p>
           <div className="space-y-2">
-            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl">
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
               <Lock size={18} className="text-emerald-600" />
-              <span className="text-sm text-emerald-800">Encrypted local storage</span>
+              <span className="text-sm text-emerald-800 dark:text-emerald-200">Encrypted local storage</span>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl">
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
               <Check size={18} className="text-emerald-600" />
-              <span className="text-sm text-emerald-800">No accounts required</span>
+              <span className="text-sm text-emerald-800 dark:text-emerald-200">No accounts required</span>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl">
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
               <Check size={18} className="text-emerald-600" />
-              <span className="text-sm text-emerald-800">Export your data anytime</span>
+              <span className="text-sm text-emerald-800 dark:text-emerald-200">Export your data anytime</span>
             </div>
           </div>
         </div>
@@ -146,25 +146,25 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
       icon: <Sparkles size={32} className="text-indigo-500" />,
       content: (
         <div className="space-y-4">
-          <p className="text-slate-600 leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
             Here's how to get the most from MAEPLE:
           </p>
           <ol className="space-y-3">
             <li className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-sm font-bold shrink-0">1</span>
-              <span className="text-slate-700"><span className="font-medium">Journal daily</span> — Just a few sentences about how you're feeling</span>
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-bold shrink-0">1</span>
+              <span className="text-slate-700 dark:text-slate-200"><span className="font-medium">Journal daily</span> — Just a few sentences about how you're feeling</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-sm font-bold shrink-0">2</span>
-              <span className="text-slate-700"><span className="font-medium">Use the sliders</span> — Rate your capacity across different dimensions</span>
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-bold shrink-0">2</span>
+              <span className="text-slate-700 dark:text-slate-200"><span className="font-medium">Use the sliders</span> — Rate your capacity across different dimensions</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-sm font-bold shrink-0">3</span>
-              <span className="text-slate-700"><span className="font-medium">Check your patterns</span> — Visit the Dashboard after 3+ entries</span>
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-bold shrink-0">3</span>
+              <span className="text-slate-700 dark:text-slate-200"><span className="font-medium">Check your patterns</span> — Visit the Dashboard after 3+ entries</span>
             </li>
           </ol>
           <div className="pt-2">
-            <p className="text-sm text-slate-500 text-center">
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
               No pressure. No streaks. Just awareness.
             </p>
           </div>
@@ -178,7 +178,7 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
 
   return (
     <div className={`fixed inset-0 bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
-      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden animate-fadeIn">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden animate-fadeIn">
         {/* Progress dots */}
         <div className="flex justify-center gap-2 pt-6">
           {steps.map((_, index) => (
@@ -190,7 +190,7 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
                   ? 'bg-indigo-500 w-6'
                   : index < currentStep
                   ? 'bg-indigo-300'
-                  : 'bg-slate-200'
+                  : 'bg-slate-200 dark:bg-slate-700'
               }`}
               aria-label={`Go to step ${index + 1}`}
             />
@@ -200,12 +200,12 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
         {/* Content */}
         <div className="p-8">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center shadow-inner">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center shadow-inner">
               {currentStepData.icon}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-800">{currentStepData.title}</h2>
-              <p className="text-sm text-slate-500">{currentStepData.subtitle}</p>
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{currentStepData.title}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{currentStepData.subtitle}</p>
             </div>
           </div>
 
@@ -215,14 +215,14 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between p-6 bg-slate-50 border-t border-slate-100">
+        <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
           <button
             onClick={() => setCurrentStep(prev => prev - 1)}
             disabled={currentStep === 0}
             className={`flex items-center gap-1 px-4 py-2 rounded-xl font-medium transition-all ${
               currentStep === 0
-                ? 'text-slate-300 cursor-not-allowed'
-                : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+                ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700'
             }`}
           >
             <ChevronLeft size={18} />
@@ -240,7 +240,7 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
           ) : (
             <button
               onClick={() => setCurrentStep(prev => prev + 1)}
-              className="flex items-center gap-1 px-6 py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-all"
+              className="flex items-center gap-1 px-6 py-3 bg-slate-900 dark:bg-slate-700 text-white rounded-xl font-medium hover:bg-slate-800 dark:hover:bg-slate-600 transition-all"
             >
               Next
               <ChevronRight size={18} />

@@ -58,14 +58,14 @@ const AIProviderStats: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <Activity className="text-indigo-500" size={20} />
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <Activity className="text-indigo-500 dark:text-indigo-400" size={20} />
           AI Provider Health & Usage
         </h3>
         <button 
           onClick={loadData}
           disabled={loading}
-          className="p-2 text-slate-400 hover:text-indigo-600 transition-colors rounded-full hover:bg-indigo-50"
+          className="p-2 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
           title="Refresh Stats"
         >
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
@@ -82,17 +82,17 @@ const AIProviderStats: React.FC = () => {
             : '0.0';
 
           return (
-            <div key={id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm relative overflow-hidden">
+            <div key={id} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h4 className="font-bold text-slate-700">{info?.name || id}</h4>
+                  <h4 className="font-bold text-slate-700 dark:text-slate-200">{info?.name || id}</h4>
                   <div className="flex items-center gap-1.5 mt-1">
                     {isHealthy ? (
-                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
                         <CheckCircle size={10} /> Operational
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
                         <AlertCircle size={10} /> Issues Detected
                       </span>
                     )}
@@ -100,7 +100,7 @@ const AIProviderStats: React.FC = () => {
                 </div>
                 <button
                   onClick={() => handleReset(id)}
-                  className="text-slate-300 hover:text-red-500 transition-colors"
+                  className="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                   title="Reset Stats"
                 >
                   <Trash2 size={16} />
@@ -109,18 +109,18 @@ const AIProviderStats: React.FC = () => {
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Requests</span>
-                  <span className="font-mono font-medium text-slate-700">{providerStats.requestCount}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Requests</span>
+                  <span className="font-mono font-medium text-slate-700 dark:text-slate-200">{providerStats.requestCount}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Error Rate</span>
-                  <span className={`font-mono font-medium ${Number(errorRate) > 5 ? 'text-red-500' : 'text-slate-700'}`}>
+                  <span className="text-slate-500 dark:text-slate-400">Error Rate</span>
+                  <span className={`font-mono font-medium ${Number(errorRate) > 5 ? 'text-red-500 dark:text-red-400' : 'text-slate-700 dark:text-slate-200'}`}>
                     {errorRate}%
                   </span>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-slate-50">
-                  <span className="text-xs text-slate-400">Last Active</span>
-                  <span className="text-xs text-slate-500">{formatTime(providerStats.lastRequestTime)}</span>
+                <div className="flex justify-between items-center pt-2 border-t border-slate-50 dark:border-slate-700">
+                  <span className="text-xs text-slate-400 dark:text-slate-500">Last Active</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{formatTime(providerStats.lastRequestTime)}</span>
                 </div>
               </div>
             </div>

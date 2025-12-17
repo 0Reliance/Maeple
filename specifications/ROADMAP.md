@@ -55,7 +55,7 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 - [x] Connect Vision Board to Neuro-Metrics.
 - [x] Generate "Smart Prompts" based on current state (e.g., "Visualize Serenity" if Sensory Load > 8).
 
-## 🟢 Phase 11: Platform Hardening (CURRENT)
+## 🟢 Phase 11: Platform Hardening (COMPLETED)
 
 - [x] **Routing**: Migrated to `react-router-dom` for proper URL navigation.
 - [x] **AI Stability**: Implemented health checks and usage tracking for all providers.
@@ -64,13 +64,27 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 - [x] **Live Coach**: Abstracted audio routing to support multi-provider real-time sessions.
 - [x] **AI Expansion**: Fully implemented Perplexity, OpenRouter, and Ollama adapters.
 
-## 🟡 Phase 12: Wearable Ecosystem (NEXT)
+## 🟢 Phase 14: Polish & Privacy (COMPLETED)
+
+- [x] **Dashboard Simplification**: Redesigned Capacity Check-in and Context Grid.
+- [x] **Navigation Refactor**: Implemented User Menu and streamlined Sidebar.
+- [x] **Privacy Clarity**: Added explicit "Local-First" terms and legal documentation.
+- [x] **Branding**: Added Poziverse branding and GitHub links.
+
+## � Phase 15: Pattern Literacy & UX Polish (COMPLETED)
+
+- [x] **Empty States**: Implemented "Cold Start" UI for all charts and widgets.
+- [x] **Educational Overlays**: Added "Waiting for Data" guidance to prevent confusion.
+- [x] **Bio-Mirror Guidance**: Added "Pro Tip" logic for masking detection context.
+- [x] **Chart Safety**: Prevented Recharts from rendering with null data.
+
+## 🟡 Phase 16: Wearable Ecosystem (NEXT)
 
 - [ ] **Apple Health**: Native integration via Capacitor.
 - [ ] **Garmin**: OAuth2 integration for real-time stress data.
 - [ ] **Fitbit/Whoop**: Add support for additional providers.
 
-## 🟡 Phase 13: Advanced AI Features
+## 🟡 Phase 17: Advanced AI Features
 
 - [ ] **OpenAI Realtime**: Implement `connectLive` for OpenAI.
 - [x] **Perplexity/OpenRouter**: Finalize adapters for research/broad model support.

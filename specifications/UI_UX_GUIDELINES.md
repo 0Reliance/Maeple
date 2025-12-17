@@ -35,12 +35,37 @@ MAEPLE uses Tailwind CSS with the `class` strategy for dark mode.
 ### 3.1 Navigation
 
 - **MobileNav**: Bottom bar navigation visible on all devices.
-- **Drawer**: Slide-out menu for secondary items.
+- **Drawer**: Slide-out menu for core navigation items.
+- **UserMenu**: Top-right dropdown for secondary tools (Settings, Resources, Legal) and account actions.
 
-### 3.2 Feedback
+### 3.2 Dashboard & Cards
+
+- **Capacity Check-in**: Uses gradient sliders and card layout for clear, calm input.
+- **Context Cards**: Grid layout with pastel color coding based on capacity levels (Blue/Purple/Pink).
+- **Visual Hierarchy**: Primary actions (Capture) are prominent; secondary details are subtle.
+
+### 3.3 Feedback
 
 - **AILoadingState**: Full-screen or card overlay for long-running AI tasks.
   - _Props_: `message`, `steps` (array of strings).
+
+### 3.4 Empty States (Cold Start)
+
+- **Principle**: Never show a broken chart or "0" data without context.
+- **Implementation**:
+  - **Charts**: Use an overlay with a relevant icon (e.g., `Activity`, `Brain`) and text "Waiting for Data".
+  - **Widgets**: Show a neutral state (e.g., Slate-50 background) with "PENDING" text.
+  - **Guidance**: Provide a clear next step (e.g., "Log your first entry to see this").
+- **Example**:
+  ```tsx
+  if (entries.length === 0) {
+    return (
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/50">
+        <p>Waiting for Data</p>
+      </div>
+    );
+  }
+  ```
 - **TypingIndicator**: Bouncing dots for chat interfaces.
   - _Usage_: `<TypingIndicator />`
 

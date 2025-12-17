@@ -98,6 +98,19 @@ const healthEntrySchema: Schema = {
   required: ["moodScore", "moodLabel", "neuroMetrics", "activityTypes", "strengths", "summary", "strategies", "analysisReasoning"]
 };
 
+// Helper to ensure response structure is valid
+const validateParsedResponse = (parsed: any): ParsedResponse => {
+  return {
+    ...parsed,
+    medications: Array.isArray(parsed.medications) ? parsed.medications : [],
+    symptoms: Array.isArray(parsed.symptoms) ? parsed.symptoms : [],
+    activityTypes: Array.isArray(parsed.activityTypes) ? parsed.activityTypes : [],
+    strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+    strategies: Array.isArray(parsed.strategies) ? parsed.strategies : [],
+    neuroMetrics: parsed.neuroMetrics || { sensoryLoad: 5, contextSwitches: 0, maskingScore: 5 },
+  };
+};
+
 /**
  * Parses natural language health journals into structured JSON.
  * Uses Gemini 2.5 Flash with Advanced Chain-of-Thought prompting for Neuro-Affirming Analysis.
@@ -134,6 +147,12 @@ export const parseJournalEntry = async (text: string, capacityProfile: CapacityP
       DETECTING EXECUTIVE DYSFUNCTION:
       - Look for: "Stuck", "Doom scrolling", "Couldn't start", "Forgot", "Scattered". Do not label this as laziness.
 
+      DECISION MATRIX (How to Respond):
+      - GREEN ZONE (High Capacity / High Mood): Encourage capitalization on strengths. Suggest creative tasks or "Deep Work".
+      - RED ZONE (Low Capacity / High Load): Validate struggle. Suggest immediate sensory reduction (e.g., "Dim lights", "Noise cancelling"). DO NOT suggest complex tasks.
+      - DISCREPANCY (High Masking Score): Gentle inquiry: "You seem to be pushing through. Is it safe to unmask?"
+      - INCONSISTENT (Text says "Fine", Mood is 1): Trust the Mood score. Ask about the discrepancy gently.
+
       STRATEGY GENERATION:
       - Generate 3 specific, micro-strategies based on the *Delta* between their Capacity Profile and their actual state.
       - If Social Capacity is low but they socialized -> Suggest "Social Decompression".
@@ -150,11 +169,12 @@ export const parseJournalEntry = async (text: string, capacityProfile: CapacityP
       "${text}"
 
       TASK:
-      Analyze the entry. 
-      1. Did the user exceed their reported capacity? 
-      2. Are they masking? Look at the tone.
-      3. Extract specific activities.
-      4. Generate 3 specific neuro-affirming strategies for the next 2 hours.
+      Analyze the entry using the Decision Matrix.
+      1. Determine the user's "Zone" (Green/Red/Discrepancy).
+      2. Did the user exceed their reported capacity? 
+      3. Are they masking? Look at the tone.
+      4. Extract specific activities.
+      5. Generate 3 specific neuro-affirming strategies for the next 2 hours based on their Zone.
     `;
 
     // Prefer router (multi-provider); fallback to direct Gemini client
@@ -169,7 +189,8 @@ export const parseJournalEntry = async (text: string, capacityProfile: CapacityP
 
     if (routerResult?.content) {
       try {
-        return JSON.parse(routerResult.content) as ParsedResponse;
+        const parsed = JSON.parse(routerResult.content);
+        return validateParsedResponse(parsed);
       } catch (parseErr) {
         console.warn('Router JSON parse failed, falling back to Gemini SDK', parseErr);
       }
@@ -197,7 +218,8 @@ export const parseJournalEntry = async (text: string, capacityProfile: CapacityP
     const textResponse = response.text;
     if (!textResponse) throw new Error("No response from AI");
     
-    return JSON.parse(textResponse) as ParsedResponse;
+    const parsed = JSON.parse(textResponse);
+    return validateParsedResponse(parsed);
   } catch (error) {
     console.error("Parsing error:", error);
     return getDefaultParsedResponse(text);

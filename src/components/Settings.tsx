@@ -142,8 +142,8 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
           <div
             className={`w-12 h-12 rounded-xl flex items-center justify-center ${
               isConnected
-                ? "bg-teal-50 text-teal-600"
-                : "bg-slate-50 text-slate-400"
+                ? "bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
+                : "bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
             }`}
           >
             <Icon size={24} />
@@ -153,11 +153,11 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               {name}
             </h3>
             {isConnected ? (
-              <div className="flex items-center gap-2 text-xs text-emerald-600 font-medium mt-1">
+              <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">
                 <Check size={12} />
                 <span>Connected</span>
                 {config.lastSyncedAt && (
-                  <span className="text-slate-400 font-normal">
+                  <span className="text-slate-400 dark:text-slate-500 font-normal">
                     • Last sync:{" "}
                     {new Date(config.lastSyncedAt).toLocaleTimeString([], {
                       hour: "2-digit",
@@ -167,7 +167,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
                 )}
               </div>
             ) : (
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                 Sync sleep & biometric data
               </p>
             )}
@@ -180,7 +180,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               <button
                 onClick={() => handleSync(id)}
                 disabled={isLoading}
-                className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
                 title="Sync Now"
               >
                 <RefreshCw
@@ -190,7 +190,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               </button>
               <button
                 onClick={() => handleDisconnect(id)}
-                className="px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg font-medium transition-colors"
+                className="px-4 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg font-medium transition-colors"
               >
                 Disconnect
               </button>
@@ -199,7 +199,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
             <button
               onClick={() => handleConnect(id)}
               disabled={isLoading}
-              className="px-6 py-2 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 flex items-center gap-2"
+              className="px-6 py-2 bg-slate-900 dark:bg-slate-700 text-white rounded-xl font-medium hover:bg-slate-800 dark:hover:bg-slate-600 transition-all shadow-lg shadow-slate-200 dark:shadow-slate-900/50 flex items-center gap-2"
             >
               {isLoading && <Loader2 size={16} className="animate-spin" />}
               Connect
@@ -312,7 +312,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
             <button
               onClick={handleExportJSON}
               disabled={isExporting}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50 text-emerald-700 rounded-xl font-medium hover:bg-emerald-100 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-xl font-medium hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors disabled:opacity-50"
             >
               {isExporting ? (
                 <Loader2 size={18} className="animate-spin" />
@@ -325,7 +325,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
             <button
               onClick={handleExportZIP}
               disabled={isExporting}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-medium hover:bg-indigo-100 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50"
             >
               {isExporting ? (
                 <Loader2 size={18} className="animate-spin" />
@@ -336,7 +336,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
             </button>
 
             <label
-              className={`flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 text-blue-700 rounded-xl font-medium hover:bg-blue-100 transition-colors cursor-pointer sm:col-span-2 ${
+              className={`flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-xl font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors cursor-pointer sm:col-span-2 ${
                 isImporting ? "opacity-50 pointer-events-none" : ""
               }`}
             >
@@ -361,8 +361,8 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
             <div
               className={`p-4 rounded-xl ${
                 importResult.success
-                  ? "bg-green-50 text-green-800"
-                  : "bg-red-50 text-red-800"
+                  ? "bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200"
+                  : "bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200"
               }`}
             >
               {importResult.success ? (
@@ -399,7 +399,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
             </div>
           )}
 
-          <div className="pt-4 border-t border-slate-100">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium text-slate-800 dark:text-slate-100">
@@ -411,7 +411,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               </div>
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl font-medium transition-colors"
               >
                 <Trash2 size={18} />
                 Delete All
@@ -422,7 +422,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
           {/* Delete Confirmation Modal */}
           {showDeleteConfirm && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-fadeIn">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-fadeIn">
                 <div className="flex items-center gap-3 text-red-600 mb-4">
                   <AlertTriangle size={24} />
                   <h3 className="text-lg font-bold">Delete All Data?</h3>
@@ -435,7 +435,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowDeleteConfirm(false)}
-                    className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+                    className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                   >
                     Cancel
                   </button>
@@ -470,7 +470,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
 
       {/* Appearance Settings */}
       <section className="space-y-4">
-        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 flex items-center gap-2">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
           <Monitor className="text-purple-500" size={20} />
           Appearance
         </h3>
@@ -481,7 +481,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                 userSettings.theme === "light"
                   ? "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
-                  : "border-slate-100 hover:border-slate-200 text-slate-600 dark:text-slate-300 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-600"
+                  : "border-slate-100 hover:border-slate-200 text-slate-600 dark:text-slate-400 dark:border-slate-700 dark:hover:border-slate-600"
               }`}
             >
               <Sun size={24} />
@@ -492,7 +492,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                 userSettings.theme === "dark"
                   ? "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
-                  : "border-slate-100 hover:border-slate-200 text-slate-600 dark:text-slate-300 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-600"
+                  : "border-slate-100 hover:border-slate-200 text-slate-600 dark:text-slate-400 dark:border-slate-700 dark:hover:border-slate-600"
               }`}
             >
               <Moon size={24} />

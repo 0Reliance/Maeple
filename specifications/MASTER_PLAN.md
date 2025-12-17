@@ -1,8 +1,8 @@
 # MAEPLE Master Development Plan
 
 **Project**: MAEPLE (Mental And Emotional Pattern Literacy Engine)  
-**Version**: 1.3.0 → 2.0.0  
-**Created**: December 14, 2025  
+**Version**: 0.95.0  
+**Created**: December 17, 2025  
 **Author**: Development Team
 
 ---

@@ -59,11 +59,11 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
 
   if (entries.length < 5) {
       return (
-          <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center">
-              <FileText size={48} className="mx-auto text-slate-300 mb-4" />
-              <h2 className="text-xl font-bold text-slate-700">Insufficient Data</h2>
-              <p className="text-slate-500 mt-2">
-                  Please log at least 5 entries to generate a meaningful Clinical Phenotype Report.
+          <div className="bg-white dark:bg-slate-800 p-12 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
+              <FileText size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+              <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200">Insufficient Data</h2>
+              <p className="text-slate-500 dark:text-slate-400 mt-2">
+                  Please log at least 5 entries to generate a meaningful Capacity & Wellness Report.
               </p>
           </div>
       );
@@ -73,14 +73,14 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
     <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn pb-12 print:p-0 print:max-w-none">
       
       {/* Header / Actions */}
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-100 shadow-sm print:hidden">
+      <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm print:hidden">
         <div>
-            <h1 className="text-2xl font-bold text-slate-800">Clinical Phenotype Report</h1>
-            <p className="text-slate-500">Longitudinal analysis for therapeutic context.</p>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Capacity & Wellness Report</h1>
+            <p className="text-slate-500 dark:text-slate-400">Longitudinal analysis for support context.</p>
         </div>
         <button 
             onClick={handlePrint}
-            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 dark:shadow-none"
         >
             <Printer size={18} />
             Print to PDF
@@ -88,24 +88,24 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
       </div>
 
       {/* The Report (Printable Area) */}
-      <div className="bg-white p-8 md:p-12 rounded-3xl border border-slate-200 shadow-xl print:shadow-none print:border-none print:p-0">
+      <div className="bg-white dark:bg-slate-800 p-8 md:p-12 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl print:shadow-none print:border-none print:p-0">
         
         {/* Report Header */}
-        <header className="border-b border-slate-100 pb-8 mb-8 flex justify-between items-start">
+        <header className="border-b border-slate-100 dark:border-slate-700 pb-8 mb-8 flex justify-between items-start">
             <div>
                 <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold">P</div>
-                    <span className="font-bold text-slate-900 tracking-tight text-xl">MAEPLE</span>
+                    <div className="w-8 h-8 bg-slate-900 dark:bg-slate-700 rounded-lg flex items-center justify-center text-white font-bold">P</div>
+                    <span className="font-bold text-slate-900 dark:text-slate-100 tracking-tight text-xl">MAEPLE</span>
                 </div>
-                <h2 className="text-3xl font-bold text-slate-800">Digital Phenotype Analysis</h2>
-                <div className="mt-4 space-y-1 text-sm text-slate-500">
+                <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Capacity Pattern Analysis</h2>
+                <div className="mt-4 space-y-1 text-sm text-slate-500 dark:text-slate-400">
                     <p><strong>Report Date:</strong> {reportDate}</p>
                     <p><strong>Data Range:</strong> {dateRangeStart} — {dateRangeEnd}</p>
                     <p><strong>Entries Analyzed:</strong> {entries.length}</p>
                 </div>
             </div>
             <div className="text-right">
-                <span className="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold uppercase tracking-wider">
+                <span className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold uppercase tracking-wider">
                     CONFIDENTIAL
                 </span>
             </div>
@@ -113,38 +113,38 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
 
         {/* 1. Executive Summary */}
         <section className="mb-12">
-            <h3 className="text-lg font-bold text-slate-800 mb-4 border-l-4 border-indigo-500 pl-3">Executive Summary</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-l-4 border-indigo-500 pl-3">Executive Summary</h3>
             <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-slate-50 p-6 rounded-xl">
-                    <h4 className="font-bold text-slate-700 mb-2 flex items-center gap-2">
+                <div className="bg-slate-50 dark:bg-slate-700/50 p-6 rounded-xl">
+                    <h4 className="font-bold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2">
                         <Activity size={18} className="text-rose-500" /> Burnout Risk
                     </h4>
                     <div className="flex items-baseline gap-2 mb-1">
                         <span className={`text-2xl font-bold ${
-                            burnoutStats.riskLevel === 'CRITICAL' ? 'text-rose-600' : 
-                            burnoutStats.riskLevel === 'MODERATE' ? 'text-orange-600' : 'text-emerald-600'
+                            burnoutStats.riskLevel === 'CRITICAL' ? 'text-rose-600 dark:text-rose-400' : 
+                            burnoutStats.riskLevel === 'MODERATE' ? 'text-orange-600 dark:text-orange-400' : 'text-emerald-600 dark:text-emerald-400'
                         }`}>{burnoutStats.riskLevel}</span>
                     </div>
-                    <p className="text-sm text-slate-600 leading-relaxed">{burnoutStats.description}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{burnoutStats.description}</p>
                 </div>
-                <div className="bg-slate-50 p-6 rounded-xl">
-                     <h4 className="font-bold text-slate-700 mb-2 flex items-center gap-2">
-                        <Brain size={18} className="text-indigo-500" /> Neuro-Cognitive Load
+                <div className="bg-slate-50 dark:bg-slate-700/50 p-6 rounded-xl">
+                     <h4 className="font-bold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2">
+                        <Brain size={18} className="text-indigo-500 dark:text-indigo-400" /> Neuro-Cognitive Load
                     </h4>
                     <div className="space-y-2 mt-3">
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-500">Avg Sensory Load</span>
-                            <span className="font-bold text-slate-700">{avgSensory}/10</span>
+                            <span className="text-slate-500 dark:text-slate-400">Avg Sensory Load</span>
+                            <span className="font-bold text-slate-700 dark:text-slate-200">{avgSensory}/10</span>
                         </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
                             <div className="bg-orange-400 h-1.5 rounded-full" style={{width: `${parseFloat(avgSensory)*10}%`}}></div>
                         </div>
 
                         <div className="flex justify-between text-sm mt-3">
-                            <span className="text-slate-500">Avg Masking Effort</span>
-                            <span className="font-bold text-slate-700">{avgMasking}/10</span>
+                            <span className="text-slate-500 dark:text-slate-400">Avg Masking Effort</span>
+                            <span className="font-bold text-slate-700 dark:text-slate-200">{avgMasking}/10</span>
                         </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
                             <div className="bg-purple-400 h-1.5 rounded-full" style={{width: `${parseFloat(avgMasking)*10}%`}}></div>
                         </div>
                     </div>
@@ -154,19 +154,19 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
 
         {/* 2. Capacity Profile (Radar Chart) */}
         <section className="mb-12">
-             <h3 className="text-lg font-bold text-slate-800 mb-6 border-l-4 border-teal-500 pl-3">Baseline Capacity Profile</h3>
+             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 border-l-4 border-teal-500 pl-3">Baseline Capacity Profile</h3>
              <div className="grid md:grid-cols-3 gap-8 items-center">
                  <div className="md:col-span-1 space-y-4">
-                     <p className="text-sm text-slate-600 leading-relaxed">
+                     <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                          This chart represents the patient's average reported capacity across 7 functional domains.
                      </p>
                      <ul className="space-y-2 text-sm">
-                         <li className="flex items-center gap-2 text-slate-700">
+                         <li className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
                              <span className="w-2 h-2 rounded-full bg-teal-500"></span>
                              <strong>Spikes:</strong> Areas of strength/hyperfocus
                          </li>
-                         <li className="flex items-center gap-2 text-slate-700">
-                             <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+                         <li className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                             <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>
                              <strong>Dips:</strong> Areas requiring accommodation
                          </li>
                      </ul>
@@ -174,7 +174,7 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
                  <div className="md:col-span-2 h-64 flex justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                         <RadarChart cx="50%" cy="50%" outerRadius="80%" data={avgProfile || []}>
-                            <PolarGrid stroke="#e2e8f0" />
+                            <PolarGrid stroke="#e2e8f0" className="dark:stroke-slate-600" />
                             <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 'bold' }} />
                             <PolarRadiusAxis angle={30} domain={[0, 10]} tick={false} axisLine={false} />
                             <Radar
@@ -193,8 +193,8 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
 
         {/* 3. Longitudinal Trends */}
         <section className="mb-12 break-inside-avoid">
-            <h3 className="text-lg font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-3">30-Day Stability Trend</h3>
-            <div className="h-64 w-full border border-slate-100 rounded-xl p-4">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 border-l-4 border-blue-500 pl-3">30-Day Stability Trend</h3>
+            <div className="h-64 w-full border border-slate-100 dark:border-slate-700 rounded-xl p-4">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData}>
                         <defs>
@@ -203,10 +203,19 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
                                 <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-700" />
                         <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{fill: '#94a3b8', fontSize: 10}} dy={10} />
                         <YAxis domain={[0, 10]} hide />
-                        <Tooltip contentStyle={{borderRadius:'8px'}} />
+                        <Tooltip 
+                            contentStyle={{
+                                borderRadius:'8px',
+                                backgroundColor: 'var(--tooltip-bg, #fff)',
+                                color: 'var(--tooltip-text, #1e293b)',
+                                border: 'none',
+                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                            }} 
+                            wrapperClassName="dark:!bg-slate-800 dark:!text-slate-100"
+                        />
                         <Area 
                             type="monotone" 
                             dataKey="spoons" 
@@ -227,35 +236,36 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
-            <p className="text-xs text-slate-400 mt-2 text-center">Green = Capacity (Spoons) • Dotted Purple = Mood</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 text-center">Green = Capacity (Spoons) • Dotted Purple = Mood</p>
         </section>
 
         {/* 4. Detected Patterns */}
         <section className="break-inside-avoid">
-             <h3 className="text-lg font-bold text-slate-800 mb-6 border-l-4 border-purple-500 pl-3">Correlational Analysis</h3>
+             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 border-l-4 border-purple-500 pl-3">Correlational Analysis</h3>
              <div className="space-y-4">
                  {insights.length > 0 ? insights.map((insight, i) => (
-                     <div key={i} className="flex gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                     <div key={i} className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-100 dark:border-slate-700">
                          <div className="mt-1">
                              {insight.type === 'WARNING' && <AlertTriangle className="text-orange-500" size={20} />}
                              {insight.type === 'BIO-LINK' && <Activity className="text-rose-500" size={20} />}
                              {insight.type === 'CORRELATION' && <Zap className="text-indigo-500" size={20} />}
                          </div>
                          <div>
-                             <h4 className="font-bold text-slate-800 text-sm">{insight.title}</h4>
-                             <p className="text-sm text-slate-600">{insight.description}</p>
+                             <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm">{insight.title}</h4>
+                             <p className="text-sm text-slate-600 dark:text-slate-300">{insight.description}</p>
                          </div>
                      </div>
                  )) : (
-                     <p className="text-slate-500 italic">Not enough data to detect patterns yet.</p>
+                     <p className="text-slate-500 dark:text-slate-400 italic">Not enough data to detect patterns yet.</p>
                  )}
              </div>
         </section>
 
-        <footer className="mt-12 pt-8 border-t border-slate-100 text-center">
-            <p className="text-xs text-slate-400">
+        <footer className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-700 text-center">
+            <p className="text-xs text-slate-400 dark:text-slate-500">
                 Generated by MAEPLE (Powered by Poziverse). 
-                This report tracks patient-reported outcomes and is not a diagnostic tool.
+                This report uses the <strong>MAEPLE Capacity Metrics</strong> framework (Bandwidth, Load, Interference) to track neurodivergent patterns.
+                It is not a diagnostic tool.
             </p>
         </footer>
 
