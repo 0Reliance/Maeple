@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { FacialAnalysis } from "../types";
 import { aiRouter } from "./ai";
 import { rateLimitedCall } from "./rateLimiter";
@@ -86,51 +86,92 @@ export const generateOrEditImage = async (
   }
 };
 
-// Schema for Facial Analysis
+// Schema for Objective Facial Analysis
 const facialAnalysisSchema: Schema = {
   type: Type.OBJECT,
   properties: {
-    primaryEmotion: { type: Type.STRING },
-    confidence: { type: Type.NUMBER },
-    eyeFatigue: { type: Type.NUMBER, description: "0-1 scale, looking for drooping, redness, or lack of focus" },
-    jawTension: { type: Type.NUMBER, description: "0-1 scale, looking for clenching or tightness" },
-    maskingScore: { type: Type.NUMBER, description: "0-1 scale. High score implies a 'forced' expression vs authentic." },
-    signs: {
+    confidence: { type: Type.NUMBER, description: "Overall confidence in the analysis (0-1)" },
+    observations: {
+      type: Type.ARRAY,
+      items: { type: Type.OBJECT },
+      description: "List of objective visual observations"
+    },
+    lighting: { type: Type.STRING, description: "Lighting condition: 'bright fluorescent', 'soft natural', 'low light', etc." },
+    lightingSeverity: { type: Type.STRING, enum: ["low", "moderate", "high"], description: "How harsh the lighting is" },
+    environmentalClues: {
       type: Type.ARRAY,
       items: { type: Type.STRING },
-      description: "List of visual indicators (e.g. 'asymmetric smile', 'furrowed brow')"
+      description: "Background elements (e.g., 'busy office', 'blank wall', 'outdoor')"
     }
   },
-  required: ["primaryEmotion", "confidence", "eyeFatigue", "jawTension", "maskingScore", "signs"]
+  required: ["confidence", "observations", "lighting", "lightingSeverity", "environmentalClues"]
 };
 
 /**
  * Default facial analysis when AI is not available
  */
 const getDefaultFacialAnalysis = (): FacialAnalysis => ({
-  primaryEmotion: "unknown",
   confidence: 0,
-  eyeFatigue: 0.5,
-  jawTension: 0.5,
-  maskingScore: 0.5,
-  signs: ["AI analysis not configured - go to Settings to enable"],
+  observations: [],
+  lighting: "unknown",
+  lightingSeverity: "moderate",
+  environmentalClues: ["AI analysis not configured - go to Settings to enable"],
+});
+
+/**
+ * Offline fallback analysis based on basic image metrics
+ */
+const getOfflineAnalysis = (_base64Image: string): FacialAnalysis => ({
+  confidence: 0.3,
+  observations: [],
+  lighting: "unknown",
+  lightingSeverity: "moderate",
+  environmentalClues: ["Offline analysis - basic estimates based on image quality"],
 });
 
 /**
  * Analyzes a selfie for neurodivergent markers (Masking, Fatigue).
  * Returns default values if AI is not configured.
  */
-export const analyzeStateFromImage = async (base64Image: string): Promise<FacialAnalysis> => {
+export const analyzeStateFromImage = async (
+  base64Image: string,
+  options: { timeout?: number, onProgress?: (stage: string, progress: number) => void, signal?: AbortSignal } = {}
+): Promise<FacialAnalysis> => {
+  const { timeout = 30000, onProgress, signal } = options;
+  
   try {
+    const promptText = `Analyze this facial image for OBJECTIVE OBSERVATIONS ONLY.
+
+Your task: Report ONLY what you can see - NO subjective interpretations or emotion labels.
+
+DO NOT:
+- Say "the user looks sad/angry/happy" (Subjective)
+- Label emotions or feelings
+- Make assumptions about internal state
+- Use terms like "seems", "appears", "looks like"
+
+DO:
+- Report physical features: "tension around eyes", "slight frown lines", "drooping eyelids"
+- Note lighting conditions: "bright fluorescent lighting", "soft natural light", "low light"
+- Note environmental elements: "busy office background", "blank wall", "outdoor"
+- Note facial indicators using FACS terminology: "ptosis (drooping eyelids)", "furrowed brow (AU4)"
+- Note visible tension: "tightness around jaw", "lip tension (AU24)"
+
+Categorize each observation:
+- "tension": Physical tightness indicators
+- "fatigue": Signs of tiredness or drooping
+- "lighting": Lighting conditions in the photo
+- "environmental": Background elements
+
+Return a structured analysis matching the schema.`;
+
+    // Check if router has vision capability
+    onProgress?.('Checking AI availability', 5);
+    
     const routed = await aiRouter.vision({
       imageData: base64Image,
       mimeType: "image/png",
-      prompt: `Analyze this selfie for signs of neurodivergent burnout and masking.
-Look for:
-1. Eye Fatigue: Drooping eyelids, lack of focus, or 'glassy' look.
-2. Jaw Tension: Clenched jaw, tight lips, or tension in the neck.
-3. Masking: Is the smile authentic (Duchenne) or forced? Is there a disconnect between the eyes and mouth?
-Return JSON matching the schema.`,
+      prompt: promptText
     });
 
     if (routed?.content) {
@@ -143,43 +184,65 @@ Return JSON matching the schema.`,
 
     const ai = getAI();
     if (!ai) {
-      return getDefaultFacialAnalysis();
+      onProgress?.('AI not configured, using offline mode', 100);
+      return getOfflineAnalysis(base64Image);
     }
 
-    const prompt = `
-      Analyze this selfie for signs of neurodivergent burnout and masking.
-      Look for:
-      1. Eye Fatigue: Drooping eyelids, lack of focus, or 'glassy' look.
-      2. Jaw Tension: Clenched jaw, tight lips, or tension in the neck.
-      3. Masking: Is the smile authentic (Duchenne) or forced? Is there a disconnect between the eyes and mouth?
+    onProgress?.('Preparing analysis request', 10);
+    
+    // Create timeout promise
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error('AI analysis timeout after 30 seconds'));
+      }, timeout);
       
-      Return a structured analysis.
-    `;
+      signal?.addEventListener('abort', () => {
+        clearTimeout(timer);
+        reject(new DOMException('Analysis cancelled', 'AbortError'));
+      });
+    });
 
-    const response = await rateLimitedCall(() =>
-      ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: {
-          parts: [
-            { inlineData: { mimeType: "image/png", data: base64Image } },
-            { text: prompt }
-          ]
-        },
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: facialAnalysisSchema,
-          systemInstruction: "You are Mae, the voice of MAEPLE (Mental And Emotional Pattern Literacy Engine). MAEPLE is codenamed POZIMIND and is part of the Poziverse. You are a kind, clinical bio-feedback analyst specializing in detecting stress and masking signals. Present facts compassionately, without alarm.",
-        },
-      }),
-      { priority: 4 } // Bio-mirror analysis is high priority
-    );
+    onProgress?.('Sending image to AI', 20);
+    
+    const response = await Promise.race([
+      rateLimitedCall(async () => {
+        const result = await ai.models.generateContent({
+          model: "gemini-2.0-flash-exp", // FIXED: Correct model name
+          contents: {
+            parts: [
+              { inlineData: { mimeType: "image/png", data: base64Image } },
+              { text: promptText }
+            ]
+          },
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: facialAnalysisSchema,
+            systemInstruction: "You are MAEPLE's Bio-Mirror, an objective observation tool. Your task: Analyze facial features and environmental conditions. Report ONLY what you can physically observe. NEVER label emotions or make assumptions about how the user feels. Be precise and evidence-based. Use FACS (Facial Action Coding System) terminology for facial movements. Describe lighting and environmental factors. Confidence scores are mandatory."
+          }
+        });
+        return result;
+      }, { priority: 4 }),
+      timeoutPromise
+    ]);
 
+    onProgress?.('Analyzing facial features', 50);
+    
     const textResponse = response.text;
     if (!textResponse) throw new Error("No response from AI");
+    
+    onProgress?.('Parsing results', 90);
     
     return JSON.parse(textResponse) as FacialAnalysis;
   } catch (error) {
     console.error("Vision Analysis Error:", error);
-    return getDefaultFacialAnalysis();
+    
+    // Check if it was an abort
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error; // Re-throw abort error
+    }
+    
+    // Return offline fallback on error
+    onProgress?.('Using offline analysis', 100);
+    return getOfflineAnalysis(base64Image);
   }
 };

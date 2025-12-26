@@ -1,6 +1,6 @@
 # MAEPLE Memory Bank
 
-**Last Updated**: December 14, 2025
+**Last Updated**: December 17, 2025
 
 ## 1. Project Context
 
@@ -19,11 +19,12 @@ MAEPLE started as a local-only prototype and evolved into a "Production-Ready En
 - **Dark Mode**: Requires manual class toggling on the `html` element in `appStore.ts`. Don't rely on system preference alone if the user has overridden it.
 - **AI Rate Limiting**: It's client-side (`rateLimiter.ts`). If the user clears LocalStorage, their rate limit counters reset (which is acceptable for now).
 - **Audio**: `LiveCoach` uses the Web Audio API. It requires HTTPS in production to access the microphone.
+- **Docker Build Args**: The `VITE_GEMINI_API_KEY` must be passed as a build argument (`ARG`) in the Dockerfile and via `args` in `docker-compose.yml` because Vite embeds env vars at build time.
 
 ## 4. Active Sprints
 
-- **Sprint 4 (UX & Polish)**: Recently completed Dark Mode and Visual Feedback.
-- **Next Up**: Push Notifications, Widget Support, Performance Optimization.
+- **Sprint 5 (Bio-Mirror & PWA)**: Completed FACS implementation for Bio-Mirror, PWA install flow, and production deployment fixes.
+- **Next Up**: Wearable Integrations, Push Notifications.
 
 ## 5. File Locations
 

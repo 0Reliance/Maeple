@@ -9,6 +9,8 @@ import {
   AIImageResponse,
   AISearchRequest,
   AISearchResponse,
+  AIAudioAnalysisRequest,
+  AIAudioAnalysisResponse,
   AILiveConfig,
   AILiveSession,
   AIError,
@@ -75,6 +77,29 @@ export class GeminiAdapter extends BaseAIAdapter {
         contents: {
           parts: [
             { inlineData: { mimeType: request.mimeType, data: request.imageData } },
+            { text: request.prompt },
+          ],
+        },
+      });
+
+      return {
+        content: response.text || "",
+        provider: "gemini",
+        model: "gemini-2.5-flash",
+      };
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async analyzeAudio(request: AIAudioAnalysisRequest): Promise<AIAudioAnalysisResponse> {
+    this.trackRequest();
+    try {
+      const response = await this.client.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: {
+          parts: [
+            { inlineData: { mimeType: request.mimeType, data: request.audioData } },
             { text: request.prompt },
           ],
         },

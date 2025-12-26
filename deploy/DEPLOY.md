@@ -24,11 +24,13 @@ This is the most robust method as it encapsulates the entire stack (Frontend, Ba
     ```bash
     DB_PASSWORD=your_secure_password
     JWT_SECRET=your_production_secret
+    VITE_GEMINI_API_KEY=your_gemini_api_key
     ```
 3.  **Build and Run**:
     ```bash
     cd deploy
-    docker-compose up -d --build
+    # Pass the env file to ensure VITE_GEMINI_API_KEY is picked up by the build args
+    docker compose --env-file ../.env up -d --build
     ```
 4.  **Access**:
     - Frontend: `http://your-server-ip`

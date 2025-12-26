@@ -1,40 +1,38 @@
-import React, { useEffect, Suspense, useState } from "react";
+import {
+  BookHeart,
+  Camera,
+  Compass,
+  Download,
+  FileText,
+  Image as ImageIcon,
+  LayoutDashboard,
+  LucideIcon,
+  MessagesSquare
+} from "lucide-react";
+import React, { Suspense, useEffect, useState } from "react";
 import {
   BrowserRouter,
-  Routes,
-  Route,
   Navigate,
-  useNavigate,
-  useLocation,
   NavLink,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
-import {
-  LayoutDashboard,
-  BookHeart,
-  MessagesSquare,
-  Search as SearchIcon,
-  Image as ImageIcon,
-  Settings as SettingsIcon,
-  Compass,
-  ShieldCheck,
-  Map,
-  FileText,
-  Camera,
-  LucideIcon,
-} from "lucide-react";
-import JournalView from "./components/JournalView";
-import SearchResources from "./components/SearchResources";
+import AuthModal from "./components/AuthModal";
 import Guide from "./components/Guide";
-import Terms from "./components/Terms";
-import Roadmap from "./components/Roadmap";
+import JournalView from "./components/JournalView";
+import LandingPage from "./components/LandingPage";
 import MobileNav from "./components/MobileNav";
 import OnboardingWizard from "./components/OnboardingWizard";
+import Roadmap from "./components/Roadmap";
+import SearchResources from "./components/SearchResources";
 import SyncIndicator from "./components/SyncIndicator";
-import LandingPage from "./components/LandingPage";
-import AuthModal from "./components/AuthModal";
+import Terms from "./components/Terms";
+import { usePWAInstall } from "./hooks/usePWAInstall";
 
-import UserMenu from "./components/UserMenu";
 import { Github } from "lucide-react";
+import UserMenu from "./components/UserMenu";
 
 // Lazy load heavy components for better performance
 const HealthMetricsDashboard = React.lazy(
@@ -48,11 +46,10 @@ const StateCheckWizard = React.lazy(
 const Settings = React.lazy(() => import("./components/Settings"));
 const ClinicalReport = React.lazy(() => import("./components/ClinicalReport"));
 
-import { HealthEntry, View, WearableDataPoint } from "./types";
-import { viewToPath, pathToView } from "./routes";
-import { initNotificationService } from "./services/notificationService";
+import { pathToView, viewToPath } from "./routes";
 import { initBackgroundSync } from "./services/backgroundSync";
-import swManager from "./swRegistration.ts";
+import { initNotificationService } from "./services/notificationService";
+import { HealthEntry, View, WearableDataPoint } from "./types";
 
 // Zustand stores
 import { useAppStore, useAuthStore } from "./stores";
@@ -77,6 +74,7 @@ function AppContent() {
 
   const { initializeAuth, isAuthenticated, isInitialized } = useAuthStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { isInstallable, install } = usePWAInstall();
 
   // Determine current view from path
   const currentPath =
@@ -98,8 +96,8 @@ function AppContent() {
 
   if (!isInitialized) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
+      <div className="flex items-center justify-center min-h-screen bg-bg-primary dark:bg-dark-bg-primary">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -143,8 +141,8 @@ function AppContent() {
       className={({ isActive }) =>
         `w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
           isActive
-            ? "bg-teal-50 text-teal-700 font-medium dark:bg-teal-900/20 dark:text-teal-300"
-            : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
+            ? "bg-primary/10 text-primary font-medium dark:bg-primary/20 dark:text-primary-light"
+            : "text-text-secondary dark:text-dark-text-secondary hover:bg-bg-secondary dark:hover:bg-dark-bg-secondary hover:text-text-primary dark:hover:text-dark-text-primary"
         }`
       }
     >
@@ -154,19 +152,28 @@ function AppContent() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen bg-bg-primary dark:bg-dark-bg-primary flex flex-col font-sans text-text-primary dark:text-dark-text-primary">
       {/* Top Header (Branding & Sync) */}
-      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 p-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
+      <div className="bg-bg-card/90 dark:bg-dark-bg-card/90 backdrop-blur-md border-b border-bg-secondary dark:border-dark-bg-secondary p-4 flex justify-between items-center sticky top-0 z-30 shadow-card">
         <div className="w-8"></div> {/* Spacer */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-teal-200 shadow-lg">
+          <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent-action rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
             M
           </div>
-          <span className="font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-            MAEPLE <span className="text-xs text-teal-500 font-normal">v0.95</span>
+          <span className="font-bold text-text-primary dark:text-dark-text-primary tracking-tight">
+            MAEPLE <span className="text-xs text-primary font-normal">v0.95</span>
           </span>
         </div>
         <div className="flex items-center gap-4">
+          {isInstallable && (
+            <button
+              onClick={install}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-accent-positive/10 dark:bg-accent-positive/20 text-accent-positive dark:text-accent-positive rounded-lg text-sm font-medium hover:bg-accent-positive/20 dark:hover:bg-accent-positive/30 transition-colors"
+            >
+              <Download size={16} />
+              <span>Install App</span>
+            </button>
+          )}
           <SyncIndicator />
           <UserMenu />
         </div>
@@ -180,28 +187,28 @@ function AppContent() {
 
       {/* Mobile Menu Drawer (triggered by bottom nav menu button) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-[60] w-72 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col print:hidden ${
-          mobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-[60] w-72 bg-bg-card dark:bg-dark-bg-card border-r border-bg-secondary dark:border-dark-bg-secondary transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col print:hidden ${
+          mobileMenuOpen ? "translate-x-0 shadow-card-hover" : "-translate-x-full"
         }`}
       >
         <div className="p-8 flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-teal-100 text-lg">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent-action rounded-xl flex items-center justify-center text-white font-bold shadow-lg text-lg">
             M
           </div>
-          <span className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+          <span className="text-2xl font-bold text-text-primary dark:text-dark-text-primary tracking-tight">
             MAEPLE
           </span>
         </div>
 
         <nav className="px-4 space-y-1.5 mt-4 flex-1 overflow-y-auto no-scrollbar">
-          <div className="px-4 mb-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <div className="px-4 mb-4 text-xs font-bold uppercase tracking-wider text-text-tertiary">
             Navigation
           </div>
 
           <NavButton
             targetView={View.JOURNAL}
             icon={BookHeart}
-            label="Smart Journal"
+            label="Thoughtful Journal"
           />
           <NavButton
             targetView={View.DASHBOARD}
@@ -211,17 +218,17 @@ function AppContent() {
           <NavButton
             targetView={View.BIO_MIRROR}
             icon={Camera}
-            label="Bio-Mirror (State Check)"
+            label="Self-Reflection"
           />
           <NavButton
             targetView={View.LIVE_COACH}
             icon={MessagesSquare}
-            label="Mae Live"
+            label="Gentle Guidance"
           />
           <NavButton
             targetView={View.VISION}
             icon={ImageIcon}
-            label="Visual Therapy"
+            label="Vision Board"
           />
           <NavButton
             targetView={View.CLINICAL}
@@ -231,26 +238,26 @@ function AppContent() {
           <NavButton
             targetView={View.GUIDE}
             icon={Compass}
-            label="Guide & Vision"
+            label="Guide"
           />
         </nav>
 
         <div className="p-6 mt-auto">
-          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl p-5 border border-indigo-100 mb-4">
-            <h4 className="font-bold text-indigo-900 text-sm mb-1">
+          <div className="bg-gradient-to-r from-primary/10 to-accent-positive/10 dark:from-primary/20 dark:to-accent-positive/20 rounded-2xl p-5 border border-primary/20 dark:border-primary/30 mb-4">
+            <h4 className="font-bold text-primary dark:text-primary-light text-sm mb-1">
               Powered by Poziverse
             </h4>
-            <p className="text-xs text-indigo-600/80 leading-relaxed">
-              Context-aware intelligence for neurodivergent minds.
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Understand your patterns to live a healthier life.
             </p>
           </div>
           
           <div className="flex flex-col items-center gap-3">
-             <a href="https://github.com/poziverse/maeple" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+             <a href="https://github.com/poziverse/maeple" target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-text-secondary dark:hover:text-dark-text-secondary transition-colors">
                 <Github size={20} />
              </a>
-             <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest">
-                MAEPLE IS A PART OF THE POZIVERSE
+             <span className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary">
+                PART OF THE POZIVERSE
              </span>
           </div>
         </div>
@@ -262,50 +269,7 @@ function AppContent() {
         className="flex-1 p-4 md:p-8 overflow-y-auto h-auto scroll-smooth print:h-auto print:overflow-visible pb-24"
       >
         <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
-          <header className="mb-4 md:mb-8 print:hidden">
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  {view === View.DASHBOARD && "Pattern Dashboard"}
-                  {view === View.JOURNAL && "MAEPLE Journal"}
-                  {view === View.BIO_MIRROR && "Bio-Mirror Check"}
-                  {view === View.LIVE_COACH && "Mae Live Companion"}
-                  {view === View.VISION && "Visual Therapy"}
-                  {view === View.SEARCH && "Health Resources"}
-                  {view === View.SETTINGS && "Settings & Devices"}
-                  {view === View.GUIDE && "Welcome to MAEPLE"}
-                  {view === View.TERMS && "Terms & Conditions"}
-                  {view === View.ROADMAP && "Product Roadmap"}
-                  {view === View.CLINICAL && "Clinical Tools"}
-                </h1>
-                <p className="text-slate-500 mt-2 text-base md:text-lg hidden md:block">
-                  {view === View.DASHBOARD &&
-                    `Tracking ${entries.length} patterns. Identifying gaps between capacity and demand.`}
-                  {view === View.JOURNAL &&
-                    "Capture your context. Track spoons, sensory load, and flow states."}
-                  {view === View.BIO_MIRROR &&
-                    "Objectively analyze your physical signs of stress and masking."}
-                  {view === View.LIVE_COACH &&
-                    "Real-time, voice-first reflection with Mae, your neuro-affirming companion."}
-                  {view === View.VISION &&
-                    "Visualize your state of mind with generative art."}
-                  {view === View.SEARCH &&
-                    "Grounded knowledge base for health queries."}
-                  {view === View.SETTINGS &&
-                    "Configure your biological context and wearable integrations."}
-                  {view === View.GUIDE && "Understanding the MAEPLE method."}
-                  {view === View.TERMS &&
-                    "Legal information and privacy policy."}
-                  {view === View.ROADMAP &&
-                    "The evolution of MAEPLE to transform tracking."}
-                  {view === View.CLINICAL &&
-                    "Generate professional reports for your healthcare team."}
-                </p>
-              </div>
-              <SyncIndicator className="hidden md:flex mt-2" />
-            </div>
-          </header>
-
+          
           <div className="animate-fadeIn">
             <Routes>
               <Route path="/" element={<Navigate to="/journal" replace />} />
@@ -315,7 +279,7 @@ function AppContent() {
                 element={
                   <Suspense
                     fallback={
-                      <div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>
+                      <div className="animate-pulse bg-bg-secondary h-64 rounded-card"></div>
                     }
                   >
                     <HealthMetricsDashboard
@@ -330,7 +294,7 @@ function AppContent() {
                 element={
                   <Suspense
                     fallback={
-                      <div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>
+                      <div className="animate-pulse bg-bg-secondary h-64 rounded-card"></div>
                     }
                   >
                     <StateCheckWizard />
@@ -342,7 +306,7 @@ function AppContent() {
                 element={
                   <Suspense
                     fallback={
-                      <div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>
+                      <div className="animate-pulse bg-bg-secondary h-64 rounded-card"></div>
                     }
                   >
                     <LiveCoach />
@@ -354,7 +318,7 @@ function AppContent() {
                 element={
                   <Suspense
                     fallback={
-                      <div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>
+                      <div className="animate-pulse bg-bg-secondary h-64 rounded-card"></div>
                     }
                   >
                     <VisionBoard />
@@ -364,10 +328,10 @@ function AppContent() {
               <Route path="/resources" element={<SearchResources />} />
               <Route
                 path="/settings"
-                element={
-                  <Suspense
-                    fallback={
-                      <div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>
+                  element={
+                    <Suspense
+                      fallback={
+                      <div className="animate-pulse bg-bg-secondary h-64 rounded-card"></div>
                     }
                   >
                     <Settings onDataSynced={handleWearableSync} />
@@ -382,7 +346,7 @@ function AppContent() {
                 element={
                   <Suspense
                     fallback={
-                      <div className="animate-pulse bg-slate-200 h-64 rounded-lg"></div>
+                      <div className="animate-pulse bg-bg-secondary h-64 rounded-card"></div>
                     }
                   >
                     <ClinicalReport
@@ -408,7 +372,7 @@ function AppContent() {
       {/* Overlay for mobile menu */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 md:hidden print:hidden"
+          className="fixed inset-0 bg-dark-bg-primary/20 backdrop-blur-sm z-50 md:hidden print:hidden"
           onClick={() => setMobileMenuOpen(false)}
         ></div>
       )}

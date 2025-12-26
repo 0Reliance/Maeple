@@ -185,6 +185,20 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, b
                         )}
                     </div>
                </div>
+
+               {/* Detected Signs */}
+               {analysis.signs && analysis.signs.length > 0 && (
+                   <div className="mt-2">
+                       <p className="text-xs text-slate-400 font-bold uppercase mb-2">Detected Markers (FACS)</p>
+                       <div className="flex flex-wrap gap-2">
+                           {analysis.signs.map((sign, i) => (
+                               <span key={i} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md border border-slate-200">
+                                   {sign}
+                               </span>
+                           ))}
+                       </div>
+                   </div>
+               )}
            </div>
         </div>
 

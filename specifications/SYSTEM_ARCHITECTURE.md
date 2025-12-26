@@ -16,7 +16,10 @@ MAEPLE (Mental And Emotional Pattern Literacy Engine) is a neuro-affirming healt
 - **State Management**: Zustand (Persisted stores)
 - **Styling**: Tailwind CSS (Dark mode support via `class` strategy)
 - **Routing**: React Router DOM
-- **PWA**: Service Worker, Manifest, Installable
+- **PWA**:
+  - **Manifest**: `public/manifest.json` defines app identity (icons, theme color).
+  - **Service Worker**: `public/sw.js` handles caching and offline capabilities.
+  - **Installation**: Custom `usePWAInstall` hook captures the `beforeinstallprompt` event to provide a custom in-app install UI.
 
 ### Backend Services
 
@@ -30,6 +33,7 @@ MAEPLE (Mental And Emotional Pattern Literacy Engine) is a neuro-affirming healt
 - **Providers**:
   - **Gemini**: Primary (Text, Vision, Audio).
     - **Gemini Live**: Real-time multimodal interaction (Audio/Text) via WebSockets.
+    - **Gemini Vision**: Used for Bio-Mirror analysis, implementing FACS (Facial Action Coding System) to detect specific Action Units (AUs) for fatigue and tension.
   - **OpenAI**: Secondary (Text, Vision)
   - **Anthropic**: Text, Vision
   - **Perplexity**: Search/Research

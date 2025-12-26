@@ -16,6 +16,8 @@ import {
   AIImageResponse,
   AISearchRequest,
   AISearchResponse,
+  AIAudioAnalysisRequest,
+  AIAudioAnalysisResponse,
   AILiveConfig,
   AILiveSession,
   AI_PROVIDERS,
@@ -172,6 +174,19 @@ class AIRouter {
   /** Search routing */
   async search(request: AISearchRequest): Promise<AISearchResponse | null> {
     return this.routeWithFallback('search', (adapter) => adapter.search(request));
+  }
+
+  /** Audio Analysis routing */
+  async analyzeAudio(request: AIAudioAnalysisRequest): Promise<AIAudioAnalysisResponse | null> {
+    // Currently only Gemini supports this directly via the adapter method we added
+    // We can use 'audio' capability or 'vision' (multimodal) capability check
+    // For now, we'll check for the specific method existence
+    return this.routeWithFallback('audio', async (adapter) => {
+      if ('analyzeAudio' in adapter) {
+        return (adapter as any).analyzeAudio(request);
+      }
+      throw new Error('Adapter does not support analyzeAudio');
+    });
   }
 
   /** Audio routing */
