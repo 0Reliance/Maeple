@@ -91,6 +91,9 @@
   .btn {
     @apply inline-flex items-center justify-center font-semibold rounded-button transition-all duration-200 ease-in-out;
     padding: 12px 24px;
+    whitespace: normal;
+    word-spacing: normal;
+    overflow-wrap: break-word;
   }
   
   .btn-primary {
