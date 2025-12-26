@@ -1,0 +1,134 @@
+{
+  // TypeScript Configuration
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  
+  // Editor Configuration
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  
+  // Files Configuration
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "files.associations": {
+    "*.tsx": "typescriptreact",
+    "*.ts": "typescript",
+    "*.json": "json",
+    ".env*": "dotenv"
+  },
+  
+  // Tailwind CSS
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ],
+  "css.validate": false,
+  "tailwindCSS.emmetCompletions": true,
+  
+  // Testing
+  "vitest.enable": true,
+  "testing.automaticallyOpenPeekView": "never",
+  
+  // Z.ai Integration Settings
+  "ai.provider": "zai",
+  "ai.zai.apiKey": "${ZAI_API_KEY}",
+  "ai.zai.baseUrl": "https://api.z.ai/v1",
+  "ai.zai.model": "zai-latest",
+  "ai.zai.temperature": 0.7,
+  "ai.zai.maxTokens": 4096,
+  
+  // MCP Configuration
+  "mcp.enabled": true,
+  "mcp.servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/opt/Maeple"]
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "/opt/Maeple"]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"]
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost:5432/maeple"]
+    }
+  },
+  "mcp.tools": {
+    "filesystem": ["read_file", "write_to_file", "list_files", "search_files"],
+    "git": ["git_log", "git_diff", "git_status"],
+    "brave-search": ["search"],
+    "postgres": ["query", "execute"]
+  },
+  
+  // Cline-Specific Settings
+  "cline.enabled": true,
+  "cline.autoApprove": false,
+  "cline.contextWindow": 200000,
+  "cline.maxTokens": 4096,
+  "cline.temperature": 0.3,
+  "cline.model": "claude-sonnet-4-20250514",
+  "cline.useMCP": true,
+  "cline.mcpServers": [
+    "filesystem",
+    "git",
+    "brave-search",
+    "postgres"
+  ],
+  
+  // Development Best Practices
+  "javascript.validate.enable": false,
+  "javascript.suggestionActions.enabled": false,
+  "eslint.workingDirectories": ["."],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  
+  // Git Configuration
+  "git.enableSmartCommit": true,
+  "git.postCommitCommand": "none",
+  "git.autofetch": true,
+  "git.decorations.enabled": true,
+  
+  // Search
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.git": true
+  },
+  
+  // AI Copilot Integration (Complementary to Z.ai)
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": false,
+    "plaintext": false,
+    "markdown": true
+  },
+  "github.copilot.editor.enableAutoCompletions": true,
+  
+  // Debugging
+  "debug.node.autoAttach": "on",
+  "debug.javascript.autoAttachFilter": "always"
+}

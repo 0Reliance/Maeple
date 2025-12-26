@@ -1,43 +1,68 @@
-import React, { useState } from "react";
 import {
-  Send,
-  Sparkles,
-  Battery,
-  BatteryCharging,
-  BatteryWarning,
-  Zap,
   Brain,
-  Users,
-  LayoutList,
-  Heart,
-  Dumbbell,
-  Ear,
   ChevronDown,
   ChevronUp,
   Compass,
+  Heart,
+  Send,
+  Users,
   X,
-  Loader2,
+  Zap,
 } from "lucide-react";
+import React, { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { AudioAnalysisResult } from "../services/audioAnalysisService";
 import { parseJournalEntry } from "../services/geminiService";
 import {
-  HealthEntry,
-  ParsedResponse,
   CapacityProfile,
+  HealthEntry,
+  ObjectiveObservation,
+  ParsedResponse,
   StrategyRecommendation,
 } from "../types";
-import { v4 as uuidv4 } from "uuid";
-import RecordVoiceButton from "./RecordVoiceButton";
 import AILoadingState from "./AILoadingState";
+import GentleInquiry from "./GentleInquiry";
+import QuickCaptureMenu from "./QuickCaptureMenu";
+import RecordVoiceButton from "./RecordVoiceButton";
+import StateCheckWizard from "./StateCheckWizard";
+import VoiceObservations from "./VoiceObservations";
+import { Button } from "./ui/Button";
+import { Card, CardDescription } from "./ui/Card";
+import { Textarea } from "./ui/Input";
 
 interface Props {
   onEntryAdded: (entry: HealthEntry) => void;
 }
 
+type CaptureMode = "menu" | "text" | "voice" | "bio-mirror";
+
 const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
+  // Capture Mode State
+  const [captureMode, setCaptureMode] = useState<CaptureMode>("menu");
+
+  const handleMethodSelect = (method: CaptureMode) => {
+    setCaptureMode(method);
+  };
   const [text, setText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Phase 1: Multi-Dimensional Capacity
+  // Voice Observations State
+  const [voiceObservations, setVoiceObservations] =
+    useState<AudioAnalysisResult | null>(null);
+
+  // Photo/Bio-Mirror Observations State
+  const [photoObservations, setPhotoObservations] = useState<any>(null);
+
+  // Gentle Inquiry State
+  const [gentleInquiry, setGentleInquiry] = useState<any>(null);
+  const [inquiryResponse, setInquiryResponse] = useState<string>("");
+  const [showInquiry, setShowInquiry] = useState(false);
+
+  const handlePhotoAnalysis = (analysis: any) => {
+    setPhotoObservations(analysis);
+  };
+
+  // Phase 1: Energy Capacity
   const [showCapacity, setShowCapacity] = useState(true);
   const [capacity, setCapacity] = useState<CapacityProfile>({
     focus: 7,
@@ -48,6 +73,26 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     sensory: 6,
     executive: 5,
   });
+  const [suggestedCapacity, setSuggestedCapacity] =
+    useState<Partial<CapacityProfile>>({});
+
+  // Recalculate suggestions when observations change
+  React.useEffect(() => {
+    if (voiceObservations || photoObservations) {
+      const suggestions = getSuggestedCapacity();
+      setSuggestedCapacity(suggestions);
+
+      // Update capacity with suggestions if not already set
+      if (Object.keys(suggestions).length > 0) {
+        setCapacity((prev) => ({
+          ...prev,
+          ...suggestions,
+        }) as CapacityProfile);
+      }
+    } else {
+      setSuggestedCapacity({});
+    }
+  }, [voiceObservations, photoObservations]);
 
   // Phase 3: Immediate Strategy Feedback
   const [lastStrategies, setLastStrategies] = useState<
@@ -55,30 +100,201 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
   >([]);
   const [lastReasoning, setLastReasoning] = useState<string | null>(null);
 
-  const handleTranscript = (transcript: string) => {
+  const handleTranscript = (
+    transcript: string,
+    audioBlob?: Blob,
+    analysis?: AudioAnalysisResult
+  ) => {
     setText((prev) => {
       const trimmed = prev.trim();
       return trimmed ? `${trimmed} ${transcript}` : transcript;
     });
+
+    // Store voice observations if available
+    if (analysis) {
+      setVoiceObservations(analysis);
+    }
   };
 
   const updateCapacity = (key: keyof CapacityProfile, val: number) => {
     setCapacity((prev) => ({ ...prev, [key]: val }));
   };
 
-  const calculateAverageSpoons = () => {
+  const calculateAverageEnergy = () => {
     const values = Object.values(capacity) as number[];
     return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+  };
+
+  const getSuggestedCapacity = (): Partial<CapacityProfile> => {
+    const suggestions: Partial<CapacityProfile> = {};
+
+    // Voice analysis suggestions
+    if (voiceObservations) {
+      const highNoise = voiceObservations.observations.some(
+        (obs: any) => obs.category === "noise" && obs.severity === "high"
+      );
+      if (highNoise) {
+        suggestions.sensory = 3;
+        suggestions.focus = 4;
+      }
+
+      const moderateNoise = voiceObservations.observations.some(
+        (obs: any) => obs.category === "noise" && obs.severity === "moderate"
+      );
+      if (moderateNoise) {
+        suggestions.sensory = 5;
+      }
+
+      const fastPace = voiceObservations.observations.some(
+        (obs: any) =>
+          obs.category === "speech-pace" && obs.value.includes("fast")
+      );
+      if (fastPace) {
+        suggestions.executive = 4;
+        suggestions.social = 4;
+      }
+
+      const highTension = voiceObservations.observations.some(
+        (obs: any) => obs.category === "tone" && obs.severity === "high"
+      );
+      if (highTension) {
+        suggestions.emotional = 4;
+      }
+    }
+
+    // Photo analysis suggestions
+    if (photoObservations) {
+      if (photoObservations.lightingSeverity === "high") {
+        suggestions.sensory = 3;
+        suggestions.emotional = 4;
+      }
+
+      if (photoObservations.lightingSeverity === "moderate") {
+        suggestions.sensory = 5;
+      }
+
+      const highTension = photoObservations.observations.some(
+        (obs: any) =>
+          obs.category === "tension" && obs.value.includes("high")
+      );
+      if (highTension) {
+        suggestions.emotional = 4;
+        suggestions.executive = 4;
+      }
+
+      const fatigueIndicators = photoObservations.observations.some(
+        (obs: any) =>
+          obs.category === "fatigue" && obs.severity !== "low"
+      );
+      if (fatigueIndicators) {
+        suggestions.physical = 4;
+        suggestions.focus = 4;
+      }
+    }
+
+    return suggestions;
+  };
+
+  const getInformedByContext = (
+    field: keyof CapacityProfile
+  ): string | null => {
+    const reasons: string[] = [];
+
+    // Voice analysis reasons
+    if (voiceObservations) {
+      if (field === "sensory") {
+        const noiseObs = voiceObservations.observations.find(
+          (obs: any) => obs.category === "noise"
+        );
+        if (noiseObs?.severity === "high")
+          reasons.push("high noise level detected");
+        else if (noiseObs?.severity === "moderate")
+          reasons.push("moderate noise detected");
+      }
+      if (field === "executive") {
+        const paceObs = voiceObservations.observations.find(
+          (obs: any) => obs.category === "speech-pace"
+        );
+        if (paceObs) reasons.push("speech pace analysis");
+      }
+      if (field === "emotional") {
+        const toneObs = voiceObservations.observations.find(
+          (obs: any) => obs.category === "tone"
+        );
+        if (toneObs?.severity === "high")
+          reasons.push("tension detected in voice tone");
+      }
+    }
+
+    // Photo analysis reasons
+    if (photoObservations) {
+      if (field === "sensory") {
+        reasons.push("lighting conditions observed");
+      }
+      if (field === "emotional") {
+        const tensionObs = photoObservations.observations.find(
+          (obs: any) => obs.category === "tension"
+        );
+        if (tensionObs) reasons.push("facial tension detected");
+      }
+      if (field === "physical") {
+        const fatigueObs = photoObservations.observations.find(
+          (obs: any) => obs.category === "fatigue"
+        );
+        if (fatigueObs) reasons.push("fatigue indicators detected");
+      }
+    }
+
+    return reasons.length > 0 ? `Informed by: ${reasons.join(", ")}` : null;
   };
 
   const handleSubmit = async () => {
     if (!text.trim()) return;
     setIsProcessing(true);
-    setLastStrategies([]); // Reset
+    setLastStrategies([]);
     setLastReasoning(null);
 
     try {
       const parsed: ParsedResponse = await parseJournalEntry(text, capacity);
+
+      // Build objective observations array
+      const objectiveObservations: ObjectiveObservation[] = [];
+
+      // 1. Add voice observations if available
+      if (voiceObservations) {
+        objectiveObservations.push({
+          type: "audio",
+          source: "voice",
+          observations: voiceObservations.observations,
+          confidence: voiceObservations.confidence,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // 2. Add photo observations if available
+      if (photoObservations) {
+        objectiveObservations.push({
+          type: "visual",
+          source: "bio-mirror",
+          observations: photoObservations.observations,
+          confidence: photoObservations.confidence,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // 3. Add text observations if AI extracted them
+      if (
+        parsed.objectiveObservations &&
+        parsed.objectiveObservations.length > 0
+      ) {
+        objectiveObservations.push({
+          type: "text",
+          source: "text-input",
+          observations: parsed.objectiveObservations,
+          confidence: 0.8,
+          timestamp: new Date().toISOString(),
+        });
+      }
 
       const newEntry: HealthEntry = {
         id: uuidv4(),
@@ -99,33 +315,31 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         activityTypes: parsed.activityTypes || [],
         strengths: parsed.strengths || [],
         neuroMetrics: {
-          spoonLevel: calculateAverageSpoons(),
-          sensoryLoad: parsed.neuroMetrics.sensoryLoad,
-          contextSwitches: parsed.neuroMetrics.contextSwitches,
-          maskingScore: parsed.neuroMetrics.maskingScore,
-          capacity: capacity, // Store the full profile
+          spoonLevel: calculateAverageEnergy(),
+          sensoryLoad: 0,
+          contextSwitches: 0,
+          maskingScore: 0,
+          capacity: capacity,
         },
         notes: parsed.summary,
         aiStrategies: parsed.strategies,
         aiReasoning: parsed.analysisReasoning,
+        objectiveObservations:
+          objectiveObservations.length > 0 ? objectiveObservations : undefined,
       };
 
-      // Use AI Generated strategies
+      // Handle gentle inquiry - display if provided, otherwise save entry
+      if (parsed.gentleInquiry) {
+        setGentleInquiry(parsed.gentleInquiry);
+        setShowInquiry(true);
+        setPendingEntry(newEntry);
+      } else {
+        onEntryAdded(newEntry);
+        resetForm();
+      }
+
       setLastStrategies(parsed.strategies || []);
       setLastReasoning(parsed.analysisReasoning || null);
-
-      onEntryAdded(newEntry);
-      setText("");
-      // Reset to defaults
-      setCapacity({
-        focus: 7,
-        social: 5,
-        structure: 4,
-        emotional: 6,
-        physical: 5,
-        sensory: 6,
-        executive: 5,
-      });
     } catch (e) {
       console.error("Failed to process entry", e);
       alert("Failed to analyze entry. Please try again.");
@@ -134,56 +348,217 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     }
   };
 
-  const colorStyles: Record<string, { bg: string, text: string, gradient: string, accent: string }> = {
-    blue: { bg: 'bg-blue-100 dark:bg-blue-900/50', text: 'text-blue-600 dark:text-blue-400', gradient: 'from-blue-400 to-blue-500', accent: 'accent-blue-500' },
-    pink: { bg: 'bg-pink-100 dark:bg-pink-900/50', text: 'text-pink-600 dark:text-pink-400', gradient: 'from-pink-400 to-pink-500', accent: 'accent-pink-500' },
-    purple: { bg: 'bg-purple-100 dark:bg-purple-900/50', text: 'text-purple-600 dark:text-purple-400', gradient: 'from-purple-400 to-purple-500', accent: 'accent-purple-500' },
-    cyan: { bg: 'bg-cyan-100 dark:bg-cyan-900/50', text: 'text-cyan-600 dark:text-cyan-400', gradient: 'from-cyan-400 to-cyan-500', accent: 'accent-cyan-500' },
-    indigo: { bg: 'bg-indigo-100 dark:bg-indigo-900/50', text: 'text-indigo-600 dark:text-indigo-400', gradient: 'from-indigo-400 to-indigo-500', accent: 'accent-indigo-500' },
-    rose: { bg: 'bg-rose-100 dark:bg-rose-900/50', text: 'text-rose-600 dark:text-rose-400', gradient: 'from-rose-400 to-rose-500', accent: 'accent-rose-500' },
-    orange: { bg: 'bg-orange-100 dark:bg-orange-900/50', text: 'text-orange-600 dark:text-orange-400', gradient: 'from-orange-400 to-orange-500', accent: 'accent-orange-500' },
-    yellow: { bg: 'bg-yellow-100 dark:bg-yellow-900/50', text: 'text-yellow-600 dark:text-yellow-400', gradient: 'from-yellow-400 to-yellow-500', accent: 'accent-yellow-500' },
+  const handleInquirySubmit = () => {
+    if (!inquiryResponse.trim() || !pendingEntry) {
+      setShowInquiry(false);
+      if (pendingEntry) {
+        onEntryAdded(pendingEntry);
+      }
+      resetForm();
+      return;
+    }
+
+    const entryWithInquiry: HealthEntry = {
+      ...pendingEntry,
+      notes: inquiryResponse.trim()
+        ? `${pendingEntry.notes}\n\nInquiry Response: ${inquiryResponse}`
+        : pendingEntry.notes,
+    };
+
+    onEntryAdded(entryWithInquiry);
+    resetForm();
   };
 
-  const CapacitySlider = ({ label, icon: Icon, value, field, color }: any) => {
+  const handleInquirySkip = () => {
+    setShowInquiry(false);
+    if (pendingEntry) {
+      onEntryAdded(pendingEntry);
+    }
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setText("");
+    setCapacity({
+      focus: 7,
+      social: 5,
+      structure: 4,
+      emotional: 6,
+      physical: 5,
+      sensory: 6,
+      executive: 5,
+    });
+    setVoiceObservations(null);
+    setPhotoObservations(null);
+    setGentleInquiry(null);
+    setInquiryResponse("");
+    setShowInquiry(false);
+    setPendingEntry(null);
+  };
+
+  const [pendingEntry, setPendingEntry] = useState<HealthEntry | null>(null);
+
+  const colorStyles: Record<
+    string,
+    { bg: string; text: string; gradient: string; accent: string }
+  > = {
+    blue: {
+      bg: "bg-blue-100 dark:bg-blue-900/50",
+      text: "text-blue-600 dark:text-blue-400",
+      gradient: "from-blue-400 to-blue-500",
+      accent: "accent-blue-500",
+    },
+    pink: {
+      bg: "bg-pink-100 dark:bg-pink-900/50",
+      text: "text-pink-600 dark:text-pink-400",
+      gradient: "from-pink-400 to-pink-500",
+      accent: "accent-pink-500",
+    },
+    purple: {
+      bg: "bg-purple-100 dark:bg-purple-900/50",
+      text: "text-purple-600 dark:text-purple-400",
+      gradient: "from-purple-400 to-purple-500",
+      accent: "accent-purple-500",
+    },
+    cyan: {
+      bg: "bg-cyan-100 dark:bg-cyan-900/50",
+      text: "text-cyan-600 dark:text-cyan-400",
+      gradient: "from-cyan-400 to-cyan-500",
+      accent: "accent-cyan-500",
+    },
+    indigo: {
+      bg: "bg-indigo-100 dark:bg-indigo-900/50",
+      text: "text-indigo-600 dark:text-indigo-400",
+      gradient: "from-indigo-400 to-indigo-500",
+      accent: "accent-indigo-500",
+    },
+    rose: {
+      bg: "bg-rose-100 dark:bg-rose-900/50",
+      text: "text-rose-600 dark:text-rose-400",
+      gradient: "from-rose-400 to-rose-500",
+      accent: "accent-rose-500",
+    },
+    orange: {
+      bg: "bg-orange-100 dark:bg-orange-900/50",
+      text: "text-orange-600 dark:text-orange-400",
+      gradient: "from-orange-400 to-orange-500",
+      accent: "accent-orange-500",
+    },
+    yellow: {
+      bg: "bg-yellow-100 dark:bg-yellow-900/50",
+      text: "text-yellow-600 dark:text-yellow-400",
+      gradient: "from-yellow-400 to-yellow-500",
+      accent: "accent-yellow-500",
+    },
+  };
+
+  const CapacitySlider = ({
+    label,
+    icon: Icon,
+    value,
+    field,
+    color,
+    suggested,
+  }: any) => {
     const styles = colorStyles[color] || colorStyles.blue;
+    const informedBy = getInformedByContext(field);
+    const isSuggested = suggested !== undefined && value === suggested;
+
     return (
-    <div className="mb-4">
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-full ${styles.bg} ${styles.text}`}>
-            <Icon size={14} />
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center gap-2">
+            <div
+              className={`p-1.5 rounded-full ${styles.bg} ${styles.text}`}
+            >
+              <Icon size={14} />
+            </div>
+            <span className="text-sm font-medium text-text-primary">
+              {label}
+            </span>
+            {isSuggested && (
+              <span className="text-xs text-primary font-medium">
+                (Suggested)
+              </span>
+            )}
           </div>
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
+          <span className="text-sm font-bold text-text-primary">
+            {value}/10
+          </span>
         </div>
-        <span className="text-sm font-bold text-slate-900 dark:text-white">{value}/10</span>
+
+        {informedBy && (
+          <div className="mb-2 text-xs text-primary flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-full">
+            <span>💡</span>
+            <span>{informedBy}</span>
+          </div>
+        )}
+
+        <div className="relative h-3 bg-bg-secondary rounded-full overflow-hidden cursor-pointer group">
+          <div
+            className={`absolute top-0 left-0 h-full bg-gradient-to-r ${styles.gradient} rounded-full transition-all duration-300`}
+            style={{ width: `${value * 10}%` }}
+          ></div>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={value}
+            onChange={(e) =>
+              updateCapacity(field, parseInt(e.target.value))
+            }
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          />
+        </div>
       </div>
-      <div className="relative h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden cursor-pointer group">
-        <div 
-          className={`absolute top-0 left-0 h-full bg-gradient-to-r ${styles.gradient} rounded-full transition-all duration-300`}
-          style={{ width: `${value * 10}%` }}
-        ></div>
-        {/* Invisible range input for interaction */}
-        <input
-          type="range"
-          min="1"
-          max="10"
-          value={value}
-          onChange={(e) => updateCapacity(field, parseInt(e.target.value))}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-        />
-        {/* Hover effect highlight */}
-        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-      </div>
-    </div>
     );
   };
 
   return (
-    <div className="space-y-6">
-      {/* Phase 3: Immediate Strategy Feedback Overlay */}
+    <div className="space-y-lg animate-fadeIn">
+      {/* Quick Capture Menu - Mode Selection */}
+      {captureMode === "menu" && (
+        <QuickCaptureMenu
+          onMethodSelect={handleMethodSelect}
+          disabled={isProcessing}
+        />
+      )}
+
+      {/* Bio-Mirror / Photo Mode */}
+      {captureMode === "bio-mirror" && (
+        <div className="space-y-6">
+          <Card>
+            <button
+              onClick={() => setCaptureMode("menu")}
+              className="text-small text-text-tertiary hover:text-text-primary transition-colors"
+            >
+              ← Back to menu
+            </button>
+            <div className="mt-4">
+              <StateCheckWizard />
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Gentle Inquiry Overlay */}
+      {showInquiry && gentleInquiry && (
+        <Card className="bg-primary/10 border-primary/20">
+          <GentleInquiry
+            inquiry={gentleInquiry}
+            onResponse={(response) => {
+              setInquiryResponse(response);
+              handleInquirySubmit();
+            }}
+            onSkip={handleInquirySkip}
+            disabled={isProcessing}
+          />
+        </Card>
+      )}
+
+      {/* Strategy Feedback */}
       {lastStrategies.length > 0 && (
-        <div className="bg-teal-600 rounded-3xl p-6 text-white shadow-xl animate-fadeIn relative overflow-hidden">
+        <Card className="bg-gradient-to-r from-accent-positive to-primary text-white border-none shadow-lg shadow-accent-positive/20">
           <button
             onClick={() => setLastStrategies([])}
             className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
@@ -191,73 +566,84 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
             <X size={16} />
           </button>
 
-          <div className="flex items-center gap-2 mb-2">
-            <Compass size={24} className="text-teal-200" />
-            <h3 className="text-xl font-bold">Mae's Strategy Deck</h3>
+          <div className="flex items-center gap-2 mb-4 pr-8">
+            <Compass size={24} className="text-white/80" />
+            <h3 className="text-h2 font-display font-semibold">
+              Today's Insights
+            </h3>
           </div>
 
           {lastReasoning && (
-            <p className="text-teal-100/80 text-sm mb-4 italic border-l-2 border-teal-400/50 pl-3">
-              "I detected this pattern: {lastReasoning}"
+            <p className="text-white/90 text-small mb-4 italic border-l-2 border-white/50 pl-3">
+              Pattern detected: {lastReasoning}
             </p>
           )}
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-3 gap-lg">
             {lastStrategies.map((strat) => (
               <div
                 key={strat.id}
-                className="bg-white/10 border border-white/20 p-4 rounded-xl backdrop-blur-sm"
+                className="bg-white/10 border border-white/20 p-lg rounded-xl backdrop-blur-sm"
               >
-                <span className="font-bold text-sm text-white block mb-1">
+                <span className="font-bold text-small text-white block mb-2">
                   {strat.title}
                 </span>
-                <p className="text-sm text-teal-50 opacity-90 leading-snug">
+                <p className="text-base text-white/90 leading-relaxed">
                   {strat.action}
                 </p>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Main Input Card */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 border border-slate-100 dark:border-slate-800 relative overflow-hidden">
+      <Card>
         {isProcessing && (
-          <div className="absolute inset-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm z-20 flex items-center justify-center rounded-[2rem]">
+          <div className="absolute inset-0 bg-bg-primary/90 backdrop-blur-sm z-20 flex items-center justify-center rounded-card">
             <AILoadingState
               message="Analyzing your entry..."
               steps={[
                 "Parsing context...",
-                "Checking capacity...",
+                "Checking energy levels...",
                 "Generating strategies...",
               ]}
             />
           </div>
         )}
 
-        {/* Capacity Check-in Section */}
-        <div className="mb-6">
+        {/* Energy Capacity Section */}
+        <div className="mb-lg">
           <div className="flex items-center justify-between mb-4">
-             <div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Daily Capacity Check-in</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Set your baseline before journaling.</p>
-             </div>
-             <button 
-               onClick={() => setShowCapacity(!showCapacity)}
-               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-             >
-                {showCapacity ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-             </button>
+            <div>
+              <h3 className="text-h2 font-display font-semibold text-text-primary">
+                Energy Check-in
+              </h3>
+              <CardDescription>
+                Set your baseline before journaling.
+              </CardDescription>
+            </div>
+            <button
+              onClick={() => setShowCapacity(!showCapacity)}
+              className="p-2 hover:bg-bg-secondary rounded-full transition-colors"
+            >
+              {showCapacity ? (
+                <ChevronUp size={20} className="text-text-tertiary" />
+              ) : (
+                <ChevronDown size={20} className="text-text-tertiary" />
+              )}
+            </button>
           </div>
 
           {showCapacity && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 animate-fadeIn">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-xl gap-y-2 animate-fadeIn">
               <CapacitySlider
                 label="Deep Focus"
                 icon={Brain}
                 value={capacity.focus}
                 field="focus"
                 color="blue"
+                suggested={suggestedCapacity.focus}
               />
               <CapacitySlider
                 label="Emotional Processing"
@@ -265,20 +651,23 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
                 value={capacity.emotional}
                 field="emotional"
                 color="pink"
+                suggested={suggestedCapacity.emotional}
               />
               <CapacitySlider
-                label="Social Battery"
+                label="Social Energy"
                 icon={Users}
                 value={capacity.social}
                 field="social"
                 color="purple"
+                suggested={suggestedCapacity.social}
               />
               <CapacitySlider
-                label="Executive / Decisions"
+                label="Decision Capacity"
                 icon={Zap}
                 value={capacity.executive}
                 field="executive"
                 color="cyan"
+                suggested={suggestedCapacity.executive}
               />
             </div>
           )}
@@ -286,47 +675,59 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
 
         {/* Input Area */}
         <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-full opacity-0 group-focus-within:opacity-100 blur transition-opacity duration-500 -z-10"></div>
-          <div className="relative flex items-center bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 focus-within:border-transparent focus-within:bg-white dark:focus-within:bg-slate-900 transition-all shadow-inner">
-            <input
-              type="text"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-              placeholder="What's happening?"
-              className="w-full py-4 pl-6 pr-16 bg-transparent border-none focus:ring-0 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 text-lg"
-            />
-            
-            <div className="absolute right-2 flex items-center gap-1">
-               <div className="scale-90">
-                  <RecordVoiceButton
-                    onTranscript={handleTranscript}
-                    isDisabled={isProcessing}
-                  />
-               </div>
-            </div>
+          <div className="mb-3 px-2">
+            <p className="text-micro font-bold uppercase tracking-wider text-text-secondary mb-1">
+              Capture Your Moment
+            </p>
+            <p className="text-small text-text-secondary">
+              Note your <strong>environment</strong>, <strong>interactions</strong>,
+              and <strong>energy levels</strong>.
+            </p>
           </div>
+
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="How are you feeling right now? (e.g., 'Overwhelmed by noise', 'In peak focus')"
+            className="resize-none"
+            rows={4}
+          />
+
+          {/* Voice Input */}
+          <div className="absolute right-4 bottom-4">
+            <RecordVoiceButton
+              onTranscript={handleTranscript}
+              onAnalysisReady={(analysis) => setVoiceObservations(analysis)}
+              isDisabled={isProcessing}
+            />
+          </div>
+
+          {/* Voice Observations Display */}
+          {voiceObservations && (
+            <div className="mt-6">
+              <VoiceObservations
+                analysis={voiceObservations}
+                onContinue={() => setVoiceObservations(null)}
+                onSkip={() => setVoiceObservations(null)}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Action Bar (Hidden if empty to simplify, or minimal) */}
+        {/* Action Bar */}
         {text && (
-            <div className="mt-4 flex justify-end animate-fadeIn">
-                <button
-                    onClick={handleSubmit}
-                    disabled={isProcessing}
-                    className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform flex items-center gap-2"
-                >
-                    <span>Capture Context</span>
-                    <Send size={16} />
-                </button>
-            </div>
+          <div className="mt-4 flex justify-end animate-fadeIn">
+            <Button
+              onClick={handleSubmit}
+              disabled={isProcessing}
+              size="md"
+              rightIcon={<Send size={16} />}
+            >
+              Save Entry
+            </Button>
+          </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

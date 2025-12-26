@@ -1,39 +1,273 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* Font Imports */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  
   body {
-    @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-50;
+    @apply bg-bg-primary text-text-primary antialiased font-body;
+    font-size: 16px;
+    line-height: 1.6;
   }
+  
+  /* Custom Properties for Design System */
   :root {
+    /* Colors */
+    --color-primary: #2D4A5A;
+    --color-primary-light: #4A6B7D;
+    --color-primary-dark: #1E3240;
+    
+    --color-accent-positive: #3B8B7E;
+    --color-accent-attention: #E8A538;
+    --color-accent-alert: #D4756A;
+    --color-accent-action: #5B8A9C;
+    
+    --color-bg-primary: #F8F6F3;
+    --color-bg-secondary: #EDEAE6;
+    --color-bg-card: #FFFFFF;
+    
+    --color-text-primary: #2D3436;
+    --color-text-secondary: #636E72;
+    --color-text-tertiary: #B2BEC3;
+    
+    /* Dark Mode */
+    --color-bg-primary-dark: #1A1E23;
+    --color-bg-secondary-dark: #242930;
+    --color-bg-card-dark: #2D3436;
+    
+    --color-text-primary-dark: #F8F6F3;
+    --color-text-secondary-dark: #B2BEC3;
+    
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+    
+    /* Border Radius */
+    --radius-card: 16px;
+    --radius-button: 12px;
+    
+    /* Shadows */
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.04);
+    --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.08);
+    --shadow-glow: 0 0 0 3px rgba(91, 138, 156, 0.1);
+    
+    /* Tooltip Colors */
     --tooltip-bg: #ffffff;
     --tooltip-text: #1e293b;
     --tooltip-border: #e2e8f0;
   }
+  
   .dark {
     --tooltip-bg: #1e293b;
     --tooltip-text: #f1f5f9;
     --tooltip-border: #334155;
+    
+    background-color: var(--color-bg-primary-dark);
+    color: var(--color-text-primary-dark);
   }
 }
 
-/* Custom Scrollbar for Dashboard containers */
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
+@layer components {
+  /* Base Card Component */
+  .card {
+    @apply bg-bg-card rounded-card shadow-card border border-bg-secondary;
+    padding: var(--space-lg);
+    transition: all 0.2s ease;
+  }
+  
+  .card:hover {
+    @apply shadow-card-hover;
+    transform: translateY(-2px);
+  }
+  
+  /* Button Variants */
+  .btn {
+    @apply inline-flex items-center justify-center font-semibold rounded-button transition-all duration-200 ease;
+    padding: 12px 24px;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white;
+  }
+  
+  .btn-primary:hover {
+    @apply bg-primary-dark;
+    transform: translateY(-1px);
+  }
+  
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+  
+  .btn-secondary {
+    @apply bg-transparent text-primary border-2 border-primary;
+    padding: 10px 22px; /* Account for border */
+  }
+  
+  .btn-secondary:hover {
+    @apply bg-bg-secondary;
+  }
+  
+  .btn-accent {
+    @apply bg-accent-action text-white;
+  }
+  
+  .btn-accent:hover {
+    @apply opacity-90;
+    transform: translateY(-1px);
+  }
+  
+  /* Input Component */
+  .input {
+    @apply w-full bg-bg-secondary border-2 border-transparent rounded-button text-base transition-all duration-200 ease;
+    padding: 14px 16px;
+  }
+  
+  .input:focus {
+    @apply border-accent-action outline-none shadow-glow;
+  }
+  
+  .input::placeholder {
+    @apply text-text-tertiary;
+  }
+  
+  /* Badge/Tag Component */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full font-label uppercase tracking-wider;
+  }
+  
+  .badge-positive {
+    @apply bg-accent-positive/10 text-accent-positive;
+  }
+  
+  .badge-attention {
+    @apply bg-accent-attention/10 text-accent-attention;
+  }
+  
+  .badge-alert {
+    @apply bg-accent-alert/10 text-accent-alert;
+  }
+  
+  /* Typography Utilities */
+  .text-display {
+    @apply font-display font-bold;
+  }
+  
+  .text-body {
+    @apply font-body;
+  }
+  
+  /* Focus States for Accessibility */
+  .focus-ring {
+    @apply outline-none focus:ring-2 focus:ring-accent-action focus:ring-offset-2;
+  }
+  
+  /* Section Containers */
+  .section {
+    @apply py-2xl px-lg md:px-xl;
+  }
+  
+  .container {
+    @apply max-w-7xl mx-auto px-lg;
+  }
 }
-.no-scrollbar {
+
+@layer utilities {
+  /* Custom Scrollbar */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  
+  /* Smooth Scroll */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+  
+  /* Text Truncate */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent-positive;
+  }
+  
+  /* Glass Effect */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md;
+  }
+  
+  .glass-dark {
+    @apply bg-slate-900/80 backdrop-blur-md;
+  }
 }
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .animate-fadeIn {
-    animation: fadeIn 0.5s ease-out forwards;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.4s ease-out forwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }

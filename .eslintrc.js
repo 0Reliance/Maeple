@@ -1,0 +1,162 @@
+module.exports = {
+  root: true,
+  env: {
+    browser: true,
+    es2021: true,
+    node: true,
+  },
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:react/recommended",
+    "plugin:jsx-a11y/recommended",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "prettier",
+  ],
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: "latest",
+    sourceType: "module",
+    project: "./tsconfig.json",
+  },
+  plugins: [
+    "@typescript-eslint",
+    "react-hooks",
+    "react",
+    "jsx-a11y",
+    "import",
+    "prettier",
+  ],
+  settings: {
+    react: {
+      version: "detect",
+    },
+    "import/resolver": {
+      typescript: {
+        alwaysTryTypes: true,
+        project: "./tsconfig.json",
+      },
+    },
+  },
+  rules: {
+    // TypeScript specific rules
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+      },
+    ],
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/strict-boolean-expressions": "off",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-misused-promises": "error",
+    "@typescript-eslint/await-thenable": "error",
+
+    // React specific rules
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "react/display-name": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+
+    // Import rules for better organization
+    "import/order": [
+      "error",
+      {
+        groups: [
+          "builtin",
+          "external",
+          "internal",
+          ["parent", "sibling"],
+          "index",
+          "object",
+          "type",
+        ],
+        pathGroups: [
+          {
+            pattern: "react",
+            group: "external",
+            position: "before",
+          },
+          {
+            pattern: "react/**",
+            group: "external",
+            position: "before",
+          },
+          {
+            pattern: "@/**",
+            group: "internal",
+          },
+          {
+            pattern: "src/**",
+            group: "internal",
+          },
+        ],
+        pathGroupsExcludedImportTypes: ["react"],
+        "newlines-between": "always",
+        alphabetize: {
+          order: "asc",
+          caseInsensitive: true,
+        },
+      },
+    ],
+    "import/no-unresolved": "error",
+    "import/no-cycle": "error",
+    "import/no-duplicates": "error",
+
+    // General best practices
+    "no-console": ["warn", { allow: ["warn", "error"] }],
+    "no-debugger": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    eqeqeq: ["error", "always"],
+    curly: ["error", "all"],
+
+    // Prettier integration
+    "prettier/prettier": "error",
+
+    // Security
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+
+    // Accessibility (jsx-a11y)
+    "jsx-a11y/anchor-is-valid": "warn",
+    "jsx-a11y/click-events-have-key-events": "warn",
+    "jsx-a11y/no-static-element-interactions": "warn",
+  },
+  ignorePatterns: [
+    "dist",
+    "build",
+    "node_modules",
+    "*.config.js",
+    "*.config.ts",
+    "public",
+  ],
+  overrides: [
+    {
+      files: ["*.test.ts", "*.test.tsx", "*.spec.ts", "*.spec.tsx"],
+      env: {
+        jest: true,
+      },
+      rules: {
+        "@typescript-eslint/no-explicit-any": "off",
+        "no-console": "off",
+      },
+    },
+    {
+      files: ["*.tsx"],
+      rules: {
+        "react/prop-types": "off",
+      },
+    },
+  ],
+};

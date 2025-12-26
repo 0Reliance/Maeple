@@ -1,6 +1,6 @@
 
-import { StateCheck, FacialBaseline, FacialAnalysis } from '../types';
-import { encryptData, decryptData } from './encryptionService';
+import { FacialAnalysis, FacialBaseline, StateCheck } from '../types';
+import { decryptData, encryptData } from './encryptionService';
 
 const DB_NAME = 'maeple_db';
 const STORE_NAME = 'state_checks';
@@ -9,8 +9,12 @@ const DB_VERSION = 2; // Incremented for new store
 
 // Default/fallback analysis when decryption fails
 const defaultAnalysis: FacialAnalysis = {
-  primaryEmotion: 'unknown',
   confidence: 0,
+  observations: [],
+  lighting: 'unknown',
+  lightingSeverity: 'low',
+  environmentalClues: [],
+  primaryEmotion: 'unknown',
   eyeFatigue: 0,
   jawTension: 0,
   maskingScore: 0,

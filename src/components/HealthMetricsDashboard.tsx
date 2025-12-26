@@ -1,93 +1,84 @@
-import React, { useMemo } from "react";
 import {
-  HealthEntry,
-  WearableDataPoint,
-  StrategyRecommendation,
-} from "../types";
-import {
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ComposedChart,
-  Bar,
-  Legend,
-  Line,
-  ReferenceArea,
-} from "recharts";
-import {
+  Activity,
+  AlertCircle,
   Brain,
+  ChevronDown,
+  ChevronUp,
+  CloudFog,
+  Layers,
+  Shield,
+  Sparkles,
+  Star,
+  Sun,
   TrendingUp,
   Zap,
-  Star,
-  AlertTriangle,
-  Sparkles,
-  Lightbulb,
-  Compass,
-  Shield,
-  TrendingDown,
-  Activity,
-  BatteryWarning,
-  Layers,
-  CloudRain,
-  Sun,
-  CloudFog,
-  EyeOff,
-  VenetianMask,
-  PhoneCall,
 } from "lucide-react";
-import { getUserSettings } from "../services/storageService";
+import React, { useMemo, useState } from "react";
 import {
-  generateInsights,
-  generateDailyStrategy,
+  Area,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from "recharts";
+import {
   calculateBurnoutTrajectory,
   calculateCognitiveLoad,
   calculateCyclePhase,
+  generateDailyStrategy,
+  generateInsights,
 } from "../services/analytics";
-import StateTrendChart from "./StateTrendChart";
+import { getUserSettings } from "../services/storageService";
+import {
+  HealthEntry,
+  WearableDataPoint
+} from "../types";
+import { Badge } from "./ui/Badge";
+import { Button } from "./ui/Button";
+import { Card, CardDescription, CardHeader, CardTitle } from "./ui/Card";
 
 interface HealthMetricsDashboardProps {
   entries: HealthEntry[];
   wearableData?: WearableDataPoint[];
 }
 
-// Type for chart data points
 interface ChartDataPoint {
   rawDate: string;
   date: string;
-  mood: number | null;
-  spoons: number | null;
+  energy: number | null;
   sensory: number | null;
   hrv: number | null;
   sleep: number | null;
-  cycleDay: number | null;
-  isLuteal: boolean;
 }
 
 /**
  * HealthMetricsDashboard
  *
- * Visualization component focused on Neuro-Affirming Metrics:
- * Bandwidth (Capacity) vs Load (Demand) vs Biology (Cycle) vs Physiology (HRV).
+ * Visualization component focused on Pattern Literacy:
+ * Energy Capacity vs Sensory Intensity vs Biological Rhythms.
+ * Designed with progressive disclosure to reduce cognitive load.
  */
 const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
   entries,
   wearableData = [],
 }) => {
-  // Generate Insights (Phase 2 & 6: Correlation Engine)
+  const [showDetails, setShowDetails] = useState(false);
+
+  // Generate Insights
   const insights = useMemo(
     () => generateInsights(entries, wearableData),
     [entries, wearableData]
   );
 
-  // Generate Current Strategy & Cognitive Load based on latest entry
+  // Generate Current Strategy & Cognitive Load
   const { strategies, cognitiveLoad } = useMemo(() => {
     if (entries.length === 0) return { strategies: [], cognitiveLoad: null };
     const sorted = [...entries].sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
     const latest = sorted[0];
     return {
@@ -96,36 +87,14 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
     };
   }, [entries]);
 
-  // Generate Burnout Forecast (Phase 4)
-  const forecast = useMemo(
-    () => calculateBurnoutTrajectory(entries),
-    [entries]
-  );
+  // Generate Depletion Forecast
+  const forecast = useMemo(() => calculateBurnoutTrajectory(entries), [entries]);
 
-  // Generate Hormonal Context (Phase 7)
+  // Generate Cycle Context
   const userSettings = getUserSettings();
-  const hormonalContext = useMemo(
-    () => calculateCyclePhase(userSettings),
-    [userSettings]
-  );
+  const cycleContext = useMemo(() => calculateCyclePhase(userSettings), [userSettings]);
 
-  // Calculate Masking Trends (Phase 8)
-  const maskingTrend = useMemo(() => {
-    if (entries.length < 2) return null;
-    const sorted = [...entries].sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
-    const latest = sorted[0].neuroMetrics.maskingScore || 0;
-    const avg =
-      sorted.reduce(
-        (acc, curr) => acc + (curr.neuroMetrics.maskingScore || 0),
-        0
-      ) / sorted.length;
-    return { latest, avg, diff: latest - avg };
-  }, [entries]);
-
-  // Sleep Stats (New)
+  // Sleep Stats
   const sleepStats = useMemo(() => {
     if (!wearableData.length) return null;
     const recent = [...wearableData]
@@ -136,116 +105,73 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
     if (!recent.length) return null;
 
     const avgTotal =
-      recent.reduce(
-        (acc, curr) => acc + (curr.metrics.sleep?.totalDurationSeconds || 0),
-        0
-      ) / recent.length;
+      recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.totalDurationSeconds || 0), 0) / recent.length;
     const avgDeep =
-      recent.reduce(
-        (acc, curr) => acc + (curr.metrics.sleep?.deepSleepSeconds || 0),
-        0
-      ) / recent.length;
+      recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.deepSleepSeconds || 0), 0) / recent.length;
     const avgRem =
-      recent.reduce(
-        (acc, curr) => acc + (curr.metrics.sleep?.remSleepSeconds || 0),
-        0
-      ) / recent.length;
+      recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.remSleepSeconds || 0), 0) / recent.length;
 
     return {
       totalHours: (avgTotal / 3600).toFixed(1),
       deepPercent: avgTotal > 0 ? Math.round((avgDeep / avgTotal) * 100) : 0,
       remPercent: avgTotal > 0 ? Math.round((avgRem / avgTotal) * 100) : 0,
       efficiency: Math.round(
-        recent.reduce(
-          (acc, curr) => acc + (curr.metrics.sleep?.efficiencyScore || 0),
-          0
-        ) / recent.length
+        recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.efficiencyScore || 0), 0) / recent.length
       ),
     };
   }, [wearableData]);
 
+  // Empty State
   if (!entries || entries.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-700">
-        <div className="bg-indigo-50 dark:bg-indigo-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-          <TrendingUp className="text-indigo-400" size={32} />
+      <div className="bg-bg-card rounded-card p-12 text-center border-2 border-dashed border-bg-secondary">
+        <div className="w-16 h-16 bg-accent-positive/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Activity className="text-accent-positive" size={32} />
         </div>
-        <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200">No Data Available</h3>
-        <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm mx-auto">
-          Start logging to track your Energy Spoons, Sensory Load, and Mood
-          patterns.
+        <h3 className="text-h2 font-display font-semibold text-text-primary mb-2">
+          Your Pattern Garden
+        </h3>
+        <p className="text-base text-text-secondary max-w-sm mx-auto leading-relaxed">
+          Start your first entry today to begin understanding your unique energy
+          patterns and what helps you feel your best.
         </p>
+        <Button variant="primary" size="md" className="mt-6">
+          Start Your First Entry
+        </Button>
       </div>
     );
   }
 
-  const cycleStart = userSettings.cycleStartDate
-    ? new Date(userSettings.cycleStartDate)
-    : null;
-  const cycleLen = userSettings.avgCycleLength || 28;
-
-  // 1. Generate Date Range (Last 14 days for clarity)
+  // Chart Data Preparation
   const today = new Date();
   const dateMap = new Map<string, ChartDataPoint>();
 
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(today.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
-    const displayDate = d.toLocaleDateString(undefined, {
-      weekday: "short",
-      day: "numeric",
-    });
-
-    // Calculate Cycle Day
-    let cycleDay = null;
-    let isLuteal = false;
-    if (cycleStart) {
-      const daysSinceStart = Math.floor(
-        (d.getTime() - cycleStart.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (daysSinceStart >= 0) {
-        cycleDay = (daysSinceStart % cycleLen) + 1;
-        // Luteal Phase approx Day 18-28
-        if (cycleDay >= 18 && cycleDay <= cycleLen) {
-          isLuteal = true;
-        }
-      }
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0];
+      const displayDate = d.toLocaleDateString(undefined, {
+        weekday: "short",
+        day: "numeric",
+      });
+      dateMap.set(dateStr, { rawDate: dateStr, date: displayDate, energy: null, sensory: null, hrv: null, sleep: null });
     }
 
-    dateMap.set(dateStr, {
-      rawDate: dateStr,
-      date: displayDate,
-      mood: null,
-      spoons: null,
-      sensory: null,
-      hrv: null,
-      sleep: null,
-      cycleDay,
-      isLuteal,
-    });
-  }
-
-  // 2. Populate Journal Data
   entries.forEach((e) => {
     const dateStr = new Date(e.timestamp).toISOString().split("T")[0];
     const curr = dateMap.get(dateStr);
     if (curr) {
-      curr.mood = e.mood;
-      curr.spoons = e.neuroMetrics?.spoonLevel || 5;
+      curr.energy = e.neuroMetrics?.spoonLevel || 5;
       curr.sensory = e.neuroMetrics?.sensoryLoad || 0;
     }
   });
 
-  // 3. Populate Wearable Data
   wearableData.forEach((w) => {
     const curr = dateMap.get(w.date);
     if (curr) {
       curr.hrv = w.metrics.biometrics?.hrvMs ?? null;
       if (w.metrics.sleep?.totalDurationSeconds) {
-        curr.sleep = parseFloat(
-          (w.metrics.sleep.totalDurationSeconds / 3600).toFixed(1)
-        );
+        curr.sleep = parseFloat((w.metrics.sleep.totalDurationSeconds / 3600).toFixed(1));
       }
     }
   });
@@ -253,641 +179,501 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
   const chartData = Array.from(dateMap.values());
 
   // Stats
-  const validSpoons = chartData.filter(
-    (d): d is ChartDataPoint & { spoons: number } => d.spoons !== null
-  );
-  const avgSpoons = validSpoons.length
-    ? (
-        validSpoons.reduce((acc, curr) => acc + curr.spoons, 0) /
-        validSpoons.length
-      ).toFixed(1)
+  const validEnergy = chartData.filter((d): d is ChartDataPoint & { energy: number } => d.energy !== null);
+  const avgEnergy = validEnergy.length
+    ? (validEnergy.reduce((acc, curr) => acc + curr.energy, 0) / validEnergy.length).toFixed(1)
     : "-";
 
-  const validMood = chartData.filter(
-    (d): d is ChartDataPoint & { mood: number } => d.mood !== null
-  );
+  const validMood = chartData.filter((d): d is ChartDataPoint & { energy: number } => d.energy !== null);
   const avgMood = validMood.length
-    ? (
-        validMood.reduce((acc, curr) => acc + curr.mood, 0) / validMood.length
-      ).toFixed(1)
+    ? (validMood.reduce((acc, curr) => acc + curr.energy, 0) / validMood.length).toFixed(1)
     : "-";
 
-  // Count top strengths
+  // Top Strength
   const strengthMap: Record<string, number> = {};
   entries.forEach((e) =>
     e.strengths?.forEach((s) => {
       strengthMap[s] = (strengthMap[s] || 0) + 1;
     })
   );
-  const topStrength =
-    Object.entries(strengthMap).sort((a, b) => b[1] - a[1])[0]?.[0] ||
-    "None yet";
+  const topStrength = Object.entries(strengthMap).sort((a, b) => b[1] - a[1])[0]?.[0] || "None yet";
+
+  // Trend calculation
+  const trend = useMemo(() => {
+    if (validEnergy.length < 2) return null;
+    const recent = validEnergy.slice(-3);
+    const earlier = validEnergy.slice(-6, -3);
+    if (recent.length < 2 || earlier.length < 2) return null;
+    const recentAvg = recent.reduce((a, b) => a + b.energy, 0) / recent.length;
+    const earlierAvg = earlier.reduce((a, b) => a + b.energy, 0) / earlier.length;
+    const change = ((recentAvg - earlierAvg) / earlierAvg) * 100;
+    return {
+      percent: change.toFixed(0),
+      direction: change > 5 ? "up" : change < -5 ? "down" : "stable",
+    };
+  }, [validEnergy]);
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* Phase 3: Mae's Strategy Deck */}
+    <div className="space-y-xl animate-fadeIn">
+      {/* Dashboard Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-h1 font-display font-bold text-text-primary">
+            Pattern Dashboard
+          </h2>
+          <p className="text-base text-text-secondary">
+            Tracking {entries.length} patterns • Last updated 2 hours ago
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setShowDetails(!showDetails)}>
+          {showDetails ? (
+            <>
+              <ChevronUp size={16} className="mr-2" />
+              Show Less
+            </>
+          ) : (
+            <>
+              <ChevronDown size={16} className="mr-2" />
+              Show Details
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Top Insights Card - Always Visible */}
       {strategies.length > 0 && (
-        <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full translate-x-10 -translate-y-10 blur-2xl"></div>
-
-          <div className="flex items-center gap-2 mb-4 relative z-10">
-            <Compass className="text-teal-200" size={24} />
-            <h3 className="font-bold text-xl">Mae's Strategy Deck</h3>
-            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
-              For Today
-            </span>
+        <Card className="bg-gradient-to-r from-primary to-primary-light text-white border-none">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <Sparkles className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="text-h2 font-display font-semibold">Today's Insight</h3>
+              <Badge variant="neutral" size="sm" className="bg-white/20 text-white border-none">
+                Personalized for you
+              </Badge>
+            </div>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-4 relative z-10">
-            {strategies.map((strat) => (
+          <div className="grid md:grid-cols-3 gap-lg">
+            {strategies.slice(0, 3).map((strat) => (
               <div
                 key={strat.id}
-                className="bg-white/10 border border-white/20 p-4 rounded-xl backdrop-blur-sm hover:bg-white/20 transition-colors"
+                className="bg-white/10 border border-white/20 p-lg rounded-xl backdrop-blur-sm"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  {strat.type === "REST" && (
-                    <Shield size={16} className="text-rose-200" />
-                  )}
-                  {strat.type === "FOCUS" && (
-                    <Zap size={16} className="text-yellow-200" />
-                  )}
-                  {strat.type === "SOCIAL" && (
-                    <Brain size={16} className="text-pink-200" />
-                  )}
-                  {strat.type === "SENSORY" && (
-                    <AlertTriangle size={16} className="text-orange-200" />
-                  )}
-                  <span className="font-bold text-sm text-white">
-                    {strat.title}
-                  </span>
-                </div>
-                <p className="text-sm text-teal-50 leading-snug opacity-90">
+                <p className="text-small font-semibold text-white mb-2">
+                  {strat.title}
+                </p>
+                <p className="text-base text-white/90 leading-relaxed">
                   {strat.action}
                 </p>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* Grid for Widgets */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Phase 4: Burnout Forecast Widget */}
-        <div
-          className={`rounded-2xl p-6 border shadow-md relative overflow-hidden ${
-            entries.length < 3
-              ? "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
-              : forecast.riskLevel === "CRITICAL"
-              ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800"
-              : forecast.riskLevel === "MODERATE"
-              ? "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800"
-              : "bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800"
-          }`}
-        >
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex items-center gap-3">
-              <div
-                className={`p-3 rounded-xl ${
-                  entries.length < 3
-                    ? "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
-                    : forecast.riskLevel === "CRITICAL"
-                    ? "bg-rose-500 text-white"
-                    : forecast.riskLevel === "MODERATE"
-                    ? "bg-orange-500 text-white"
-                    : "bg-indigo-500 text-white"
-                }`}
-              >
-                <Activity size={24} />
-              </div>
-              <div>
-                <h3
-                  className={`font-bold text-lg ${
-                    entries.length < 3
-                      ? "text-slate-600 dark:text-slate-400"
-                      : forecast.riskLevel === "CRITICAL"
-                      ? "text-rose-800 dark:text-rose-200"
-                      : forecast.riskLevel === "MODERATE"
-                      ? "text-orange-800 dark:text-orange-200"
-                      : "text-indigo-800 dark:text-indigo-200"
-                  }`}
-                >
-                  Burnout Trajectory
-                </h3>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      entries.length < 3
-                        ? "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
-                        : forecast.riskLevel === "CRITICAL"
-                        ? "bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200"
-                        : forecast.riskLevel === "MODERATE"
-                        ? "bg-orange-200 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200"
-                        : "bg-indigo-200 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200"
-                    }`}
-                  >
-                    {entries.length < 3 ? "PENDING DATA" : forecast.riskLevel}
-                  </span>
-                </div>
-              </div>
+      {/* Quick Stats - Always Visible */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
+        <Card>
+          <CardHeader>
+            <CardTitle>Today's Energy</CardTitle>
+          </CardHeader>
+          <div className="flex items-end justify-between">
+            <div>
+              <h4 className="text-[42px] font-display font-bold text-text-primary leading-none">
+                {avgEnergy}
+              </h4>
+              <p className="text-small text-text-secondary">out of 10</p>
             </div>
-
-            {forecast.daysUntilCrash !== null && (
-              <div className="text-right">
-                <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
-                  Projected Crash
-                </p>
-                <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">
-                  {forecast.daysUntilCrash} Days
-                </p>
+            {trend && (
+              <div className="flex items-center gap-1 text-small font-semibold">
+                {trend.direction === "up" && (
+                  <TrendingUp size={16} className="text-accent-positive" />
+                )}
+                <span
+                  className={
+                    trend.direction === "up"
+                      ? "text-accent-positive"
+                      : trend.direction === "down"
+                      ? "text-accent-alert"
+                      : "text-text-secondary"
+                  }
+                >
+                  {trend.direction === "stable" ? "Stable" : `${trend.percent}%`}
+                </span>
               </div>
             )}
+            <div className="w-14 h-14 bg-accent-positive/10 rounded-xl flex items-center justify-center">
+              <Zap className="text-accent-positive" size={28} fill="currentColor" />
+            </div>
           </div>
+        </Card>
 
-          <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-4 text-sm">
-            {entries.length < 3 
-              ? "Need at least 3 days of journal entries to calculate your burnout risk trajectory. Keep logging!" 
-              : forecast.description}
-          </p>
-
-          {forecast.recoveryDaysNeeded > 0 && (
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-white/50 dark:bg-slate-800/50 p-2 rounded-lg w-fit">
-              <BatteryWarning size={14} className="text-orange-500 dark:text-orange-400" />
-              <span>
-                Est. Recovery:{" "}
-                <strong>{forecast.recoveryDaysNeeded} Days</strong>
-              </span>
+        <Card>
+          <CardHeader>
+            <CardTitle>Average Mood</CardTitle>
+            <CardDescription>Based on your recent entries</CardDescription>
+          </CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-[42px] font-display font-bold text-text-primary leading-none">
+                {avgMood}
+              </h4>
+              <p className="text-small text-text-secondary">out of 5</p>
             </div>
-          )}
-
-          {/* Safety Interceptor */}
-          {forecast.riskLevel === "CRITICAL" && (
-            <div className="mt-4 pt-4 border-t border-rose-200 dark:border-rose-800">
-              <p className="text-xs font-bold text-rose-500 dark:text-rose-400 mb-2 flex items-center gap-1">
-                <AlertTriangle size={12} /> CLINICAL NOTE
-              </p>
-              <p className="text-xs text-rose-800 dark:text-rose-200 mb-2">
-                Sustained critical load predicts severe burnout. Consider
-                activating your support network.
-              </p>
-              {userSettings.safetyContact && (
-                <a
-                  href={`tel:${userSettings.safetyContact}`}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200 rounded-lg text-xs font-bold hover:bg-rose-300 dark:hover:bg-rose-800 transition-colors"
-                >
-                  <PhoneCall size={12} /> Call Support
-                </a>
-              )}
+            <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Brain className="text-primary" size={28} />
             </div>
-          )}
-        </div>
+          </div>
+        </Card>
 
-        {/* Phase 5 & 8: Cognitive & Masking Load Widget */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-md">
-          {/* Empty State for Cognitive Load */}
-          {!cognitiveLoad && !maskingTrend && (
-             <div className="flex flex-col items-center justify-center h-full text-center py-4">
-                <Layers size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
-                <h3 className="font-bold text-slate-500 dark:text-slate-400">Cognitive Load</h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                  Log your first entry to see your cognitive tax and masking burden.
-                </p>
-             </div>
-          )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Top Strength</CardTitle>
+          </CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-h3 font-display font-semibold text-text-primary line-clamp-2">
+                {topStrength}
+              </h4>
+              <p className="text-small text-text-secondary mt-1">Most recognized pattern</p>
+            </div>
+            <div className="w-14 h-14 bg-accent-attention/10 rounded-xl flex items-center justify-center">
+              <Star className="text-accent-attention" size={28} fill="currentColor" />
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Expanded Details Section */}
+      {showDetails && (
+        <div className="space-y-lg animate-fadeIn">
+          {/* Depletion Forecast */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                      entries.length < 3
+                        ? "bg-bg-secondary text-text-tertiary"
+                        : forecast.riskLevel === "CRITICAL"
+                        ? "bg-accent-alert text-white"
+                        : forecast.riskLevel === "MODERATE"
+                        ? "bg-accent-attention text-white"
+                        : "bg-accent-positive text-white"
+                    }`}
+                  >
+                    <Shield size={24} />
+                  </div>
+                  <div>
+                    <CardTitle>Energy Depletion Forecast</CardTitle>
+                    <CardDescription>
+                      {entries.length < 3
+                        ? "Need at least 3 days of entries"
+                        : forecast.description}
+                    </CardDescription>
+                  </div>
+                </div>
+                {forecast.daysUntilCrash !== null && (
+                  <div className="text-right">
+                    <p className="text-small font-semibold uppercase text-text-secondary mb-1">
+                      Days Until High Stress
+                    </p>
+                    <p className="text-3xl font-display font-bold text-accent-alert">
+                      {forecast.daysUntilCrash}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            {forecast.recoveryDaysNeeded > 0 && (
+              <div className="flex items-center gap-2 text-small text-text-secondary bg-bg-secondary p-3 rounded-lg">
+                <Activity size={16} className="text-accent-attention" />
+                <span>
+                  Estimated recovery: <strong>{forecast.recoveryDaysNeeded} days</strong>
+                </span>
+              </div>
+            )}
+            {forecast.riskLevel === "CRITICAL" && (
+              <div className="mt-4 pt-4 border-t border-bg-secondary">
+                <div className="flex items-start gap-2 text-small text-accent-alert">
+                  <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    Your energy levels have been low for a while. Consider taking a rest day
+                    or reaching out to someone you trust.
+                  </p>
+                </div>
+                {userSettings.safetyContact && (
+                  <Button variant="secondary" size="sm" className="mt-3">
+                    Contact Support
+                  </Button>
+                )}
+              </div>
+            )}
+          </Card>
 
           {/* Cognitive Load */}
           {cognitiveLoad && (
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Layers size={18} className="text-blue-500 dark:text-blue-400" />
-                  <h3 className="font-bold text-slate-800 dark:text-slate-100">Cognitive Load</h3>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        cognitiveLoad.state === "FRAGMENTED"
+                          ? "bg-accent-alert text-white"
+                          : cognitiveLoad.state === "MODERATE"
+                          ? "bg-accent-attention text-white"
+                          : "bg-accent-positive text-white"
+                      }`}
+                    >
+                      <Layers size={24} />
+                    </div>
+                    <div>
+                      <CardTitle>Mental Clarity</CardTitle>
+                      <CardDescription>
+                        Based on your activity changes
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Badge
+                    variant={cognitiveLoad.state === "FRAGMENTED" ? "alert" : cognitiveLoad.state === "MODERATE" ? "attention" : "positive"}
+                    size="md"
+                  >
+                    {cognitiveLoad.state}
+                  </Badge>
                 </div>
-                <span
-                  className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                    cognitiveLoad.state === "FRAGMENTED"
-                      ? "bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300"
-                      : cognitiveLoad.state === "MODERATE"
-                      ? "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300"
-                      : "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300"
-                  }`}
-                >
-                  {cognitiveLoad.state}
-                </span>
+              </CardHeader>
+              <div className="space-y-3">
+                <div className="w-full bg-bg-secondary rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all ${
+                      cognitiveLoad.efficiencyLoss > 30 ? "bg-accent-alert" : "bg-accent-positive"
+                    }`}
+                    style={{ width: `${Math.min(cognitiveLoad.efficiencyLoss, 100)}%` }}
+                  />
+                </div>
+                <p className="text-small text-text-secondary">
+                  <strong>{cognitiveLoad.switches}</strong> activity changes today
+                  ({cognitiveLoad.efficiencyLoss}% efficiency impact)
+                </p>
               </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 mb-2">
-                <div
-                  className={`h-1.5 rounded-full ${
-                    cognitiveLoad.efficiencyLoss > 30
-                      ? "bg-rose-500"
-                      : "bg-blue-500"
-                  }`}
-                  style={{
-                    width: `${Math.min(cognitiveLoad.efficiencyLoss, 100)}%`,
-                  }}
-                ></div>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                <strong>{cognitiveLoad.switches}</strong> context switches (
-                {cognitiveLoad.efficiencyLoss}% efficiency tax).
-              </p>
-            </div>
+            </Card>
           )}
 
-          {/* Phase 8: Masking Burden */}
-          {maskingTrend && (
-            <div className="pt-4 border-t border-slate-50 dark:border-slate-700">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <VenetianMask size={18} className="text-purple-500 dark:text-purple-400" />
-                  <h3 className="font-bold text-slate-800 dark:text-slate-100">Masking Burden</h3>
-                </div>
-                {maskingTrend.latest > 6 && (
-                  <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                    High
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 mb-2">
-                    <div
-                      className={`h-1.5 rounded-full ${
-                        maskingTrend.latest > 6
-                          ? "bg-purple-500"
-                          : "bg-slate-400"
-                      }`}
-                      style={{ width: `${maskingTrend.latest * 10}%` }}
-                    ></div>
+          {/* Cycle Context */}
+          {cycleContext && (
+            <Card className="bg-gradient-to-br from-accent-alert/5 to-accent-attention/5">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                    {cycleContext.phase === "LUTEAL" || cycleContext.phase === "MENSTRUAL" ? (
+                      <CloudFog size={24} className="text-accent-alert" />
+                    ) : (
+                      <Sun size={24} className="text-accent-attention" />
+                    )}
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Current Effort: <strong>{maskingTrend.latest}/10</strong>
+                  <div>
+                    <CardTitle>Cycle Context</CardTitle>
+                    <CardDescription>
+                      Day {cycleContext.day}/{cycleContext.length}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <div className="grid md:grid-cols-2 gap-lg">
+                <div className="bg-white/60 p-lg rounded-xl border border-white/40">
+                  <p className="text-small font-semibold uppercase text-text-secondary mb-2">
+                    Expected Energy
+                  </p>
+                  <p className="text-h3 font-display font-semibold text-text-primary">
+                    {cycleContext.energyPrediction}
                   </p>
                 </div>
-                {maskingTrend.diff > 1 ? (
-                  <div className="text-xs font-bold text-rose-500 dark:text-rose-400 flex items-center">
-                    <TrendingUp size={12} className="mr-1" /> Rising
-                  </div>
-                ) : maskingTrend.diff < -1 ? (
-                  <div className="text-xs font-bold text-emerald-500 dark:text-emerald-400 flex items-center">
-                    <TrendingDown size={12} className="mr-1" /> Dropping
-                  </div>
-                ) : (
-                  <span className="text-xs text-slate-400 dark:text-slate-500">Stable</span>
-                )}
+                <div className="bg-white/60 p-lg rounded-xl border border-white/40">
+                  <p className="text-small font-semibold uppercase text-text-secondary mb-2">
+                    Suggestion
+                  </p>
+                  <p className="text-base text-text-primary leading-relaxed">
+                    {cycleContext.advice}
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 italic">
-                High masking correlates with faster spoon depletion.
-              </p>
-            </div>
+            </Card>
           )}
-        </div>
 
-        {/* Phase 7: Hormonal Weather Widget */}
-        {hormonalContext ? (
-          <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 rounded-2xl p-6 border border-rose-100 dark:border-rose-800 shadow-md md:col-span-2">
-            <div className="flex justify-between items-start">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-white dark:bg-rose-900/50 text-rose-500 dark:text-rose-300 rounded-xl shadow-sm">
-                  {hormonalContext.phase === "LUTEAL" ||
-                  hormonalContext.phase === "MENSTRUAL" ? (
-                    <CloudFog size={24} />
-                  ) : (
-                    <Sun size={24} />
-                  )}
+          {/* Sleep Architecture */}
+          {sleepStats && (
+            <Card className="bg-dark-bg-primary text-white border-dark-bg-card">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-dark-bg-card rounded-xl flex items-center justify-center">
+                      <Activity size={24} className="text-accent-positive" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white">Sleep Quality</CardTitle>
+                      <CardDescription className="text-dark-text-secondary">
+                        7-day average
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-display font-bold text-white">
+                      {sleepStats.totalHours}
+                      <span className="text-base text-dark-text-secondary">h</span>
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-lg text-rose-900 dark:text-rose-200">
-                    Hormonal Forecast
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200">
-                      {hormonalContext.phase} Phase
-                    </span>
-                    <span className="text-xs text-rose-600 dark:text-rose-400 font-medium">
-                      Day {hormonalContext.day}/{hormonalContext.length}
-                    </span>
+              </CardHeader>
+              <div className="grid grid-cols-3 gap-lg">
+                <div className="bg-dark-bg-secondary/50 p-lg rounded-xl border border-dark-bg-secondary">
+                  <p className="text-small font-semibold uppercase text-dark-text-secondary mb-2">
+                    Deep Sleep
+                  </p>
+                  <p className="text-h3 font-display font-bold">{sleepStats.deepPercent}%</p>
+                  <div className="w-full bg-dark-bg-primary h-2 rounded-full mt-3">
+                    <div className="bg-accent-positive h-2 rounded-full" style={{ width: `${sleepStats.deepPercent}%` }} />
+                  </div>
+                </div>
+                <div className="bg-dark-bg-secondary/50 p-lg rounded-xl border border-dark-bg-secondary">
+                  <p className="text-small font-semibold uppercase text-dark-text-secondary mb-2">
+                    REM Sleep
+                  </p>
+                  <p className="text-h3 font-display font-bold">{sleepStats.remPercent}%</p>
+                  <div className="w-full bg-dark-bg-primary h-2 rounded-full mt-3">
+                    <div className="bg-primary h-2 rounded-full" style={{ width: `${sleepStats.remPercent}%` }} />
+                  </div>
+                </div>
+                <div className="bg-dark-bg-secondary/50 p-lg rounded-xl border border-dark-bg-secondary">
+                  <p className="text-small font-semibold uppercase text-dark-text-secondary mb-2">
+                    Sleep Quality
+                  </p>
+                  <p className="text-h3 font-display font-bold">{sleepStats.efficiency}%</p>
+                  <div className="w-full bg-dark-bg-primary h-2 rounded-full mt-3">
+                    <div
+                      className={`h-2 rounded-full ${sleepStats.efficiency > 85 ? "bg-accent-positive" : "bg-accent-attention"}`}
+                      style={{ width: `${sleepStats.efficiency}%` }}
+                    />
                   </div>
                 </div>
               </div>
+            </Card>
+          )}
 
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold uppercase text-rose-400 dark:text-rose-300">
-                  Energy Prediction
-                </p>
-                <p className="text-lg font-bold text-rose-700 dark:text-rose-300">
-                  {hormonalContext.energyPrediction}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 grid md:grid-cols-2 gap-4">
-              <div className="bg-white/60 dark:bg-slate-800/50 p-3 rounded-xl border border-rose-100/50 dark:border-rose-800/50">
-                <p className="text-xs font-bold uppercase text-rose-400 dark:text-rose-300 mb-1">
-                  Cognitive Impact
-                </p>
-                <p className="text-rose-900 dark:text-rose-200 font-medium">
-                  {hormonalContext.cognitiveImpact}
-                </p>
-              </div>
-              <div className="bg-white/60 dark:bg-slate-800/50 p-3 rounded-xl border border-rose-100/50 dark:border-rose-800/50">
-                <p className="text-xs font-bold uppercase text-rose-400 dark:text-rose-300 mb-1">
-                  Mae's Advice
-                </p>
-                <p className="text-rose-900 dark:text-rose-200 text-sm">
-                  {hormonalContext.advice}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 flex items-center justify-between text-slate-400 dark:text-slate-500 md:col-span-2">
-            <div className="flex items-center gap-3">
-              <CloudRain size={24} />
-              <span>Hormonal forecasting disabled. Set up in Settings.</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* State Check Trends (Phase 6 Bio-Mirror) */}
-      <StateTrendChart />
-
-      {/* Pattern Insights Section (Phase 2 & 6) */}
-      {insights.length > 0 && (
-        <div className="bg-indigo-900 rounded-2xl p-6 text-white shadow-lg border border-indigo-800">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="text-indigo-300" size={20} />
-            <h3 className="font-bold text-lg">AI Pattern Discovery</h3>
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            {insights.map((insight, i) => (
-              <div
-                key={i}
-                className="bg-indigo-800/50 border border-indigo-700 p-4 rounded-xl"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  {insight.type === "WARNING" ? (
-                    <AlertTriangle size={16} className="text-orange-400" />
-                  ) : insight.type === "BIO-LINK" ? (
-                    <Activity size={16} className="text-rose-400" />
-                  ) : (
-                    <Lightbulb size={16} className="text-emerald-400" />
-                  )}
-                  <span className="font-bold text-sm text-indigo-100">
-                    {insight.title}
-                  </span>
+          {/* Pattern Insights */}
+          {insights.length > 0 && (
+            <Card className="bg-primary text-white border-none">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Sparkles size={24} className="text-accent-action" />
+                  <CardTitle className="text-white">Pattern Discoveries</CardTitle>
                 </div>
-                <p className="text-sm text-indigo-300 leading-snug">
-                  {insight.description}
-                </p>
+              </CardHeader>
+              <div className="grid md:grid-cols-2 gap-lg">
+                {insights.map((insight, i) => (
+                  <div key={i} className="bg-primary-light/50 border border-primary-light/30 p-lg rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      {insight.type === "WARNING" ? (
+                        <AlertCircle size={16} className="text-accent-attention" />
+                      ) : insight.type === "BIO-LINK" ? (
+                        <Activity size={16} className="text-accent-alert" />
+                      ) : (
+                        <Star size={16} className="text-accent-positive" />
+                      )}
+                      <span className="text-small font-semibold text-white">
+                        {insight.title}
+                      </span>
+                    </div>
+                    <p className="text-base text-primary-light/90 leading-relaxed">
+                      {insight.description}
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </Card>
+          )}
+
+          {/* Energy Trend Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>14-Day Energy Pattern</CardTitle>
+              <CardDescription>
+                Comparing your energy with sensory intensity
+              </CardDescription>
+            </CardHeader>
+            <div className="h-80">
+              {entries.length === 0 ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-bg-secondary/50 rounded-xl">
+                  <Activity className="text-text-tertiary mb-3" size={32} />
+                  <p className="text-base text-text-secondary">Waiting for data</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="energyGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3B8B7E" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#3B8B7E" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EDEAE6" opacity={0.5} />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: "#B2BEC3", fontSize: 13 }}
+                      dy={10}
+                    />
+                    <YAxis yAxisId="left" domain={[0, 10]} hide />
+                    <YAxis yAxisId="right" orientation="right" domain={[0, 10]} hide />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "12px",
+                        border: "none",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+                        backgroundColor: "rgba(255, 255, 255, 0.95)",
+                      }}
+                    />
+                    <Legend iconType="circle" />
+                    {/* Energy Area */}
+                    <Area
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="energy"
+                      name="Energy Capacity"
+                      stroke="#3B8B7E"
+                      fill="url(#energyGradient)"
+                      strokeWidth={3}
+                    />
+                    {/* Sensory Line */}
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="sensory"
+                      name="Sensory Intensity"
+                      stroke="#E8A538"
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: "#E8A538", strokeWidth: 0 }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-4 text-small text-text-secondary bg-bg-secondary p-3 rounded-lg">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-accent-positive rounded-full"></div>
+                <span>Green area = Your energy capacity</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-accent-attention rounded-full"></div>
+                <span>Amber line = Sensory intensity</span>
+              </div>
+            </div>
+          </Card>
         </div>
       )}
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-              Avg Capacity
-            </p>
-            <h4 className="text-3xl font-bold text-slate-800 dark:text-slate-100 flex items-baseline gap-1">
-              {avgSpoons}
-              <span className="text-base font-normal text-slate-400 dark:text-slate-500">
-                /10 Spoons
-              </span>
-            </h4>
-          </div>
-          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
-            <Zap className="text-emerald-600 dark:text-emerald-400" size={24} fill="currentColor" />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-              Avg Mood
-            </p>
-            <h4 className="text-3xl font-bold text-slate-800 dark:text-slate-100 flex items-baseline gap-1">
-              {avgMood}
-              <span className="text-base font-normal text-slate-400 dark:text-slate-500">/5</span>
-            </h4>
-          </div>
-          <div className="w-12 h-12 bg-teal-50 dark:bg-teal-900/30 rounded-xl flex items-center justify-center">
-            <Brain className="text-teal-600 dark:text-teal-400" size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-              Top Strength
-            </p>
-            <h4
-              className="text-xl font-bold text-slate-800 dark:text-slate-100 truncate max-w-[150px]"
-              title={topStrength}
-            >
-              {topStrength}
-            </h4>
-          </div>
-          <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
-            <Star className="text-purple-600 dark:text-purple-400" size={24} />
-          </div>
-        </div>
-      </div>
-
-      {/* Sleep Architecture Widget */}
-      {sleepStats && (
-        <div className="bg-indigo-950 dark:bg-slate-900 text-white p-6 rounded-2xl shadow-lg border border-indigo-900 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-indigo-900 dark:bg-slate-800 rounded-xl">
-                <Activity size={24} className="text-indigo-300 dark:text-indigo-400" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">Sleep Architecture</h3>
-                <p className="text-indigo-300 dark:text-slate-400 text-sm">7-Day Average</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold">
-                {sleepStats.totalHours}
-                <span className="text-lg font-normal text-indigo-400 dark:text-slate-400">h</span>
-              </p>
-              <p className="text-xs font-bold uppercase text-indigo-400 dark:text-slate-500">
-                Avg Duration
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-indigo-900/50 dark:bg-slate-800/50 p-4 rounded-xl border border-indigo-800 dark:border-slate-700">
-              <p className="text-xs font-bold uppercase text-indigo-400 dark:text-slate-400 mb-1">
-                Deep Sleep
-              </p>
-              <p className="text-xl font-bold">{sleepStats.deepPercent}%</p>
-              <div className="w-full bg-indigo-950 dark:bg-slate-900 h-1.5 rounded-full mt-2">
-                <div
-                  className="bg-indigo-400 h-1.5 rounded-full"
-                  style={{ width: `${sleepStats.deepPercent}%` }}
-                ></div>
-              </div>
-            </div>
-            <div className="bg-indigo-900/50 dark:bg-slate-800/50 p-4 rounded-xl border border-indigo-800 dark:border-slate-700">
-              <p className="text-xs font-bold uppercase text-indigo-400 dark:text-slate-400 mb-1">
-                REM Sleep
-              </p>
-              <p className="text-xl font-bold">{sleepStats.remPercent}%</p>
-              <div className="w-full bg-indigo-950 dark:bg-slate-900 h-1.5 rounded-full mt-2">
-                <div
-                  className="bg-purple-400 h-1.5 rounded-full"
-                  style={{ width: `${sleepStats.remPercent}%` }}
-                ></div>
-              </div>
-            </div>
-            <div className="bg-indigo-900/50 dark:bg-slate-800/50 p-4 rounded-xl border border-indigo-800 dark:border-slate-700">
-              <p className="text-xs font-bold uppercase text-indigo-400 dark:text-slate-400 mb-1">
-                Efficiency
-              </p>
-              <p className="text-xl font-bold">{sleepStats.efficiency}%</p>
-              <div className="w-full bg-indigo-950 dark:bg-slate-900 h-1.5 rounded-full mt-2">
-                <div
-                  className={`h-1.5 rounded-full ${
-                    sleepStats.efficiency > 85
-                      ? "bg-emerald-400"
-                      : "bg-orange-400"
-                  }`}
-                  style={{ width: `${sleepStats.efficiency}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Chart: Neuro-Context Fusion */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-        <div className="mb-6 flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-              Neuro-Context Timeline
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Correlating Capacity (Spoons), Sensory Demand, and Biological
-              Rhythms.
-            </p>
-          </div>
-          {cycleStart && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-bold border border-rose-100 dark:border-rose-800">
-              <AlertTriangle size={14} />
-              <span>Cycle Tracking Active</span>
-            </div>
-          )}
-        </div>
-
-        <div className="h-96 w-full relative">
-          {entries.length === 0 ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-800/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700">
-              <Activity className="text-slate-300 dark:text-slate-600 mb-4" size={48} />
-              <h4 className="text-lg font-bold text-slate-500 dark:text-slate-400">Waiting for Data</h4>
-              <p className="text-slate-400 dark:text-slate-500 text-sm mt-2 max-w-xs text-center">
-                Your neuro-context timeline will appear here once you log your first entry.
-              </p>
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart
-                data={chartData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="spoonGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
-                <XAxis 
-                  dataKey="date" 
-                  tickLine={false} 
-                  axisLine={false} 
-                  tick={{fill: '#94a3b8', fontSize: 12}} 
-                  dy={10} 
-                />
-                <YAxis 
-                  yAxisId="left" 
-                  domain={[0, 10]} 
-                  hide 
-                />
-                <YAxis 
-                  yAxisId="right" 
-                  orientation="right" 
-                  domain={[0, 10]} 
-                  hide 
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    borderRadius: '12px', 
-                    border: 'none', 
-                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)'
-                  }}
-                />
-                <Legend iconType="circle" />
-                
-                {/* Spoons Area */}
-                <Area
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="spoons"
-                  name="Capacity (Spoons)"
-                  stroke="#10b981"
-                  fill="url(#spoonGradient)"
-                  strokeWidth={3}
-                />
-
-                {/* Sensory Line */}
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="sensory"
-                  name="Sensory Load"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
-                  dot={{ r: 4, fill: '#f59e0b', strokeWidth: 0 }}
-                />
-
-                {/* Luteal Phase Background Highlight */}
-                {/* Note: Recharts ReferenceArea requires x-axis values. 
-                    For MVP we skip complex background shading or implement custom shape. 
-                */}
-              </ComposedChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 justify-center bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-            <span>Green Area = Your Energy Capacity</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-orange-300 rounded-sm"></div>
-            <span>Orange Bar = Sensory Demand</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-rose-200 rounded-sm opacity-50"></div>
-            <span>Red Zone = Luteal Phase Risk</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-1 bg-rose-500 rounded-full"></div>
-            <span>Red Line = HRV (Low = Stress)</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

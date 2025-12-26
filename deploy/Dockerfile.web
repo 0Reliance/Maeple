@@ -4,10 +4,15 @@ FROM node:22-alpine as build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install
 
 COPY . .
-RUN npm run build
+
+# Build Arguments
+ARG VITE_GEMINI_API_KEY
+ENV VITE_GEMINI_API_KEY=$VITE_GEMINI_API_KEY
+
+RUN npm run build:production
 
 # Production Stage
 FROM nginx:alpine

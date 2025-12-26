@@ -5,16 +5,16 @@
  * Prevents corrupted data from crashing the app and provides defaults.
  */
 
-import { 
-  HealthEntry, 
-  CapacityProfile, 
-  NeuroMetrics, 
-  UserSettings,
-  StateCheck,
+import {
+  CapacityProfile,
   FacialAnalysis,
-  WearableDataPoint,
+  HealthEntry,
   Medication,
+  NeuroMetrics,
+  StateCheck,
   Symptom,
+  UserSettings,
+  WearableDataPoint,
 } from '../types';
 import { StandardizedDailyMetric } from './wearables/types';
 
@@ -96,8 +96,12 @@ const DEFAULT_USER_SETTINGS: UserSettings = {
 };
 
 const DEFAULT_FACIAL_ANALYSIS: FacialAnalysis = {
-  primaryEmotion: 'neutral',
   confidence: 0,
+  observations: [],
+  lighting: 'unknown',
+  lightingSeverity: 'low',
+  environmentalClues: [],
+  primaryEmotion: 'neutral',
   eyeFatigue: 0,
   jawTension: 0,
   maskingScore: 0,
@@ -218,13 +222,32 @@ export function validateFacialAnalysis(data: unknown): FacialAnalysis {
     return { ...DEFAULT_FACIAL_ANALYSIS };
   }
 
+  // Validate observations array
+  let observations = DEFAULT_FACIAL_ANALYSIS.observations;
+  if (isArray(data.observations)) {
+    observations = data.observations.filter(obs => 
+      isObject(obs) && 
+      isString((obs as any).category) &&
+      isString((obs as any).value) &&
+      isString((obs as any).evidence)
+    ) as FacialAnalysis['observations'];
+  }
+
   return {
-    primaryEmotion: isString(data.primaryEmotion) ? data.primaryEmotion : DEFAULT_FACIAL_ANALYSIS.primaryEmotion,
     confidence: isNumber(data.confidence) ? clamp(data.confidence, 0, 1) : DEFAULT_FACIAL_ANALYSIS.confidence,
+    observations,
+    lighting: isString(data.lighting) ? data.lighting : DEFAULT_FACIAL_ANALYSIS.lighting,
+    lightingSeverity: ['low', 'moderate', 'high'].includes(data.lightingSeverity as string) 
+      ? data.lightingSeverity as 'low' | 'moderate' | 'high'
+      : DEFAULT_FACIAL_ANALYSIS.lightingSeverity,
+    environmentalClues: isArray(data.environmentalClues) ? data.environmentalClues.filter(isString) : [],
+    primaryEmotion: isString(data.primaryEmotion) ? data.primaryEmotion : DEFAULT_FACIAL_ANALYSIS.primaryEmotion,
     eyeFatigue: isNumber(data.eyeFatigue) ? clamp(data.eyeFatigue, 0, 1) : DEFAULT_FACIAL_ANALYSIS.eyeFatigue,
     jawTension: isNumber(data.jawTension) ? clamp(data.jawTension, 0, 1) : DEFAULT_FACIAL_ANALYSIS.jawTension,
     maskingScore: isNumber(data.maskingScore) ? clamp(data.maskingScore, 0, 1) : DEFAULT_FACIAL_ANALYSIS.maskingScore,
-    signs: isArray(data.signs) ? data.signs.filter(isString) : [],
+    signs: isArray(data.signs) && data.signs.length > 0 && isObject(data.signs[0]) 
+      ? data.signs as FacialAnalysis['signs'] 
+      : DEFAULT_FACIAL_ANALYSIS.signs,
   };
 }
 
@@ -347,11 +370,9 @@ export function safeLoadSettings(key: string): UserSettings {
 }
 
 // Export defaults for use elsewhere
-export { 
-  DEFAULT_CAPACITY_PROFILE, 
-  DEFAULT_NEURO_METRICS, 
-  DEFAULT_USER_SETTINGS,
-  DEFAULT_FACIAL_ANALYSIS,
+export {
+  DEFAULT_CAPACITY_PROFILE, DEFAULT_FACIAL_ANALYSIS, DEFAULT_NEURO_METRICS,
+  DEFAULT_USER_SETTINGS
 };
 
 // ============================================

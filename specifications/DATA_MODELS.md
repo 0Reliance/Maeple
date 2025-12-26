@@ -54,6 +54,37 @@ A 7-point grid representing available bandwidth in different domains (0-10 scale
 - **metrics**: Standardized metrics (HRV, Sleep Duration, Steps).
 - **syncedAt**: ISO Timestamp
 
+### 1.5 Bio-Mirror Analysis (`FacialAnalysis`)
+
+Objective physiological analysis derived from computer vision (FACS).
+
+- **primaryEmotion**: `string` (Dominant expression)
+- **confidence**: `number` (0-1)
+- **eyeFatigue**: `number` (0-1) - Detects Ptosis/Glazed Gaze.
+- **jawTension**: `number` (0-1) - Detects Masseter tension/Lip Pressor.
+- **maskingScore**: `number` (0-1) - Discrepancy between Zygomatic Major and Orbicularis Oculi.
+- **signs**: `string[]` (List of detected Action Units, e.g., "AU24 Lip Pressor").
+
+### 1.6 Bio-Mirror Baseline (`FacialBaseline`)
+
+Calibration data for a user's neutral state.
+
+- **id**: `string` (UUID)
+- **timestamp**: `string` (ISO 8601)
+- **neutralTension**: `number`
+- **neutralFatigue**: `number`
+- **neutralMasking**: `number`
+
+### 1.7 State Check Entry (`StateCheck`)
+
+A saved record of a Bio-Mirror session.
+
+- **id**: `string` (UUID)
+- **timestamp**: `string` (ISO 8601)
+- **imageBase64**: `string` (Optional, encrypted)
+- **analysis**: `FacialAnalysis`
+- **userNote**: `string` (Optional context)
+
 ## 2. Database Schema (PostgreSQL)
 
 ### `users`

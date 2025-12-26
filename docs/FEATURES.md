@@ -30,9 +30,11 @@ Native support for "Spoon Theory" tracking, allowing you to visualize your daily
 
 An objective reality check for your nervous system. Sometimes we mask so hard we don't realize we're stressed.
 
--   **Jaw Tension Detection**: AI analyzes micro-expressions to detect clenching.
--   **Eye Fatigue Analysis**: Detects "glassy" eyes or drooping lids indicative of cognitive overload.
--   **Masking Score**: Calculates the disparity between your "social face" and your micro-expressions.
+-   **Scientific Foundation**: Uses the **Facial Action Coding System (FACS)** to identify specific Action Units (AUs) associated with stress and fatigue.
+-   **Physiological Markers**:
+    -   **Fatigue**: Detects Ptosis (lid droop) and Glazed Gaze (AU63).
+    -   **Tension**: Identifies Lip Pressor (AU24) and Masseter (Jaw) tension.
+    -   **Masking**: Compares Zygomatic Major (Smile) vs. Orbicularis Oculi (Eye crinkle) to distinguish "social" smiles from authentic ones.
 -   **Privacy First**: All image analysis happens **locally** or via secure, stateless AI calls. Your photos are never stored on our servers.
 
 ---
@@ -49,11 +51,36 @@ A comprehensive view of your longitudinal health data.
 
 ---
 
-## 📝 Smart Journal
+## 📝 Enhanced Multi-Mode Journal
 
--   **Context-Aware Logging**: Tag entries with environmental factors (e.g., "Loud Office", "Bright Lights").
--   **Voice-to-Text**: Frictionless entry for when typing is too much.
--   **Pattern Recognition**: "You tend to report high sensory overload on Tuesdays."
+-   **Multi-Mode Input**: Choose the entry method that works for you right now:
+      - **Text Entry**: Traditional journaling with real-time AI analysis
+      - **Voice Recording**: Live transcription with audio analysis (Web Speech API)
+      - **Photo Capture (Bio-Mirror)**: Visual analysis for objective physiological markers
+   - **Objective Data Collection**: AI analyzes your input for:
+      - **Voice Observations**: Pitch, pace, energy, noise levels, breathing patterns
+      - **Photo Observations**: Fatigue markers (Ptosis, glazed gaze), tension indicators, environmental context
+      - **Text Observations**: Environmental mentions (noise, lighting, etc.)
+   - **Informed Capacity Calibration**: AI suggests capacity values based on objective observations
+      - Shows **"Informed by" badges** explaining why suggestions were made
+      - All suggestions can be overridden by user
+      - Real-time updates as observations change
+   - **Gentle Inquiry System**: Context-aware, optional AI questions
+      - Questions based on objective observations (e.g., "I noticed high noise levels. How is this affecting your focus?")
+      - Quick response buttons for easy interaction
+      - Custom input always available
+      - Skip always prominent - never forced
+      - Neuro-affirming, curious tone (not interrogative)
+   - **Context-Aware Strategies**: Enhanced recommendations based on both subjective reports and objective data
+   - **Pattern Recognition**: "You tend to report high sensory overload on Tuesdays."
+
+### Why This Matters
+
+Multi-mode journaling transforms MAEPLE from "symptom surveillance" to **pattern literacy**:
+- **Multiple Data Sources**: Text + voice + photo = richer, more accurate patterns
+- **Objective Support**: When you're masking or dissociating, objective data validates or gently challenges your self-perception
+- **Flexible Access**: Choose the input method that matches your current capacity
+- **Evidence-Based**: Build a data foundation for self-advocacy with healthcare providers
 
 ---
 

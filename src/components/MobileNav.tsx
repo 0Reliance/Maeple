@@ -1,15 +1,15 @@
+import {
+  BookHeart,
+  Camera,
+  LayoutDashboard,
+  LucideIcon,
+  Menu,
+  MessagesSquare,
+} from "lucide-react";
 import React from "react";
 import { NavLink } from "react-router-dom";
-import {
-  LayoutDashboard,
-  BookHeart,
-  MessagesSquare,
-  Camera,
-  Menu,
-  LucideIcon,
-} from "lucide-react";
-import { View } from "../types";
 import { viewToPath } from "../routes";
+import { View } from "../types";
 
 interface Props {
   currentView: View;
@@ -39,10 +39,10 @@ const MobileNav: React.FC<Props> = ({
       <>
         {isAction ? (
           <div
-            className={`p-3 rounded-2xl -mt-10 shadow-lg border-4 border-slate-50 dark:border-slate-950 ${
+            className={`p-3 rounded-2xl -mt-10 shadow-lg border-4 border-bg-primary dark:border-dark-bg-primary ${
               isActive
-                ? "bg-teal-600 text-white"
-                : "bg-slate-900 dark:bg-slate-700 text-white"
+                ? "bg-primary text-white"
+                : "bg-slate-900 dark:bg-dark-bg-secondary text-white"
             }`}
           >
             <Icon size={24} />
@@ -57,13 +57,13 @@ const MobileNav: React.FC<Props> = ({
         </span>
 
         {isActive && !isAction && (
-          <span className="absolute bottom-0 w-8 h-1 bg-teal-600 rounded-t-full"></span>
+          <span className="absolute bottom-0 w-8 h-1 bg-primary dark:bg-primary-light rounded-t-full"></span>
         )}
       </>
     );
 
     if (isMenuTrigger) {
-      const activeColor = isMenuOpen ? "text-indigo-600" : "text-slate-400";
+      const activeColor = isMenuOpen ? "text-primary dark:text-primary-light" : "text-text-tertiary";
       return (
         <button
           onClick={onToggleMenu}
@@ -80,8 +80,8 @@ const MobileNav: React.FC<Props> = ({
         className={({ isActive }) =>
           `flex flex-col items-center justify-center w-full py-2 transition-colors relative ${
             isActive
-              ? "text-teal-600 dark:text-teal-400"
-              : "text-slate-400 dark:text-slate-500"
+              ? "text-primary dark:text-primary-light"
+              : "text-text-tertiary dark:text-dark-text-secondary"
           }`
         }
       >
@@ -92,7 +92,7 @@ const MobileNav: React.FC<Props> = ({
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50"
+      className="fixed bottom-0 left-0 right-0 bg-bg-card dark:bg-dark-bg-card border-t border-bg-secondary dark:border-dark-bg-secondary shadow-card z-50"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
     >
       <div className="flex justify-around items-end h-16 pb-1 max-w-md mx-auto md:max-w-2xl">
@@ -101,7 +101,7 @@ const MobileNav: React.FC<Props> = ({
           icon={LayoutDashboard}
           label="Patterns"
         />
-        <NavItem view={View.BIO_MIRROR} icon={Camera} label="Bio-Mirror" />
+        <NavItem view={View.BIO_MIRROR} icon={Camera} label="Reflect" />
 
         {/* Central Action Button */}
         <NavItem
@@ -111,7 +111,7 @@ const MobileNav: React.FC<Props> = ({
           isAction
         />
 
-        <NavItem view={View.LIVE_COACH} icon={MessagesSquare} label="Coach" />
+        <NavItem view={View.LIVE_COACH} icon={MessagesSquare} label="Guide" />
         <NavItem icon={Menu} label="Menu" />
       </div>
     </div>

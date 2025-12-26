@@ -32,7 +32,25 @@ This plan outlines the next phases of development focused on "Pattern Literacy" 
     - Identify "Boost Tags" (e.g., `#nature` correlates with +1 Mood).
     - Add these findings to the `generateInsights` output.
 
-## Phase 4: Memory & RAG (The Long-Term)
+## Phase 4: Voice Intake Refactor ("Tell Mae")
+**Goal**: Replace the fragile "Live Coach" with a robust "Voice Intake" feature for long-form stream-of-consciousness journaling.
+
+- [ ] **Architecture**:
+    - Rename feature concept to "Tell Mae" / "Voice Intake".
+    - Move away from real-time streaming (WebSockets) to "Record -> Process" (MediaRecorder API).
+    - Leverage Gemini's multimodal capabilities to process audio directly into structured JSON.
+
+- [ ] **AI Adapter Updates**:
+    - Update `BaseAIAdapter` interface to support `analyzeAudio(audioData: string, prompt: string)`.
+    - Implement `analyzeAudio` in `GeminiAdapter` (using `gemini-2.5-flash`).
+
+- [ ] **UI Refactor (`src/components/LiveCoach.tsx`)**:
+    - Remove complex WebSocket/AudioContext streaming logic.
+    - Implement robust `MediaRecorder` logic with visual feedback (timer/waveform).
+    - Add "Processing" state that handles the async AI analysis.
+    - On success, redirect to `JournalEntry` with the pre-filled data.
+
+## Phase 5: Memory & RAG (The Long-Term)
 **Goal**: Enable the AI to remember what worked before.
 
 - [ ] **Implement Simple Recall**:

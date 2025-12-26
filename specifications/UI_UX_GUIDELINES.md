@@ -37,9 +37,11 @@ MAEPLE uses Tailwind CSS with the `class` strategy for dark mode.
 - **MobileNav**: Bottom bar navigation visible on all devices.
 - **Drawer**: Slide-out menu for core navigation items.
 - **UserMenu**: Top-right dropdown for secondary tools (Settings, Resources, Legal) and account actions.
+- **PWA Install**: A discrete "Install App" button appears in the top-right corner (desktop) or menu (mobile) when the browser supports installation.
 
 ### 3.2 Dashboard & Cards
 
+- **Clean Design**: Cards should not have redundant internal headers if the page title already provides context.
 - **Capacity Check-in**: Uses gradient sliders and card layout for clear, calm input.
 - **Context Cards**: Grid layout with pastel color coding based on capacity levels (Blue/Purple/Pink).
 - **Visual Hierarchy**: Primary actions (Capture) are prominent; secondary details are subtle.

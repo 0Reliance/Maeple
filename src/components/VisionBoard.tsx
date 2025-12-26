@@ -72,7 +72,7 @@ const VisionBoard: React.FC = () => {
 
         <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
           <Wand2 className="text-pink-200" />
-          Visual Therapy AI
+          Visual Therapy
         </h2>
         <p className="text-purple-100 text-base max-w-xl leading-relaxed mb-6">
           Process your emotions visually. Use generative art to externalize

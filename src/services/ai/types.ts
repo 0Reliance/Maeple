@@ -106,6 +106,18 @@ export interface AISearchResponse {
   provider: AIProviderType;
 }
 
+export interface AIAudioAnalysisRequest {
+  audioData: string; // base64
+  mimeType: string;
+  prompt: string;
+}
+
+export interface AIAudioAnalysisResponse {
+  content: string;
+  provider: AIProviderType;
+  model: string;
+}
+
 // Live/Audio Types
 export interface AILiveConfig {
   systemInstruction?: string;
