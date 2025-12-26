@@ -66,3 +66,4 @@ tmp
 *.crt
 .secrets
 credentials.json
+docs/LOCAL_DEPLOYMENT_CREDENTIALS.md
