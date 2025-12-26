@@ -79,7 +79,7 @@
   .card {
     @apply bg-bg-card rounded-card shadow-card border border-bg-secondary;
     padding: var(--space-lg);
-    transition: all 0.2s ease;
+    transition: all 0.2s ease-in-out;
   }
   
   .card:hover {
@@ -89,7 +89,7 @@
   
   /* Button Variants */
   .btn {
-    @apply inline-flex items-center justify-center font-semibold rounded-button transition-all duration-200 ease;
+    @apply inline-flex items-center justify-center font-semibold rounded-button transition-all duration-200 ease-in-out;
     padding: 12px 24px;
   }
   
@@ -126,7 +126,7 @@
   
   /* Input Component */
   .input {
-    @apply w-full bg-bg-secondary border-2 border-transparent rounded-button text-base transition-all duration-200 ease;
+    @apply w-full bg-bg-secondary border-2 border-transparent rounded-button text-base transition-all duration-200 ease-in-out;
     padding: 14px 16px;
   }
   
@@ -140,7 +140,10 @@
   
   /* Badge/Tag Component */
   .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full font-label uppercase tracking-wider;
+    @apply inline-flex items-center px-3 py-1 rounded-full uppercase tracking-wider;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
   }
   
   .badge-positive {
