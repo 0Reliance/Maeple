@@ -71,8 +71,27 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-
-  const onTranscriptCallback = onTranscript;
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const MAX_RECORDING_DURATION = 300; // 5 minutes in seconds
+  
+  // Track mounted state to prevent state updates on unmounted components
+  const isMountedRef = useRef(true);
+  
+  // Use refs to store latest callbacks without triggering effect re-runs
+  const onTranscriptRef = useRef(onTranscript);
+  const onAnalysisReadyRef = useRef(onAnalysisReady);
+  
+  // Update refs when props change
+  useEffect(() => {
+    isMountedRef.current = true;
+    onTranscriptRef.current = onTranscript;
+    onAnalysisReadyRef.current = onAnalysisReady;
+    
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [onTranscript, onAnalysisReady]);
 
   useEffect(() => {
     // Browser compatibility check
@@ -115,7 +134,7 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({
         }
       }
       if (finalTranscript) {
-        onTranscriptCallback(finalTranscript);
+        onTranscriptRef.current(finalTranscript);
       }
     };
 
@@ -131,7 +150,7 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({
         }
       }
     };
-  }, [onTranscriptCallback, onAnalysisReady]);
+  }, []); // Empty dependency array - setup once
 
   const startRecording = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -155,7 +174,11 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({
       // Start MediaRecorder for audio capture
       const MediaRecorderClass = window.MediaRecorder;
       if (MediaRecorderClass) {
-        const mediaRecorder = new MediaRecorderClass(stream);
+        // Use supported MIME type for iOS compatibility
+        const supportedType = MediaRecorderClass.isTypeSupported('audio/mp4') 
+          ? 'audio/mp4' 
+          : 'audio/webm';
+        const mediaRecorder = new MediaRecorderClass(stream, { mimeType: supportedType });
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
 
@@ -167,10 +190,18 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({
 
         mediaRecorder.onstop = async () => {
           // Create audio blob from chunks
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          // Use supported MIME type for iOS compatibility
+          const supportedType = MediaRecorder.isTypeSupported('audio/mp4') 
+            ? 'audio/mp4' 
+            : 'audio/webm';
+          const audioBlob = new Blob(audioChunksRef.current, { type: supportedType });
+          
+          // Check if component is still mounted
+          if (!isMountedRef.current) return;
           
           // Analyze audio
           setIsAnalyzing(true);
+          
           try {
             // Get transcript from recognition
             const transcript = ''; // Will be captured via onresult
@@ -179,23 +210,41 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({
             const { analyzeAudio } = await import('../services/audioAnalysisService');
             const analysis = await analyzeAudio(audioBlob, transcript);
             
+            // Check mounted state before parent notifications
+            if (!isMountedRef.current) return;
+            
             // Notify parent of analysis
-            if (onAnalysisReady) {
-              onAnalysisReady(analysis);
+            if (onAnalysisReadyRef.current) {
+              onAnalysisReadyRef.current(analysis);
             }
             
             // Notify parent of complete result
-            onTranscriptCallback(transcript, audioBlob, analysis);
+            onTranscriptRef.current(transcript, audioBlob, analysis);
           } catch (e) {
             console.error("Audio analysis failed", e);
+            // Check mounted state before parent notifications
+            if (!isMountedRef.current) return;
             // Still return transcript even if analysis fails
-            onTranscriptCallback('', audioBlob);
+            onTranscriptRef.current('', audioBlob);
           } finally {
-            setIsAnalyzing(false);
+            setTimeout(() => {
+              if (isMountedRef.current) {
+                setIsAnalyzing(false);
+              }
+            }, 500);
           }
         };
 
         mediaRecorder.start();
+        
+        // Set auto-stop timeout
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+          console.warn("Recording timeout reached");
+          stopRecording();
+        }, MAX_RECORDING_DURATION * 1000);
       }
     } catch (e) {
       console.error("Microphone access error", e);
@@ -204,6 +253,12 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({
   };
 
   const stopRecording = () => {
+    // Clear timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     // Stop speech recognition
     if (recognitionRef.current) {
       try {
@@ -229,6 +284,16 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({
     mediaRecorderRef.current = null;
     audioChunksRef.current = [];
     mediaStreamRef.current = null;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const triggerHaptic = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
   };
 
   const toggleRecording = async () => {
@@ -238,6 +303,7 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({
       setError(null);
 
       if (isListening) {
+        triggerHaptic();
         stopRecording();
       } else {
         await startRecording();
@@ -269,9 +335,9 @@ const RecordVoiceButton: React.FC<RecordVoiceButtonProps> = ({
         </div>
       )}
 
-      {/* Error Tooltip */}
+      {/* Error Tooltip - Always visible for mobile (no hover) */}
       {error && !isAnalyzing && (
-        <div className="absolute -top-8 bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute -top-8 bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap animate-pulse">
           {error}
         </div>
       )}

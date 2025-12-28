@@ -5,32 +5,10 @@ export interface ComparisonResult {
   discrepancyScore: number; // 0-100
   subjectiveState: string;
   objectiveState: string;
-  insight: string;
+  insight: { description: string; confidence: number };
   isMaskingLikely: boolean;
   baselineApplied?: boolean; // New: Flag to show if calibration was used
 }
-
-/**
- * Maps a 1-5 Mood Score to a generic valence string
- */
-const getMoodLabel = (score: number): string => {
-  if (score >= 4) return "Positive";
-  if (score === 3) return "Neutral";
-  return "Negative/Struggling";
-};
-
-/**
- * Maps facial analysis to a generic valence string
- */
-const getFacialValence = (analysis: FacialAnalysis): string => {
-  const negativeEmotions = ['sad', 'angry', 'fearful', 'disgusted', 'stressed', 'anxious'];
-  const primary = analysis.primaryEmotion.toLowerCase();
-  
-  if (negativeEmotions.some(e => primary.includes(e))) return "Distressed";
-  if (analysis.eyeFatigue > 0.6 || analysis.jawTension > 0.6) return "Physically Strained";
-  if (primary.includes('happy') || primary.includes('joy')) return "Positive";
-  return "Neutral";
-};
 
 /**
  * Compares the user's subjective journal entry with the objective facial analysis.
@@ -42,19 +20,22 @@ export const compareSubjectiveToObjective = (
   baseline?: FacialBaseline | null
 ): ComparisonResult => {
   // 1. Calculate Deltas (if baseline exists)
-  let tension = Math.max(analysis.jawTension, analysis.eyeFatigue);
-  let masking = analysis.maskingScore;
+  let tension = Math.max(analysis.jawTension || 0, analysis.eyeFatigue || 0);
+  let masking = analysis.maskingScore || 0;
   let baselineApplied = false;
 
   if (baseline) {
       baselineApplied = true;
       // Subtract baseline "resting" values to get the true current load
       // Clamp at 0 to avoid negative scores
-      const tensionDelta = tension - Math.max(baseline.neutralTension, baseline.neutralFatigue);
+      const tensionDelta = tension - Math.max(baseline.neutralTension || 0, baseline.neutralFatigue || 0);
       tension = Math.max(0, tensionDelta);
       
-      const maskingDelta = masking - baseline.neutralMasking;
+      const maskingDelta = (masking || 0) - (baseline.neutralMasking || 0);
       masking = Math.max(0, maskingDelta);
+  } else {
+      // If no baseline, use raw values
+      masking = analysis.maskingScore || 0;
   }
 
   // Default if no journal entry
@@ -62,8 +43,11 @@ export const compareSubjectiveToObjective = (
     return {
       discrepancyScore: 0,
       subjectiveState: "No recent entry",
-      objectiveState: analysis.primaryEmotion,
-      insight: "Log a journal entry to see how your self-perception matches your physical state.",
+      objectiveState: analysis.primaryEmotion || "Unknown",
+      insight: { 
+        description: "Log a journal entry to see how your self-perception matches your physical state.",
+        confidence: analysis.confidence || 0.8 
+      },
       isMaskingLikely: masking > 0.6,
       baselineApplied
     };
@@ -72,12 +56,9 @@ export const compareSubjectiveToObjective = (
   let score = 0;
   const mood = journalEntry.mood; // 1-5
   
-  // Normalize mood to 0-1 (1=0, 5=1)
-  const normMood = (mood - 1) / 4; 
-  
   // Detect positive sentiment in face?
-  const isFacePositive = analysis.primaryEmotion.toLowerCase().includes('happy') || 
-                         analysis.primaryEmotion.toLowerCase().includes('joy');
+  const primaryEmotion = (analysis.primaryEmotion || "").toLowerCase();
+  const isFacePositive = primaryEmotion.includes('happy') || primaryEmotion.includes('joy');
 
   // Calculation:
   // If Mood is High (>4) but Tension (adjusted) is High (>0.6) -> Discrepancy
@@ -105,9 +86,10 @@ export const compareSubjectiveToObjective = (
   
   // Display string shows "Corrected" if baseline used
   const tensionLabel = (tension * 10).toFixed(0);
+  const primaryEmotionStr = analysis.primaryEmotion || "Unknown";
   const objectiveState = baselineApplied 
-    ? `${analysis.primaryEmotion} (Adj. Tension: ${tensionLabel}/10)`
-    : `${analysis.primaryEmotion} (Tension: ${tensionLabel}/10)`;
+    ? `${primaryEmotionStr} (Adj. Tension: ${tensionLabel}/10)`
+    : `${primaryEmotionStr} (Tension: ${tensionLabel}/10)`;
 
   let insight = "Your internal state matches your physical signals.";
   
@@ -123,7 +105,7 @@ export const compareSubjectiveToObjective = (
     discrepancyScore,
     subjectiveState,
     objectiveState,
-    insight,
+    insight: { description: insight, confidence: analysis.confidence || 0.8 },
     isMaskingLikely: discrepancyScore > 50 || masking > 0.6,
     baselineApplied
   };

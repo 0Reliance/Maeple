@@ -165,20 +165,8 @@ export class AnthropicAdapter extends BaseAIAdapter {
     return true;
   }
 
-  async *stream(request: AITextRequest): AsyncGenerator<string, void, unknown> {
+  async *stream(_request: AITextRequest): AsyncGenerator<string, void, unknown> {
     try {
-      const systemMessages = request.messages.filter(msg => msg.role === "system");
-      const systemPrompt = systemMessages.length > 0
-        ? systemMessages.map(msg => msg.content).join("\n")
-        : request.systemPrompt || "";
-
-      const conversationMessages = request.messages.filter(msg => msg.role !== "system");
-      
-      const claudeMessages = conversationMessages.map(msg => ({
-        role: msg.role === "assistant" ? "assistant" : "user",
-        content: msg.content
-      }));
-
       const response = await this.fetchWithRetry(
         `${this.baseUrl}/v1/messages`,
         {
@@ -186,15 +174,15 @@ export class AnthropicAdapter extends BaseAIAdapter {
           headers: {
             "Content-Type": "application/json",
             "x-api-key": this.config.apiKey,
-            "anthropic-version": "2023-06-01"
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true"
           },
           body: JSON.stringify({
-            model: "claude-3-5-sonnet-20241022",
-            max_tokens: request.maxTokens ?? 2048,
-            temperature: request.temperature ?? 0.7,
-            messages: claudeMessages,
-            system: systemPrompt || undefined,
-            stream: true
+            model: this.config.model || "claude-3-5-sonnet-20241022",
+            max_tokens: _request.maxTokens ?? 4096,
+            stream: true,
+            messages: _request.messages,
+            temperature: _request.temperature ?? 0.7
           })
         }
       );
@@ -222,11 +210,10 @@ export class AnthropicAdapter extends BaseAIAdapter {
             
             try {
               const parsed = JSON.parse(data);
-              if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                yield parsed.delta.text;
-              }
+              const content = parsed.delta?.text || parsed.message?.content;
+              if (content) yield content;
             } catch (e) {
-              // Ignore parsing errors for malformed chunks
+              // Ignore parsing errors
             }
           }
         }
@@ -236,27 +223,27 @@ export class AnthropicAdapter extends BaseAIAdapter {
     }
   }
 
-  private handleError(error: any): Error {
-    // If it's already an AIError, it was likely thrown by fetchWithRetry which already tracked it
-    if (error instanceof AIError) {
-      return error;
-    }
-
+  private handleError(_error: any): Error {
+    // Track error rate
     this.trackError();
 
-    if (error?.message?.includes('401') || error?.message?.includes('403')) {
+    if (_error instanceof AIError) {
+      return _error;
+    }
+
+    if (_error?.message?.includes('401') || _error?.message?.includes('403')) {
       return new AIError("Invalid Anthropic API key", "anthropic");
     }
-    if (error?.message?.includes('429')) {
+    if (_error?.message?.includes('429')) {
       return new AIError("Anthropic rate limit exceeded", "anthropic");
     }
-    if (error?.message?.includes('402')) {
+    if (_error?.message?.includes('402')) {
       return new AIError("Anthropic credit insufficient", "anthropic");
     }
-    if (error?.message?.includes('400')) {
+    if (_error?.message?.includes('400')) {
       return new AIError("Invalid request to Anthropic API", "anthropic");
     }
-    const msg = error?.message || "Unknown Anthropic error";
+    const msg = _error?.message || "Unknown Anthropic error";
     return new AIError(`Anthropic error: ${msg}`, "anthropic");
   }
 }

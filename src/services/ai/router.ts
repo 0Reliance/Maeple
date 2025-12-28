@@ -2,8 +2,10 @@
  * AI Router Service
  * 
  * Simple routing of AI requests with graceful degradation.
+ * Enhanced with structured error logging for better visibility.
  */
 
+import { errorLogger } from '../errorLogger';
 import {
   AIProviderType,
   AICapability,
@@ -240,7 +242,18 @@ class AIRouter {
 
   private async routeWithFallback<T>(capability: AICapability, fn: (adapter: BaseAIAdapter) => Promise<T>): Promise<T | null> {
     const adapters = this.getAdaptersForCapability(capability);
-    if (adapters.length === 0) return null;
+    
+    if (adapters.length === 0) {
+      errorLogger.warn(`No adapters available for capability: ${capability}`, {
+        capability,
+        availableProviders: this.settings?.providers.map(p => ({
+          id: p.providerId,
+          enabled: p.enabled,
+          hasKey: !!p.apiKey
+        }))
+      });
+      return null;
+    }
 
     let lastError: unknown = null;
     for (const adapter of adapters) {
@@ -248,14 +261,35 @@ class AIRouter {
         return await fn(adapter);
       } catch (error) {
         lastError = error;
+        const errorDetails = {
+          adapter: adapter.constructor.name,
+          capability,
+          error: error instanceof Error ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+          } : String(error)
+        };
         console.warn(`Adapter ${adapter.constructor.name} failed for ${capability}:`, error);
+        errorLogger.warn(`AI adapter failure`, errorDetails);
         continue;
       }
     }
 
     if (lastError) {
+      const finalErrorDetails = {
+        capability,
+        allAdaptersFailed: true,
+        adapterCount: adapters.length,
+        error: lastError instanceof Error ? {
+          name: lastError.name,
+          message: lastError.message
+        } : String(lastError)
+      };
       console.error(`All providers failed for capability ${capability}`, lastError);
+      errorLogger.error(`All AI providers failed for capability ${capability}`, finalErrorDetails);
     }
+    
     return null;
   }
 }

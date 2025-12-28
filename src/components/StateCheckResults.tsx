@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
-import { FacialAnalysis, HealthEntry, FacialBaseline } from '../types';
-import { Activity, CheckCircle2, Save, Scale, ShieldCheck, EyeOff, Info, PhoneCall, AlertTriangle } from 'lucide-react';
+import { Activity, AlertTriangle, EyeOff, Info, PhoneCall, Save, Scale, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { compareSubjectiveToObjective } from '../services/comparisonEngine';
 import { saveStateCheck } from '../services/stateCheckService';
 import { getUserSettings } from '../services/storageService';
-import { v4 as uuidv4 } from 'uuid';
+import { FacialAnalysis, FacialBaseline, HealthEntry } from '../types';
 
 interface Props {
   analysis: FacialAnalysis;
@@ -29,7 +29,7 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, b
   const comparison = compareSubjectiveToObjective(recentEntry, analysis, baseline);
   
   // Safety Interceptor Logic
-  const isCritical = comparison.discrepancyScore > 80 || (recentEntry?.mood || 5) <= 1 || analysis.maskingScore > 0.9;
+  const isCritical = comparison.discrepancyScore > 80 || (recentEntry?.mood || 5) <= 1 || (analysis.maskingScore || 0) > 0.9;
 
   const handleSave = async () => {
       setIsSaving(true);
@@ -98,7 +98,7 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, b
                
                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
                    <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Masking Score</p>
-                   <div className="text-2xl font-bold text-slate-800">{(analysis.maskingScore * 10).toFixed(1)}<span className="text-sm text-slate-400 font-normal">/10</span></div>
+                   <div className="text-2xl font-bold text-slate-800">{((analysis.maskingScore || 0) * 10).toFixed(1)}<span className="text-sm text-slate-400 font-normal">/10</span></div>
                    {comparison.baselineApplied && (
                        <span className="text-[10px] text-indigo-500 font-medium bg-indigo-50 px-2 py-0.5 rounded-full inline-block mt-1">Adjusted to Baseline</span>
                    )}
@@ -145,7 +145,7 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, b
                         
                         <div className="bg-white/60 p-3 rounded-lg border border-indigo-100/50 backdrop-blur-sm">
                             <p className="text-indigo-800 text-sm font-medium leading-snug">
-                                <span className="mr-2">💡</span> {comparison.insight}
+                                <span className="mr-2">💡</span> {comparison.insight.description}
                             </p>
                         </div>
                     </div>
@@ -160,9 +160,9 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, b
                         <div className="flex items-center gap-2 mb-2 text-slate-400 text-xs font-bold uppercase">
                             <Activity size={14} /> Jaw Tension
                         </div>
-                        <div className="text-xl font-bold text-slate-700">{(analysis.jawTension * 10).toFixed(1)}</div>
+                        <div className="text-xl font-bold text-slate-700">{((analysis.jawTension || 0) * 10).toFixed(1)}</div>
                         <div className="w-full bg-slate-100 rounded-full h-1 mt-2">
-                           <div className={`h-1 rounded-full ${analysis.jawTension > 0.5 ? 'bg-orange-400' : 'bg-emerald-400'}`} style={{width: `${analysis.jawTension * 100}%`}}></div>
+                           <div className={`h-1 rounded-full ${(analysis.jawTension || 0) > 0.5 ? 'bg-orange-400' : 'bg-emerald-400'}`} style={{width: `${(analysis.jawTension || 0) * 100}%`}}></div>
                         </div>
                         {comparison.baselineApplied && (
                             <div className="absolute top-2 right-2 text-indigo-400" title="Baseline Adjusted">
@@ -174,9 +174,9 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, b
                         <div className="flex items-center gap-2 mb-2 text-slate-400 text-xs font-bold uppercase">
                             <EyeOff size={14} /> Eye Fatigue
                         </div>
-                        <div className="text-xl font-bold text-slate-700">{(analysis.eyeFatigue * 10).toFixed(1)}</div>
+                        <div className="text-xl font-bold text-slate-700">{((analysis.eyeFatigue || 0) * 10).toFixed(1)}</div>
                          <div className="w-full bg-slate-100 rounded-full h-1 mt-2">
-                           <div className={`h-1 rounded-full ${analysis.eyeFatigue > 0.5 ? 'bg-rose-400' : 'bg-emerald-400'}`} style={{width: `${analysis.eyeFatigue * 100}%`}}></div>
+                           <div className={`h-1 rounded-full ${(analysis.eyeFatigue || 0) > 0.5 ? 'bg-rose-400' : 'bg-emerald-400'}`} style={{width: `${(analysis.eyeFatigue || 0) * 100}%`}}></div>
                         </div>
                         {comparison.baselineApplied && (
                             <div className="absolute top-2 right-2 text-indigo-400" title="Baseline Adjusted">
@@ -193,7 +193,7 @@ const StateCheckResults: React.FC<Props> = ({ analysis, imageSrc, recentEntry, b
                        <div className="flex flex-wrap gap-2">
                            {analysis.signs.map((sign, i) => (
                                <span key={i} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md border border-slate-200">
-                                   {sign}
+                                   {sign.description}
                                </span>
                            ))}
                        </div>

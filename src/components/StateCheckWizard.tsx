@@ -20,6 +20,15 @@ const StateCheckWizard: React.FC = () => {
   const [estimatedTime, setEstimatedTime] = useState(30);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Cleanup object URL when imageSrc changes or component unmounts
+  useEffect(() => {
+    return () => {
+      if (imageSrc && imageSrc.startsWith('blob:')) {
+        URL.revokeObjectURL(imageSrc);
+      }
+    };
+  }, [imageSrc]);
+
   // Load recent entry and baseline
   useEffect(() => {
     const loadContext = async () => {
@@ -102,6 +111,10 @@ const StateCheckWizard: React.FC = () => {
   };
 
   const reset = () => {
+    // Revoke old image URL before resetting
+    if (imageSrc && imageSrc.startsWith('blob:')) {
+      URL.revokeObjectURL(imageSrc);
+    }
     setStep('INTRO');
     setImageSrc(null);
     setAnalysis(null);

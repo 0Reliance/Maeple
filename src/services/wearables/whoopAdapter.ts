@@ -14,8 +14,6 @@ import {
 } from "./types";
 
 const WHOOP_AUTH_URL = "https://api.prod.whoop.com/oauth/oauth2/auth";
-const WHOOP_TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token";
-const WHOOP_API_BASE = "https://api.prod.whoop.com/developer/v1";
 
 // Replace with actual client ID from environment variables
 // @ts-ignore
@@ -82,8 +80,8 @@ export class WhoopAdapter implements WearableAdapter {
       // - Strain (0-21)
       // - Sleep Performance
 
-      const recovery = Math.round(30 + Math.random() * 65); // 30-95%
-      const strain = 8 + Math.random() * 10; // 8-18
+      const _recovery = Math.round(30 + Math.random() * 65); // 30-95%
+      const _strain = 8 + Math.random() * 10; // 8-18
 
       const bedtimeStart = new Date(currentDate);
       bedtimeStart.setHours(22, 0, 0, 0);

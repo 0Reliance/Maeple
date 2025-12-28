@@ -190,24 +190,24 @@ export class OllamaAdapter extends BaseAIAdapter {
     }
   }
 
-  private handleError(error: any): Error {
+  private handleError(_error: any): Error {
     // If it's already an AIError, it was likely thrown by fetchWithRetry which already tracked it
-    if (error instanceof AIError) {
-      return error;
+    if (_error instanceof AIError) {
+      return _error;
     }
 
     this.trackError();
 
-    if (error?.message?.includes('ECONNREFUSED') || error?.message?.includes('fetch')) {
+    if (_error?.message?.includes('ECONNREFUSED') || _error?.message?.includes('fetch')) {
       return new AIError("Ollama server not running. Please start Ollama locally.", "ollama");
     }
-    if (error?.message?.includes('404')) {
+    if (_error?.message?.includes('404')) {
       return new AIError("Model not found in Ollama. Please pull the model first.", "ollama");
     }
-    if (error?.message?.includes('400')) {
+    if (_error?.message?.includes('400')) {
       return new AIError("Invalid request to Ollama API", "ollama");
     }
-    const msg = error?.message || "Unknown Ollama error";
+    const msg = _error?.message || "Unknown Ollama error";
     return new AIError(`Ollama error: ${msg}`, "ollama");
   }
 }

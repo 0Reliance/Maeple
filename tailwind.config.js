@@ -17,19 +17,19 @@ export default {
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
-        // Primary Colors (Warm, Trustworthy, Calming)
+        // Primary Colors (Warm, Trustworthy, Calming) - Bolder, more saturated
         primary: {
-          DEFAULT: '#2D4A5A',  // Deep slate-blue
-          light: '#4A6B7D',
-          dark: '#1E3240',
+          DEFAULT: '#1A4D5E',  // Deeper, more saturated teal
+          light: '#2D6B7D',
+          dark: '#0F2D3D',
         },
         
-        // Accent Colors (Purposeful, Not Decorative)
+        // Accent Colors (Purposeful, Not Decorative) - Stronger, more confident
         accent: {
-          positive: '#3B8B7E',  // Sage green - growth, balance
-          attention: '#E8A538',  // Warm amber - energy, insight
-          alert: '#D4756A',      // Muted rose - gentle warning
-          action: '#5B8A9C',     // Soft teal-blue - action
+          positive: '#2D7A6E',  // Stronger sage - growth, balance
+          attention: '#C7882E',  // Richer amber - energy, insight
+          alert: '#B85A6E',      // Deeper rose - gentle warning
+          action: '#4A9CAC',     // Stronger teal-blue - action
         },
         
         // Neutral Scale (Warm Gray, Not Cold)
@@ -110,10 +110,22 @@ export default {
         'card-hover': '0 4px 16px rgba(0,0,0,0.08)',
         'glow': '0 0 0 3px rgba(91, 138, 156, 0.1)',
       },
+      staggerDelay: {
+        '1': '0.1s',
+        '2': '0.2s',
+        '3': '0.3s',
+        '4': '0.4s',
+        '5': '0.5s',
+        '6': '0.6s',
+      },
       animation: {
         'fadeIn': 'fadeIn 0.5s ease-out forwards',
         'slideUp': 'slideUp 0.4s ease-out forwards',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'stagger': 'staggerIn 0.6s ease-out forwards',
+        'breathe': 'breathe 4s ease-in-out infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'magnetic': 'magnetic 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
       },
       keyframes: {
         fadeIn: {
@@ -123,6 +135,18 @@ export default {
         slideUp: {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        staggerIn: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        breathe: {
+          '0%, 100%': { transform: 'scale(1)', opacity: '0.8' },
+          '50%': { transform: 'scale(1.05)', opacity: '1' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
         },
       },
     },

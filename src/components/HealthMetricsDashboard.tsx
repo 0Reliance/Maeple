@@ -121,23 +121,77 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
     };
   }, [wearableData]);
 
-  // Empty State
+  // Empty State - Distinctive "Pattern Garden" Design
   if (!entries || entries.length === 0) {
     return (
-      <div className="bg-bg-card rounded-card p-12 text-center border-2 border-dashed border-bg-secondary">
-        <div className="w-16 h-16 bg-accent-positive/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Activity className="text-accent-positive" size={32} />
+      <div className="relative bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-card rounded-3xl p-16 overflow-hidden">
+        {/* Abstract Garden Pattern Background */}
+        <div className="absolute inset-0 opacity-5">
+          <svg className="w-full h-full" viewBox="0 0 400 400" preserveAspectRatio="none">
+            {/* Organic shapes suggesting growth/patterns */}
+            <circle cx="100" cy="100" r="60" fill="none" stroke="#2D7A6E" strokeWidth="1" />
+            <circle cx="300" cy="250" r="40" fill="none" stroke="#2D7A6E" strokeWidth="1" />
+            <circle cx="180" cy="320" r="50" fill="none" stroke="#2D7A6E" strokeWidth="1" />
+            <path d="M50 200 Q150 100 250 200 T350 150" stroke="#2D7A6E" strokeWidth="1" fill="none" />
+            <path d="M80 300 Q200 280 300 320" stroke="#2D7A6E" strokeWidth="1" fill="none" />
+            
+            {/* Subtle leaf shapes */}
+            <path d="M150 180 Q160 160 170 180 Q160 200 150 180" fill="#2D7A6E" opacity="0.3" />
+            <path d="M280 200 Q300 180 320 200 Q300 220 280 200" fill="#2D7A6E" opacity="0.3" />
+            <path d="M200 250 Q220 230 240 250 Q220 270 200 250" fill="#2D7A6E" opacity="0.3" />
+          </svg>
         </div>
-        <h3 className="text-h2 font-display font-semibold text-text-primary mb-2">
-          Your Pattern Garden
-        </h3>
-        <p className="text-base text-text-secondary max-w-sm mx-auto leading-relaxed">
-          Start your first entry today to begin understanding your unique energy
-          patterns and what helps you feel your best.
-        </p>
-        <Button variant="primary" size="md" className="mt-6">
-          Start Your First Entry
-        </Button>
+        
+        <div className="relative z-10 text-center max-w-md mx-auto">
+          {/* Custom Garden Illustration */}
+          <div className="mb-8 animate-float">
+            <svg className="w-28 h-28 mx-auto text-accent-positive" viewBox="0 0 100 100">
+              {/* Stylized plant/pattern illustration */}
+              <defs>
+                <linearGradient id="stemGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2D7A6E" />
+                  <stop offset="100%" stopColor="#1A4D5E" />
+                </linearGradient>
+                <linearGradient id="leafGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#3B8B7E" />
+                  <stop offset="100%" stopColor="#2D7A6E" />
+                </linearGradient>
+              </defs>
+              
+              {/* Main stem */}
+              <path d="M50 90 Q50 70 50 50" stroke="url(#stemGradient)" strokeWidth="3" fill="none" />
+              
+              {/* Left leaves */}
+              <path d="M50 75 Q35 65 30 70 Q35 75 50 75" fill="url(#leafGradient)" opacity="0.8" />
+              <path d="M50 60 Q30 50 25 55 Q30 62 50 60" fill="url(#leafGradient)" opacity="0.7" />
+              
+              {/* Right leaves */}
+              <path d="M50 65 Q65 55 70 60 Q65 67 50 65" fill="url(#leafGradient)" opacity="0.8" />
+              <path d="M50 50 Q70 40 75 45 Q70 52 50 50" fill="url(#leafGradient)" opacity="0.7" />
+              
+              {/* Top sprout */}
+              <circle cx="50" cy="45" r="5" fill="#4A9CAC" opacity="0.6" />
+              <circle cx="48" cy="42" r="3" fill="#4A9CAC" opacity="0.4" />
+              <circle cx="53" cy="43" r="3" fill="#4A9CAC" opacity="0.4" />
+            </svg>
+          </div>
+          
+          <h3 className="text-h1 font-display font-bold text-text-primary mb-4 animate-stagger">
+            Your pattern garden is waiting
+          </h3>
+          
+          <p className="text-large text-text-secondary mb-8 leading-relaxed animate-stagger stagger-delay-1">
+            Every pattern you notice is a seed. Over time, you'll grow to understand what truly nourishes you.
+          </p>
+          
+          <Button variant="primary" size="lg" className="min-w-[220px] animate-stagger stagger-delay-2">
+            Plant Your First Seed
+          </Button>
+          
+          <p className="mt-8 text-small text-text-tertiary animate-stagger stagger-delay-3">
+            One entry, one pattern, one step toward clarity.
+          </p>
+        </div>
       </div>
     );
   }
@@ -214,9 +268,9 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
   }, [validEnergy]);
 
   return (
-    <div className="space-y-xl animate-fadeIn">
-      {/* Dashboard Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-xl">
+      {/* Dashboard Header - Added Staggered Animation */}
+      <div className="flex items-center justify-between animate-stagger">
         <div>
           <h2 className="text-h1 font-display font-bold text-text-primary">
             Pattern Dashboard
@@ -225,7 +279,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
             Tracking {entries.length} patterns • Last updated 2 hours ago
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setShowDetails(!showDetails)}>
+        <Button variant="ghost" size="sm" onClick={() => setShowDetails(!showDetails)} className="btn-magnetic">
           {showDetails ? (
             <>
               <ChevronUp size={16} className="mr-2" />
@@ -240,9 +294,9 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
         </Button>
       </div>
 
-      {/* Top Insights Card - Always Visible */}
+      {/* Top Insights Card - Added Staggered Animation and Staggered Items */}
       {strategies.length > 0 && (
-        <Card className="bg-gradient-to-r from-primary to-primary-light text-white border-none">
+        <Card className="bg-gradient-to-r from-primary to-primary-light text-white border-none animate-stagger stagger-delay-2">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
               <Sparkles className="text-white" size={24} />
@@ -255,10 +309,11 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
             </div>
           </div>
           <div className="grid md:grid-cols-3 gap-lg">
-            {strategies.slice(0, 3).map((strat) => (
+            {strategies.slice(0, 3).map((strat, i) => (
               <div
                 key={strat.id}
-                className="bg-white/10 border border-white/20 p-lg rounded-xl backdrop-blur-sm"
+                className="bg-white/10 border border-white/20 p-lg rounded-xl backdrop-blur-sm animate-stagger"
+                style={{ animationDelay: `${0.3 + (i * 0.1)}s` }}
               >
                 <p className="text-small font-semibold text-white mb-2">
                   {strat.title}
@@ -272,9 +327,9 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
         </Card>
       )}
 
-      {/* Quick Stats - Always Visible */}
+      {/* Quick Stats - Added Staggered Animations */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
-        <Card>
+        <Card className="animate-stagger stagger-delay-1">
           <CardHeader>
             <CardTitle>Today's Energy</CardTitle>
           </CardHeader>
@@ -309,7 +364,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
           </div>
         </Card>
 
-        <Card>
+        <Card className="animate-stagger stagger-delay-2">
           <CardHeader>
             <CardTitle>Average Mood</CardTitle>
             <CardDescription>Based on your recent entries</CardDescription>
@@ -327,7 +382,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
           </div>
         </Card>
 
-        <Card>
+        <Card className="animate-stagger stagger-delay-3">
           <CardHeader>
             <CardTitle>Your Top Strength</CardTitle>
           </CardHeader>

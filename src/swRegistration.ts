@@ -1,7 +1,8 @@
 // Service Worker Registration for MAEPLE
-// Handles offline functionality and caching
+// Handles offline functionality and caching with automatic updates
 
-const SW_VERSION = '1.0.0';
+// Get build version from build process, fallback to timestamp
+const SW_VERSION = (typeof __BUILD_VERSION__ !== 'undefined') ? __BUILD_VERSION__ : `${Date.now()}`;
 const SW_URL = `/sw.js?v=${SW_VERSION}`;
 
 export interface OfflineQueueItem {
@@ -23,16 +24,28 @@ class ServiceWorkerManager {
   private async init() {
     if ('serviceWorker' in navigator) {
       try {
+        // Unregister any old service workers to force clean slate
+        const existingRegs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of existingRegs) {
+          if (reg.active && !reg.active.scriptURL.includes(SW_VERSION)) {
+            console.log('[SW] Unregistering old service worker:', reg.active.scriptURL);
+            await reg.unregister();
+          }
+        }
+
         this.registration = await navigator.serviceWorker.register(SW_URL);
         
         this.registration.addEventListener('updatefound', this.onUpdateFound.bind(this));
         
         // Check for existing service worker
         if (this.registration.active) {
-          console.log('[SW] Service worker already active');
+          console.log('[SW] Service worker already active, version:', SW_VERSION);
         }
         
-        console.log('[SW] Service worker registered successfully');
+        console.log('[SW] Service worker registered successfully, version:', SW_VERSION);
+        
+        // Force update immediately on registration
+        await this.registration.update();
       } catch (error) {
         console.error('[SW] Service worker registration failed:', error);
       }
@@ -63,8 +76,15 @@ class ServiceWorkerManager {
         icon: '/icon-192x192.png',
         tag: 'app-update'
       }).onclick = () => {
+        // Reload to activate new service worker
         window.location.reload();
       };
+    } else {
+      // Auto-reload if notifications not granted
+      console.log('[SW] Auto-reloading for update...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }
   }
 
@@ -95,6 +115,33 @@ class ServiceWorkerManager {
   // Public API
   public isAppOnline(): boolean {
     return this.isOnline;
+  }
+
+  // Force reload the page to clear any stale caches
+  public forceReload() {
+    // Reload with timestamp to bypass any browser caching
+    window.location.href = `${window.location.origin}${window.location.pathname}?_=${Date.now()}`;
+  }
+
+  // Check for and apply updates
+  public async checkForUpdates(): Promise<boolean> {
+    if (!this.registration) {
+      return false;
+    }
+
+    await this.registration.update();
+    
+    // If there's a waiting worker, update is available
+    if (this.registration.waiting) {
+      console.log('[SW] Update waiting, sending skipWaiting message');
+      
+      // Tell the new service worker to activate immediately
+      this.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      
+      return true;
+    }
+    
+    return false;
   }
 
   public async waitForUpdate(): Promise<void> {

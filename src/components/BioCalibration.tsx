@@ -24,9 +24,9 @@ const BioCalibration: React.FC<Props> = ({ onComplete, onCancel }) => {
         const baseline: FacialBaseline = {
             id: 'USER_BASELINE',
             timestamp: new Date().toISOString(),
-            neutralTension: Math.max(analysis.jawTension, analysis.eyeFatigue), // Use worst case as baseline floor? No, use actuals.
-            neutralFatigue: analysis.eyeFatigue,
-            neutralMasking: analysis.maskingScore
+            neutralTension: Math.max(analysis.jawTension || 0, analysis.eyeFatigue || 0), // Use worst case as baseline floor? No, use actuals.
+            neutralFatigue: analysis.eyeFatigue || 0,
+            neutralMasking: analysis.maskingScore || 0
         };
 
         await saveBaseline(baseline);

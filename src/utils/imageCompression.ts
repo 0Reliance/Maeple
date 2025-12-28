@@ -28,23 +28,50 @@ export const compressImage = async (
   } = options;
 
   // Load source if it's a data URL
-  let img: HTMLImageElement;
+  let img: HTMLImageElement | null = null;
+  let originalSize = 0;
+  
   if (typeof source === 'string') {
+    originalSize = estimateFileSize(source);
     img = await loadImage(source);
   } else if (source instanceof HTMLCanvasElement) {
-    // If it's already a canvas, just compress it
-    return source.toDataURL(format, quality);
+    // If it's already a canvas, check if resizing is needed
+    const ctx = source.getContext('2d');
+    if (!ctx) {
+      throw new Error('Failed to get canvas context for image compression');
+    }
+    
+    const needsResize = source.width > maxWidth || source.height > maxHeight;
+    
+    if (!needsResize) {
+      // Canvas is already small enough, just change format/quality
+      return source.toDataURL(format, quality);
+    }
+    
+    // Need to resize - fall through to canvas handling below
   } else {
     img = source;
   }
 
+  // Validate image dimensions
+  if (img && (img.width === 0 || img.height === 0)) {
+    throw new Error('Invalid image: dimensions are zero');
+  }
+
   // Calculate new dimensions while maintaining aspect ratio
+  const imgWidth = img ? img.width : 0;
+  const imgHeight = img ? img.height : 0;
   const { width, height } = calculateDimensions(
-    img.width,
-    img.height,
+    imgWidth,
+    imgHeight,
     maxWidth,
     maxHeight
   );
+
+  // Validate calculated dimensions
+  if (width <= 0 || height <= 0) {
+    throw new Error(`Invalid calculated dimensions: ${width}x${height}`);
+  }
 
   // Create canvas and draw resized image
   const canvas = document.createElement('canvas');
@@ -53,16 +80,49 @@ export const compressImage = async (
   
   const ctx = canvas.getContext('2d');
   if (!ctx) {
-    throw new Error('Failed to get canvas context');
+    throw new Error('Failed to get canvas context for image compression');
   }
 
   // Use better quality scaling
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(img, 0, 0, width, height);
+  
+  try {
+    if (img) {
+      ctx.drawImage(img, 0, 0, width, height);
+    } else if (source instanceof HTMLCanvasElement) {
+      // Draw from canvas to new canvas
+      ctx.drawImage(source, 0, 0, width, height);
+    }
+  } catch (e) {
+    throw new Error(`Failed to draw image to canvas: ${e instanceof Error ? e.message : String(e)}`);
+  }
 
   // Compress and return as data URL
-  return canvas.toDataURL(format, quality);
+  let compressed: string;
+  try {
+    compressed = canvas.toDataURL(format, quality);
+  } catch (e) {
+    throw new Error(`Image compression failed: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  
+  // Validate result
+  if (!compressed || !compressed.startsWith('data:')) {
+    throw new Error('Image compression failed: invalid data URL produced');
+  }
+  
+  // Log size comparison (optional validation)
+  if (originalSize > 0) {
+    const compressedSize = estimateFileSize(compressed);
+    if (compressedSize > originalSize) {
+      console.warn(`Compression increased size: ${(originalSize / 1024).toFixed(2)} KB -> ${(compressedSize / 1024).toFixed(2)} KB`);
+    } else {
+      const reduction = ((1 - compressedSize / originalSize) * 100).toFixed(0);
+      console.log(`Compression: ${(originalSize / 1024).toFixed(2)} KB -> ${(compressedSize / 1024).toFixed(2)} KB (${reduction}% reduction)`);
+    }
+  }
+  
+  return compressed;
 };
 
 /**

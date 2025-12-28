@@ -20,6 +20,7 @@ export interface AdapterConfig {
   baseUrl?: string;
   timeout?: number;
   maxRetries?: number;
+  model?: string;
 }
 
 /**

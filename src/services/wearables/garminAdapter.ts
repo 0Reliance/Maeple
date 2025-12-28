@@ -71,19 +71,11 @@ interface GarminActivityData {
   floorsAscended: number;
 }
 
-interface GarminBodyBatteryData {
-  calendarDate: string;
-  charged: number;
-  drained: number;
-  startOfDayValue: number;
-  endOfDayValue: number;
-}
-
 export class GarminAdapter implements WearableAdapter {
   provider: ProviderType = 'GARMIN';
   
   // Garmin OAuth 1.0a endpoints
-  private requestTokenUrl = 'https://connectapi.garmin.com/oauth-service/oauth/request_token';
+  private _requestTokenUrl = 'https://connectapi.garmin.com/oauth-service/oauth/request_token';
   private authorizeUrl = 'https://connect.garmin.com/oauthConfirm';
   private accessTokenUrl = 'https://connectapi.garmin.com/oauth-service/oauth/access_token';
   private apiBaseUrl = 'https://apis.garmin.com/wellness-api/rest';

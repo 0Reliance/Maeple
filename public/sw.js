@@ -1,7 +1,11 @@
 // MAEPLE Service Worker for Offline Support
-const CACHE_NAME = 'maeple-v1.0.0';
-const STATIC_CACHE = 'maeple-static-v1.0.0';
-const DYNAMIC_CACHE = 'maeple-dynamic-v1.0.0';
+// Dynamic cache versioning to ensure latest builds are served
+
+// Get cache version from URL parameter (added during build)
+const CACHE_VERSION = new URL(self.location.href).searchParams.get('v') || 'latest';
+const CACHE_NAME = `maeple-${CACHE_VERSION}`;
+const STATIC_CACHE = `maeple-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `maeple-dynamic-${CACHE_VERSION}`;
 
 // Critical assets to cache for offline functionality
 const STATIC_ASSETS = [
@@ -19,7 +23,7 @@ const CACHABLE_ROUTES = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
+  console.log('[SW] Installing service worker with version:', CACHE_VERSION);
   
   event.waitUntil(
     caches.open(STATIC_CACHE)
@@ -27,31 +31,44 @@ self.addEventListener('install', (event) => {
         console.log('[SW] Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        // Immediately activate the new service worker
+        return self.skipWaiting();
+      })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
+  console.log('[SW] Activating service worker with version:', CACHE_VERSION);
   
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
         return Promise.all(
           cacheNames
-            .filter((name) => name !== STATIC_CACHE && name !== DYNAMIC_CACHE)
+            .filter((name) => {
+              // Keep only current version caches
+              return name !== STATIC_CACHE && 
+                     name !== DYNAMIC_CACHE &&
+                     (name.startsWith('maeple-static-') || 
+                      name.startsWith('maeple-dynamic-') ||
+                      name.startsWith('maeple-'));
+            })
             .map((name) => {
               console.log('[SW] Deleting old cache:', name);
               return caches.delete(name);
             })
         );
       })
-      .then(() => self.clients.claim())
+      .then(() => {
+        // Take control of all clients immediately
+        return self.clients.claim();
+      })
   );
 });
 
-// Fetch event - handle requests with offline support
+// Fetch event - handle requests with cache-busting for latest builds
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -61,17 +78,34 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle static assets
+  // For HTML documents - always try network first to get latest
+  if (request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Cache the response
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(STATIC_CACHE)
+              .then((cache) => cache.put(request, responseClone));
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+
+  // Handle static assets (CSS, JS, images)
   if (STATIC_ASSETS.some(asset => url.pathname === asset || url.pathname.startsWith(asset))) {
     event.respondWith(
       caches.match(request)
         .then((response) => {
-          if (response) {
-            return response;
-          }
-          
-          // Network first for static assets, then cache
-          return fetch(request)
+          // Always try network first for assets to get latest versions
+          const networkFetch = fetch(request)
             .then((response) => {
               if (response.ok) {
                 const responseClone = response.clone();
@@ -84,6 +118,8 @@ self.addEventListener('fetch', (event) => {
               // Return cached version if network fails
               return caches.match(request);
             });
+          
+          return response || networkFetch;
         })
     );
     return;
@@ -122,6 +158,14 @@ self.addEventListener('fetch', (event) => {
   // For all other requests, use network first
   event.respondWith(
     fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE)
+            .then((cache) => cache.put(request, responseClone));
+        }
+        return response;
+      })
       .catch(() => {
         // Fallback to cached version if available
         return caches.match(request);

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { StateCheck } from '../types';
 import { getRecentStateChecks } from '../services/stateCheckService';
-import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { VenetianMask, Activity, Loader2 } from 'lucide-react';
 
 const StateTrendChart: React.FC = () => {
@@ -46,8 +46,8 @@ const StateTrendChart: React.FC = () => {
 
   const chartData = data.map(d => ({
     date: new Date(d.timestamp).toLocaleDateString(undefined, { weekday: 'short' }),
-    masking: (d.analysis.maskingScore * 10).toFixed(1),
-    tension: (Math.max(d.analysis.jawTension, d.analysis.eyeFatigue) * 10).toFixed(1),
+    masking: ((d.analysis.maskingScore || 0) * 10).toFixed(1),
+    tension: (Math.max(d.analysis.jawTension || 0, d.analysis.eyeFatigue || 0) * 10).toFixed(1),
     label: d.analysis.primaryEmotion
   }));
 

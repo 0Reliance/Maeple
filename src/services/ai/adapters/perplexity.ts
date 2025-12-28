@@ -209,24 +209,24 @@ export class PerplexityAdapter extends BaseAIAdapter {
     }
   }
 
-  private handleError(error: any): Error {
+  private handleError(_error: any): Error {
     // If it's already an AIError, it was likely thrown by fetchWithRetry which already tracked it
-    if (error instanceof AIError) {
-      return error;
+    if (_error instanceof AIError) {
+      return _error;
     }
 
     this.trackError();
     
-    if (error?.message?.includes('401') || error?.message?.includes('403')) {
+    if (_error?.message?.includes('401') || _error?.message?.includes('403')) {
       return new AIError("Invalid Perplexity API key", "perplexity");
     }
-    if (error?.message?.includes('429')) {
+    if (_error?.message?.includes('429')) {
       return new AIError("Perplexity rate limit exceeded", "perplexity");
     }
-    if (error?.message?.includes('402')) {
+    if (_error?.message?.includes('402')) {
       return new AIError("Perplexity credit insufficient", "perplexity");
     }
-    const msg = error?.message || "Unknown Perplexity error";
+    const msg = _error?.message || "Unknown Perplexity error";
     return new AIError(`Perplexity error: ${msg}`, "perplexity");
   }
 }

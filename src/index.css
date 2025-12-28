@@ -75,19 +75,20 @@
 }
 
 @layer components {
-  /* Base Card Component */
+  /* Base Card Component - Enhanced Hover */
   .card {
     @apply bg-bg-card rounded-card shadow-card border border-bg-secondary;
     padding: var(--space-lg);
-    transition: all 0.2s ease-in-out;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   
   .card:hover {
     @apply shadow-card-hover;
-    transform: translateY(-2px);
+    transform: translateY(-4px) scale(1.01);
+    border-color: rgba(45, 122, 110, 0.2);
   }
   
-  /* Button Variants */
+  /* Button Variants - Enhanced with Character */
   .btn {
     @apply inline-flex items-center justify-center font-semibold rounded-button transition-all duration-200 ease-in-out;
     padding: 12px 24px;
@@ -96,45 +97,95 @@
     overflow-wrap: break-word;
   }
   
+  /* Primary Button - Offset Shadow Style */
   .btn-primary {
-    @apply bg-primary text-white;
+    @apply inline-flex items-center justify-center font-semibold;
+    padding: 14px 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1A4D5E 0%, #2D6B7D 100%);
+    box-shadow: 0 4px 0 #0F2D3D, 0 6px 20px rgba(26, 77, 94, 0.3);
+    transform: translateY(0);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   
   .btn-primary:hover {
-    @apply bg-primary-dark;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #0F2D3D, 0 12px 30px rgba(26, 77, 94, 0.4);
   }
   
   .btn-primary:active {
-    transform: translateY(0);
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #0F2D3D, 0 4px 10px rgba(26, 77, 94, 0.3);
   }
   
+  /* Secondary Button - Underline Accent */
   .btn-secondary {
-    @apply bg-transparent text-primary border-2 border-primary;
-    padding: 10px 22px; /* Account for border */
+    @apply inline-flex items-center justify-center font-semibold;
+    padding: 14px 28px;
+    border-radius: 8px;
+    border: 2px solid #1A4D5E;
+    background: transparent;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-secondary::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: #2D7A6E;
+    transform: translateX(-50%);
+    transition: width 0.3s ease;
   }
   
   .btn-secondary:hover {
-    @apply bg-bg-secondary;
+    background: #EDEAE6;
   }
   
+  .btn-secondary:hover::after {
+    width: 80%;
+  }
+  
+  /* Accent Button - Gradient with Offset Shadow */
   .btn-accent {
-    @apply bg-accent-action text-white;
+    @apply inline-flex items-center justify-center font-semibold;
+    padding: 14px 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #4A9CAC 0%, #2D6B7D 100%);
+    color: white;
+    box-shadow: 0 4px 0 #1A4D5E, 0 6px 20px rgba(74, 156, 172, 0.3);
+    transform: translateY(0);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   
   .btn-accent:hover {
-    @apply opacity-90;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #1A4D5E, 0 12px 30px rgba(74, 156, 172, 0.4);
   }
   
-  /* Input Component */
+  /* Magnetic Hover Effect Utility */
+  .btn-magnetic {
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  .btn-magnetic:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Input Component - Enhanced Focus State */
   .input {
     @apply w-full bg-bg-secondary border-2 border-transparent rounded-button text-base transition-all duration-200 ease-in-out;
     padding: 14px 16px;
   }
   
   .input:focus {
-    @apply border-accent-action outline-none shadow-glow;
+    border-color: #2D7A6E;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(45, 122, 110, 0.15), 0 0 0 1px #2D7A6E;
   }
   
   .input::placeholder {
@@ -228,6 +279,14 @@
   .glass-dark {
     @apply bg-slate-900/80 backdrop-blur-md;
   }
+  
+  /* Stagger Delay Classes */
+  .stagger-delay-1 { animation-delay: 0.1s; }
+  .stagger-delay-2 { animation-delay: 0.2s; }
+  .stagger-delay-3 { animation-delay: 0.3s; }
+  .stagger-delay-4 { animation-delay: 0.4s; }
+  .stagger-delay-5 { animation-delay: 0.5s; }
+  .stagger-delay-6 { animation-delay: 0.6s; }
 }
 
 /* Animations */

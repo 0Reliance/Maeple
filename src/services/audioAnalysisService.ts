@@ -134,40 +134,49 @@ const getAudioDuration = (blob: Blob): Promise<number> => {
  * - Third-party services like AWS Transcribe, Google Speech-to-Text
  */
 const analyzeNoise = async (audioBlob: Blob): Promise<NoiseAnalysis> => {
-  // For now, we'll use a basic Web Audio API approach
-  const audioContext = new AudioContext({ sampleRate: 48000 });
-  const audioBuffer = await audioContext.decodeAudioData(await audioBlob.arrayBuffer());
+  let audioContext: AudioContext | null = null;
   
-  // Get channel data
-  const channelData = audioBuffer.getChannelData(0);
-  
-  // Calculate RMS (root mean square) for volume
-  let sum = 0;
-  for (let i = 0; i < channelData.length; i++) {
-    sum += channelData[i] * channelData[i];
+  try {
+    // For now, we'll use a basic Web Audio API approach
+    audioContext = new AudioContext({ sampleRate: 48000 });
+    const audioBuffer = await audioContext.decodeAudioData(await audioBlob.arrayBuffer());
+    
+    // Get channel data
+    const channelData = audioBuffer.getChannelData(0);
+    
+    // Calculate RMS (root mean square) for volume
+    let sum = 0;
+    for (let i = 0; i < channelData.length; i++) {
+      sum += channelData[i] * channelData[i];
+    }
+    const rms = Math.sqrt(sum / channelData.length);
+    
+    // Convert to approximate dB
+    const dbLevel = 20 * Math.log10(rms);
+    
+    // Determine noise level
+    let level: 'low' | 'moderate' | 'high';
+    let sources: string[] = [];
+    
+    if (dbLevel < -40) {
+      level = 'low';
+    } else if (dbLevel < -25) {
+      level = 'moderate';
+    } else {
+      level = 'high';
+      sources = ['elevated background levels'];
+    }
+    
+    // In production, you'd use ML to detect specific noise sources
+    // For now, we'll return generic results
+    
+    return { level, sources, dbLevel };
+  } finally {
+    // Always close the AudioContext to prevent memory leaks
+    if (audioContext) {
+      await audioContext.close();
+    }
   }
-  const rms = Math.sqrt(sum / channelData.length);
-  
-  // Convert to approximate dB
-  const dbLevel = 20 * Math.log10(rms);
-  
-  // Determine noise level
-  let level: 'low' | 'moderate' | 'high';
-  let sources: string[] = [];
-  
-  if (dbLevel < -40) {
-    level = 'low';
-  } else if (dbLevel < -25) {
-    level = 'moderate';
-  } else {
-    level = 'high';
-    sources = ['elevated background levels'];
-  }
-  
-  // In production, you'd use ML to detect specific noise sources
-  // For now, we'll return generic results
-  
-  return { level, sources, dbLevel };
 };
 
 /**
@@ -220,7 +229,7 @@ const analyzeSpeechPace = (
  * - ML models for vocal emotion classification
  */
 const analyzeVocalCharacteristics = async (
-  audioBlob: Blob
+  _audioBlob: Blob
 ): Promise<VocalCharacteristics> => {
   // For now, we'll return default values
   // In production, you'd analyze:

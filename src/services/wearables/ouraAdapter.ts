@@ -90,7 +90,7 @@ export class OuraAdapter implements WearableAdapter {
    */
   async exchangeCodeForToken(code: string): Promise<WearableConfig> {
     // Verify state for CSRF protection
-    const storedState = sessionStorage.getItem('oura_oauth_state');
+    const _storedState = sessionStorage.getItem('oura_oauth_state');
     sessionStorage.removeItem('oura_oauth_state');
 
     const response = await fetch(`${this.authBaseUrl}/oauth/token`, {
@@ -251,7 +251,7 @@ export class OuraAdapter implements WearableAdapter {
     readinessData.forEach(r => readinessMap.set(r.day, r));
 
     return sleepData.map(sleep => {
-      const readiness = readinessMap.get(sleep.day);
+      const _readiness = readinessMap.get(sleep.day);
 
       const metric: StandardizedDailyMetric = {
         date: sleep.day,

@@ -9,6 +9,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
+  magnetic?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -19,6 +20,7 @@ export const Button: React.FC<ButtonProps> = ({
   leftIcon,
   rightIcon,
   fullWidth = false,
+  magnetic = false,
   className,
   disabled,
   ...props
@@ -41,6 +43,7 @@ export const Button: React.FC<ButtonProps> = ({
   };
   
   const widthStyles = fullWidth ? 'w-full' : '';
+  const magneticStyles = magnetic ? 'btn-magnetic' : '';
   const disabledStyles = disabled || loading ? 'opacity-50 cursor-not-allowed' : '';
   
   return (
@@ -50,6 +53,7 @@ export const Button: React.FC<ButtonProps> = ({
         variantStyles[variant],
         sizeStyles[size],
         widthStyles,
+        magneticStyles,
         disabledStyles,
         className
       )}

@@ -15,7 +15,7 @@ export class MockWearableAdapter implements WearableAdapter {
     return 'https://cloud.ouraring.com/oauth/authorize?response_type=code&client_id=mock_client_id';
   }
 
-  async exchangeCodeForToken(code: string): Promise<WearableConfig> {
+  async exchangeCodeForToken(_code: string): Promise<WearableConfig> {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
@@ -28,7 +28,7 @@ export class MockWearableAdapter implements WearableAdapter {
   }
 
   async fetchDailyMetrics(
-    config: WearableConfig, 
+    _config: WearableConfig, 
     startDate: Date, 
     endDate: Date
   ): Promise<StandardizedDailyMetric[]> {

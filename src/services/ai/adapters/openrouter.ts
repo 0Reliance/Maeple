@@ -211,24 +211,24 @@ export class OpenRouterAdapter extends BaseAIAdapter {
     }
   }
 
-  private handleError(error: any): Error {
+  private handleError(_error: any): Error {
     // If it's already an AIError, it was likely thrown by fetchWithRetry which already tracked it
-    if (error instanceof AIError) {
-      return error;
+    if (_error instanceof AIError) {
+      return _error;
     }
 
     this.trackError();
 
-    if (error?.message?.includes('401') || error?.message?.includes('403')) {
+    if (_error?.message?.includes('401') || _error?.message?.includes('403')) {
       return new AIError("Invalid OpenRouter API key", "openrouter");
     }
-    if (error?.message?.includes('429')) {
+    if (_error?.message?.includes('429')) {
       return new AIError("OpenRouter rate limit exceeded", "openrouter");
     }
-    if (error?.message?.includes('402')) {
+    if (_error?.message?.includes('402')) {
       return new AIError("OpenRouter credit insufficient", "openrouter");
     }
-    const msg = error?.message || "Unknown OpenRouter error";
+    const msg = _error?.message || "Unknown OpenRouter error";
     return new AIError(`OpenRouter error: ${msg}`, "openrouter");
   }
 }

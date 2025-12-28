@@ -161,24 +161,24 @@ export class ZaiAdapter extends BaseAIAdapter {
     }
   }
 
-  private handleError(error: any): Error {
+  private handleError(_error: any): Error {
     // If it's already an AIError, it was likely thrown by fetchWithRetry which already tracked it
-    if (error instanceof AIError) {
-      return error;
+    if (_error instanceof AIError) {
+      return _error;
     }
 
     this.trackError();
 
-    if (error?.message?.includes('401') || error?.message?.includes('403')) {
+    if (_error?.message?.includes('401') || _error?.message?.includes('403')) {
       return new AIError("Invalid Z.ai API key", "zai");
     }
-    if (error?.message?.includes('429')) {
+    if (_error?.message?.includes('429')) {
       return new AIError("Z.ai rate limit exceeded", "zai");
     }
-    if (error?.message?.includes('402')) {
+    if (_error?.message?.includes('402')) {
       return new AIError("Z.ai credit insufficient", "zai");
     }
-    const msg = error?.message || "Unknown Z.ai error";
+    const msg = _error?.message || "Unknown Z.ai error";
     return new AIError(`Z.ai error: ${msg}`, "zai");
   }
 }

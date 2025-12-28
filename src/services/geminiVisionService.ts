@@ -108,17 +108,6 @@ const facialAnalysisSchema: Schema = {
 };
 
 /**
- * Default facial analysis when AI is not available
- */
-const getDefaultFacialAnalysis = (): FacialAnalysis => ({
-  confidence: 0,
-  observations: [],
-  lighting: "unknown",
-  lightingSeverity: "moderate",
-  environmentalClues: ["AI analysis not configured - go to Settings to enable"],
-});
-
-/**
  * Offline fallback analysis based on basic image metrics
  */
 const getOfflineAnalysis = (_base64Image: string): FacialAnalysis => ({
@@ -190,14 +179,18 @@ Return a structured analysis matching the schema.`;
 
     onProgress?.('Preparing analysis request', 10);
     
-    // Create timeout promise
+    // Create timeout promise with proper cleanup
+    let timeoutId: NodeJS.Timeout | null = null;
     const timeoutPromise = new Promise<never>((_, reject) => {
-      const timer = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         reject(new Error('AI analysis timeout after 30 seconds'));
       }, timeout);
       
       signal?.addEventListener('abort', () => {
-        clearTimeout(timer);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         reject(new DOMException('Analysis cancelled', 'AbortError'));
       });
     });
@@ -224,6 +217,12 @@ Return a structured analysis matching the schema.`;
       }, { priority: 4 }),
       timeoutPromise
     ]);
+
+    // Clear timeout on success
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
 
     onProgress?.('Analyzing facial features', 50);
     

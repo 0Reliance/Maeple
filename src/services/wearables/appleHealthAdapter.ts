@@ -75,7 +75,7 @@ export class AppleHealthAdapter implements WearableAdapter {
    * Request HealthKit permissions
    * In native mode, this triggers the iOS permission dialog
    */
-  async exchangeCodeForToken(code: string): Promise<WearableConfig> {
+  async exchangeCodeForToken(_code: string): Promise<WearableConfig> {
     if (this.isNative) {
       return this.requestNativePermissions();
     }
