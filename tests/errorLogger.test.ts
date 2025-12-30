@@ -8,7 +8,7 @@ import {
   logError,
   logWarn,
   logInfo,
-} from '../services/errorLogger';
+} from '@services/errorLogger';
 
 // Mock localStorage
 const localStorageMock = {

@@ -2,6 +2,9 @@ import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { FacialAnalysis } from "../types";
 import { aiRouter } from "./ai";
 import { rateLimitedCall } from "./rateLimiter";
+import { createCircuitBreaker, CircuitBreaker } from "./circuitBreaker";
+import { errorLogger } from "./errorLogger";
+import { cacheService } from "./cacheService";
 
 // Validate and retrieve API Key - returns null if not available
 const getApiKey = (): string | null => {
@@ -28,6 +31,23 @@ const getAI = (): GoogleGenAI | null => {
   _ai = new GoogleGenAI({ apiKey });
   return _ai;
 };
+
+// Circuit breaker for vision API calls
+const visionCircuitBreaker = createCircuitBreaker(async () => {
+  const ai = getAI();
+  if (!ai) {
+    throw new Error('AI client not initialized');
+  }
+  return ai;
+}, {
+  failureThreshold: 3,
+  successThreshold: 2,
+  timeout: 30000, // 30 seconds
+  monitoringPeriod: 60000, // 1 minute
+  onStateChange: (state) => {
+    errorLogger.info(`Vision circuit breaker state changed: ${state}`);
+  }
+});
 
 /**
  * Generates or edits images based on prompt.
@@ -124,11 +144,23 @@ const getOfflineAnalysis = (_base64Image: string): FacialAnalysis => ({
  */
 export const analyzeStateFromImage = async (
   base64Image: string,
-  options: { timeout?: number, onProgress?: (stage: string, progress: number) => void, signal?: AbortSignal } = {}
+  options: { timeout?: number, onProgress?: (stage: string, progress: number) => void, signal?: AbortSignal, useCache?: boolean } = {}
 ): Promise<FacialAnalysis> => {
-  const { timeout = 30000, onProgress, signal } = options;
+  const { timeout = 30000, onProgress, signal, useCache = true } = options;
+  
+  // Create cache key from image hash (using first 100 chars for simplicity)
+  const cacheKey = `vision:${base64Image.substring(0, 100)}`;
   
   try {
+    // Try to get from cache first
+    if (useCache) {
+      const cached = await cacheService.get<FacialAnalysis>(cacheKey);
+      if (cached) {
+        onProgress?.('Using cached results', 100);
+        return cached;
+      }
+    }
+
     const promptText = `Analyze this facial image for OBJECTIVE OBSERVATIONS ONLY.
 
 Your task: Report ONLY what you can see - NO subjective interpretations or emotion labels.
@@ -199,6 +231,8 @@ Return a structured analysis matching the schema.`;
     
     const response = await Promise.race([
       rateLimitedCall(async () => {
+        const ai = await visionCircuitBreaker.execute();
+        
         const result = await ai.models.generateContent({
           model: "gemini-2.0-flash-exp", // FIXED: Correct model name
           contents: {
@@ -231,7 +265,14 @@ Return a structured analysis matching the schema.`;
     
     onProgress?.('Parsing results', 90);
     
-    return JSON.parse(textResponse) as FacialAnalysis;
+    const result = JSON.parse(textResponse) as FacialAnalysis;
+    
+    // Cache successful results
+    if (useCache && result.confidence > 0.5) {
+      await cacheService.set(cacheKey, result, { ttl: 86400000 }); // 24 hours
+    }
+    
+    return result;
   } catch (error) {
     console.error("Vision Analysis Error:", error);
     

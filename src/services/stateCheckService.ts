@@ -44,7 +44,7 @@ async function withRetry<T>(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       
-      errorLogger.warn(`${operationName} failed, attempt ${attempt}/${MAX_RETRIES}`, {
+      errorLogger.warning(`${operationName} failed, attempt ${attempt}/${MAX_RETRIES}`, {
         error: lastError.message,
         willRetry: attempt < MAX_RETRIES
       });

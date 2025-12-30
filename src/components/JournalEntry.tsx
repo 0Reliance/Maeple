@@ -8,11 +8,13 @@ import {
   Users,
   X,
   Zap,
+  AlertCircle,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { AudioAnalysisResult } from "../services/audioAnalysisService";
-import { parseJournalEntry } from "../services/geminiService";
+import { useAIService } from "@/contexts/DependencyContext";
+import { CircuitState } from "@/patterns/CircuitBreaker";
 import {
   CapacityProfile,
   HealthEntry,
@@ -45,6 +47,15 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
   };
   const [text, setText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [circuitState, setCircuitState] = useState<CircuitState>(CircuitState.CLOSED);
+  const aiService = useAIService();
+
+  // Subscribe to circuit breaker state changes
+  useEffect(() => {
+    const unsubscribe = aiService.onStateChange(setCircuitState);
+    return unsubscribe;
+  }, [aiService]);
 
   // Voice Observations State
   const [voiceObservations, setVoiceObservations] =
@@ -253,9 +264,61 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     setIsProcessing(true);
     setLastStrategies([]);
     setLastReasoning(null);
+    setError("");
 
     try {
-      const parsed: ParsedResponse = await parseJournalEntry(text, capacity);
+      // Use DI with Circuit Breaker protection
+      const prompt = `
+        Analyze this journal entry and extract structured data.
+        
+        Current energy levels: ${JSON.stringify(capacity)}
+        
+        Text: ${text}
+        
+        Return a JSON object matching this schema:
+        {
+          "moodScore": 1-5,
+          "moodLabel": "...",
+          "medications": [{"name": "...", "amount": "...", "unit": "..."}],
+          "symptoms": [{"name": "...", "severity": 1-10}],
+          "activityTypes": ["#Tag"],
+          "strengths": ["..."],
+          "strategies": [{"title": "...", "action": "...", "type": "REST"}],
+          "summary": "...",
+          "analysisReasoning": "...",
+          "objectiveObservations": [{"type": "...", "value": "...", "severity": "low|moderate|high"}],
+          "gentleInquiry": "... or null"
+        }
+      `;
+      
+      const response = await aiService.analyze(prompt);
+      
+      let parsed: ParsedResponse;
+      try {
+        const cleanJson = response.content.replace(/```json\n|\n```/g, '').trim();
+        parsed = JSON.parse(cleanJson);
+      } catch (e) {
+        console.warn("Failed to parse JSON, using fallback", e);
+        parsed = {
+          moodScore: 3,
+          moodLabel: "Neutral",
+          medications: [],
+          symptoms: [],
+          neuroMetrics: {
+            environmentalMentions: [],
+            socialMentions: [],
+            executiveMentions: [],
+            physicalMentions: [],
+          },
+          activityTypes: [],
+          strengths: [],
+          summary: response.content || "Entry analyzed",
+          strategies: [],
+          analysisReasoning: "",
+          objectiveObservations: [],
+          gentleInquiry: undefined,
+        };
+      }
 
       // Build objective observations array
       const objectiveObservations: ObjectiveObservation[] = [];
@@ -342,7 +405,13 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
       setLastReasoning(parsed.analysisReasoning || null);
     } catch (e) {
       console.error("Failed to process entry", e);
-      alert("Failed to analyze entry. Please try again.");
+      
+      if (e && typeof e === 'object' && 'message' in e && 
+          (e as Error).message.includes('Circuit breaker is OPEN')) {
+        setError('AI service temporarily unavailable. Please try again later.');
+      } else {
+        setError('Failed to analyze entry. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -673,6 +742,27 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
           )}
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="mb-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle size={20} className="text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-rose-900 dark:text-rose-200">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {circuitState === CircuitState.OPEN && !error && (
+          <div className="mb-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle size={20} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-amber-900 dark:text-amber-200">
+                AI service is temporarily unavailable. Please wait a moment before trying again.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Input Area */}
         <div className="relative group">
           <div className="mb-3 px-2">
@@ -716,10 +806,10 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
 
         {/* Action Bar */}
         {text && (
-          <div className="mt-4 flex justify-end animate-fadeIn">
+          <div className="mt-4 flex justify-end animate-fadeIn gap-3">
             <Button
               onClick={handleSubmit}
-              disabled={isProcessing}
+              disabled={isProcessing || circuitState === CircuitState.OPEN}
               size="md"
               rightIcon={<Send size={16} />}
             >

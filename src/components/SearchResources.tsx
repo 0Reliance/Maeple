@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Globe, ArrowRight, Loader2, AlertCircle } from "lucide-react";
-import { searchHealthInfo, isAIConfigured } from "../services/geminiService";
+import { useAIService } from "@/contexts/DependencyContext";
+import { CircuitState } from "@/patterns/CircuitBreaker";
 import AILoadingState from "./AILoadingState";
 
 // Type for search results
@@ -24,6 +25,14 @@ const SearchResources: React.FC = () => {
   const [results, setResults] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [circuitState, setCircuitState] = useState<CircuitState>(CircuitState.CLOSED);
+  const aiService = useAIService();
+
+  // Subscribe to circuit breaker state changes
+  useEffect(() => {
+    const unsubscribe = aiService.onStateChange(setCircuitState);
+    return unsubscribe;
+  }, [aiService]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,16 +41,38 @@ const SearchResources: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await searchHealthInfo(query);
-      if (data === null) {
-        setError("AI search not configured. Go to Settings to add an API key.");
-        setResults(null);
-      } else {
-        setResults(data as SearchResult);
+      // Use AI Service with Circuit Breaker protection
+      const prompt = `Search for health information about: "${query}"\n\nPlease provide a comprehensive answer with medical sources. Format your response with:\n\n1. Main text explanation\n2. Sources section with URLs and titles\n\nFor sources, format them as a JSON array at the end:\n[\n  {"web": {"uri": "url", "title": "title"}}\n]`;
+      
+      const response = await aiService.analyze(prompt);
+      
+      // Parse response to extract text and sources
+      const text = response.content;
+      let grounding: GroundingChunk[] = [];
+      
+      // Try to extract JSON sources
+      const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (jsonMatch) {
+        try {
+          grounding = JSON.parse(jsonMatch[0]);
+        } catch (e) {
+          console.warn("Failed to parse sources JSON", e);
+        }
       }
+      
+      // Clean main text (remove JSON if found)
+      const cleanText = jsonMatch ? text.replace(jsonMatch[0], '').trim() : text;
+      
+      setResults({ text: cleanText, grounding });
     } catch (err) {
       console.error(err);
-      setError("Search failed. Please try again.");
+      
+      if (err && typeof err === 'object' && 'message' in err && 
+          (err as Error).message.includes('Circuit breaker is OPEN')) {
+        setError('AI service temporarily unavailable. Please try again later.');
+      } else {
+        setError("Search failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -69,8 +100,8 @@ const SearchResources: React.FC = () => {
           />
           <button
             type="submit"
-            disabled={loading}
-            className="absolute right-2 top-2 bg-blue-700 hover:bg-blue-800 text-white p-1.5 rounded-lg transition-colors"
+            disabled={loading || circuitState === CircuitState.OPEN}
+            className="absolute right-2 top-2 bg-blue-700 hover:bg-blue-800 text-white p-1.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="animate-spin" size={20} />
@@ -80,6 +111,15 @@ const SearchResources: React.FC = () => {
           </button>
         </form>
       </div>
+
+      {circuitState === CircuitState.OPEN && !error && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+          <AlertCircle className="text-amber-600" size={20} />
+          <p className="text-amber-800">
+            AI service is temporarily unavailable. Please wait a moment before trying again.
+          </p>
+        </div>
+      )}
 
       {error && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">

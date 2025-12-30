@@ -2,6 +2,9 @@ import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { CapacityProfile, ParsedResponse } from "../types";
 import { aiRouter } from "./ai";
 import { rateLimitedCall } from "./rateLimiter";
+import { createCircuitBreaker } from "./circuitBreaker";
+import { errorLogger } from "./errorLogger";
+import { cacheService } from "./cacheService";
 
 // Validate and retrieve API Key - returns null if not available
 const getApiKey = (): string | null => {
@@ -28,6 +31,40 @@ const getAI = (): GoogleGenAI | null => {
   _ai = new GoogleGenAI({ apiKey });
   return _ai;
 };
+
+// Circuit breaker for journal parsing
+const journalCircuitBreaker = createCircuitBreaker(async () => {
+  const ai = getAI();
+  if (!ai) {
+    throw new Error('AI client not initialized');
+  }
+  return ai;
+}, {
+  failureThreshold: 3,
+  successThreshold: 2,
+  timeout: 60000, // 60 seconds for journal parsing
+  monitoringPeriod: 120000, // 2 minutes
+  onStateChange: (state) => {
+    errorLogger.info(`Journal circuit breaker state changed: ${state}`);
+  }
+});
+
+// Circuit breaker for search
+const searchCircuitBreaker = createCircuitBreaker(async () => {
+  const ai = getAI();
+  if (!ai) {
+    throw new Error('AI client not initialized');
+  }
+  return ai;
+}, {
+  failureThreshold: 3,
+  successThreshold: 2,
+  timeout: 30000, // 30 seconds for search
+  monitoringPeriod: 120000, // 2 minutes
+  onStateChange: (state) => {
+    errorLogger.info(`Search circuit breaker state changed: ${state}`);
+  }
+});
 
 // Check if AI is available
 export const isAIConfigured = (): boolean => !!getApiKey();
@@ -187,8 +224,22 @@ const validateParsedResponse = (parsed: any): ParsedResponse => {
  * Parses natural language health journals into structured JSON.
  * Uses Gemini 2.5 Flash with Advanced Chain-of-Thought prompting for Neuro-Affirming Analysis.
  */
-export const parseJournalEntry = async (text: string, capacityProfile: CapacityProfile): Promise<ParsedResponse> => {
+export const parseJournalEntry = async (
+  text: string,
+  capacityProfile: CapacityProfile,
+  options: { useCache?: boolean } = {}
+): Promise<ParsedResponse> => {
+  const { useCache = true } = options;
+  const cacheKey = `journal:${text.substring(0, 50)}:${JSON.stringify(capacityProfile)}`;
+  
   try {
+    // Try cache first
+    if (useCache) {
+      const cached = await cacheService.get<ParsedResponse>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
     const systemInstruction = `
       You are Mae, voice of MAEPLE (Mental And Emotional Pattern Literacy Engine). MAEPLE is codenamed POZIMIND and is part of Poziverse.
       
@@ -358,8 +409,10 @@ Gentle inquiry format:
       return getDefaultParsedResponse(text);
     }
 
-    const response = await rateLimitedCall(() => 
-      ai.models.generateContent({
+    const response = await rateLimitedCall(async () => {
+      const ai = await journalCircuitBreaker.execute();
+      
+      return await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
@@ -368,15 +421,21 @@ Gentle inquiry format:
           systemInstruction: systemInstruction,
           temperature: 0.7, 
         },
-      }),
-      { priority: 5 } // Journal parsing is high priority
-    );
+      });
+    }, { priority: 5 }); // Journal parsing is high priority
 
     const textResponse = response.text;
     if (!textResponse) throw new Error("No response from AI");
     
     const parsed = JSON.parse(textResponse);
-    return validateParsedResponse(parsed);
+    const validated = validateParsedResponse(parsed);
+    
+    // Cache successful results
+    if (useCache) {
+      await cacheService.set(cacheKey, validated, { ttl: 86400000 }); // 24 hours
+    }
+    
+    return validated;
   } catch (error) {
     console.error("Parsing error:", error);
     return getDefaultParsedResponse(text);

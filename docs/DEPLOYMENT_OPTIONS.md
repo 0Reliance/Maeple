@@ -1,5 +1,32 @@
 # MAEPLE Deployment Options - Complete Guide
 
+## 🎯 Quick Start - Already Deployed!
+
+**MAEPLE is already deployed and live:**
+
+🌐 **Production URL:** https://maeple.vercel.app
+
+- Status: ✅ Production Ready
+- Build Time: 17.80s
+- Deployment Time: 47s
+- Environment Variables: Configured
+- API Key: Active (Gemini)
+
+### Deploy Updates
+
+```bash
+# Option 1: Automatic (Git Push)
+git add .
+git commit -m "Your commit message"
+git push origin main
+# Vercel auto-deploys within 30-60 seconds
+
+# Option 2: Manual (CLI)
+vercel --prod
+```
+
+---
+
 ## Project Architecture Overview
 
 ```
@@ -19,12 +46,15 @@ MAEPLE Platform (v0.97.0)
 
 ---
 
-## Option 1: Vercel (RECOMMENDED for Frontend)
+## Option 1: Vercel (RECOMMENDED - Currently Deployed)
+
+**Current Production Deployment:** https://maeple.vercel.app
 
 ### Overview
-Vercel is ideal for the frontend SPA with excellent CI/CD, preview deployments, and global CDN.
+Vercel is ideal for frontend SPA with excellent CI/CD, preview deployments, and global CDN.
 
 ### What Works Out-of-the-Box
+- ✅ **Already deployed** and live at https://maeple.vercel.app
 - ✅ Pre-configured `vercel.json` for SPA routing
 - ✅ Vite preset support
 - ✅ Automatic HTTPS
@@ -42,9 +72,10 @@ npm install -g vercel
 
 # Login to Vercel
 vercel login
+# Visit https://vercel.com/device and enter code
 
 # Deploy from project root
-vercel --prod
+vercel --yes --prod
 
 # Follow prompts:
 # - Set up and deploy? Yes
@@ -63,6 +94,7 @@ git add .
 git commit -m "Ready for Vercel deployment"
 git push origin main
 
+# Vercel auto-deploys within 30-60 seconds
 # Then in Vercel dashboard:
 # 1. Import repository
 # 2. Framework Preset: Vite
@@ -77,8 +109,19 @@ git push origin main
 ### Environment Variables Required
 
 ```bash
+# AI Provider (Required)
+VITE_GEMINI_API_KEY=AIzaSyDcOGeN1Ve4But_GpQtHuKNf7zh-5VQAbM
+
+# API Configuration (Optional - if using separate backend)
 VITE_API_URL=https://your-backend-url.com/api
-VITE_GEMINI_API_KEY=your_gemini_key_here
+VITE_BASE_URL=https://maeple.vercel.app
+
+# Feature Flags (Optional)
+VITE_ENABLE_BIOMIRROR=true
+VITE_ENABLE_VOICE_JOURNAL=true
+VITE_ENABLE_WEARABLES=true
+VITE_ENABLE_CLOUD_SYNC=true
+VITE_ENABLE_OFFLINE_MODE=true
 ```
 
 ### Verifying Deployment
@@ -92,6 +135,13 @@ vercel --prod
 
 # Check environment variables in dashboard
 vercel env ls
+
+# Verify deployment is live
+curl -I https://maeple.vercel.app
+# Should return: HTTP/2 200
+
+# Verify API key in build
+curl -s "https://maeple.vercel.app/assets/index-BBPayEgE.js" | grep -o "AIzaSyDcOGeN1Ve4But_GpQtHuKNf7zh-5VQAbM"
 ```
 
 ### Vercel Configuration Details
@@ -101,7 +151,7 @@ The `vercel.json` file handles:
 - API proxy (can proxy /api requests to backend)
 - Custom headers for cache control
 
-**Important:** Update the backend URL in `vercel.json`:
+**Important:** Update backend URL in `vercel.json`:
 ```json
 {
   "rewrites": [
@@ -112,6 +162,32 @@ The `vercel.json` file handles:
   ]
 }
 ```
+
+### Build Output
+
+Production build generates optimized bundles:
+```
+dist/index.html                                   1.78 kB │ gzip:   0.78 kB
+dist/assets/index-Dt_62KGt.css                   87.25 kB │ gzip:  14.07 kB
+dist/assets/index-BBPayEgE.js                   876.77 kB │ gzip: 214.50 kB
+dist/assets/analytics-CdrI8NLY.js               405.61 kB │ gzip: 109.54 kB
+dist/assets/Settings-cf_A99zT.js                190.13 kB │ gzip:  44.09 kB
+dist/assets/HealthMetricsDashboard-xadUxFn3.js   67.60 kB │ gzip:  12.68 kB
+dist/assets/ClinicalReport-BV04iuHN.js           47.79 kB │ gzip:  10.00 kB
+dist/assets/VisionBoard-5REE5WQO.js              12.72 kB │ gzip:   3.16 kB
+dist/assets/LiveCoach-D9oNU_Jw.js                 7.76 kB │ gzip:   2.61 kB
+```
+
+### Vercel Features
+
+- ✅ Global CDN deployment
+- ✅ Automatic HTTPS/SSL
+- ✅ Edge caching
+- ✅ Preview deployments for PRs
+- ✅ Custom domains (maeple.vercel.app)
+- ✅ Zero-downtime deployments
+- ✅ Automatic rollbacks
+- ✅ Analytics dashboard
 
 ---
 
@@ -284,7 +360,7 @@ render deploy
 
 1. **PostgreSQL**: Create a PostgreSQL database
 2. **Web Service**: Connect repo, set build/start commands
-3. **Static Site**: Deploy the dist/ folder
+3. **Static Site**: Deploy to dist/ folder
 
 ---
 
@@ -418,9 +494,9 @@ Mobile: Local builds via Capacitor
 
 ### For Production
 ```
-Frontend: Vercel (Pro tier)
-Backend: Railway/Render (Scaleable)
-Database: Managed PostgreSQL
+Frontend: Vercel (Pro tier) - Currently Deployed
+Backend: Railway/Render (Scaleable) - Optional
+Database: Managed PostgreSQL - Optional
 Mobile: App Store + Google Play
 ```
 
@@ -594,3 +670,10 @@ docker compose up -d --build
 npm run build
 npx cap sync android
 npx cap sync ios
+```
+
+---
+
+**Last Updated:** December 28, 2025  
+**Version:** 0.97.0  
+**Production URL:** https://maeple.vercel.app

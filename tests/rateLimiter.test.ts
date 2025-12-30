@@ -7,7 +7,7 @@ import {
   rateLimitedCall, 
   apiRateLimiter,
   APIRateLimiter
-} from '../services/rateLimiter';
+} from '@services/rateLimiter';
 
 describe('rateLimiter', () => {
   beforeEach(() => {

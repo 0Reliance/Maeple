@@ -13,7 +13,7 @@ import {
   validateStateCheck,
   validateWearableDataPoint,
   validateWearableData,
-} from '../services/validationService';
+} from '@services/validationService';
 
 describe('validationService', () => {
   describe('validateCapacityProfile', () => {

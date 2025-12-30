@@ -5,8 +5,8 @@ import {
   calculateBurnoutTrajectory,
   calculateCognitiveLoad,
   calculateCyclePhase,
-} from '../services/analytics';
-import { HealthEntry, UserSettings } from '../types';
+} from '@services/analytics';
+import { HealthEntry, UserSettings } from '@/types';
 
 // Test data factory
 const createEntry = (overrides: Partial<HealthEntry> = {}): HealthEntry => ({

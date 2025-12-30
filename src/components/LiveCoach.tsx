@@ -1,21 +1,30 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Mic, Square, Loader2, Save, AlertCircle, CheckCircle2, Volume2, X, Sparkles } from "lucide-react";
-import { aiRouter } from "../services/ai/router";
+import { useAIService } from "@/contexts/DependencyContext";
 import { useAppStore } from "../stores";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import { CircuitState } from "@/patterns/CircuitBreaker";
 
 const VoiceIntake: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [circuitState, setCircuitState] = useState<CircuitState>(CircuitState.CLOSED);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<any>(null);
   const { addEntry } = useAppStore();
   const navigate = useNavigate();
+  const aiService = useAIService();
+
+  // Subscribe to circuit breaker state changes
+  useEffect(() => {
+    const unsubscribe = aiService.onStateChange(setCircuitState);
+    return unsubscribe;
+  }, [aiService]);
 
   useEffect(() => {
     return () => {
@@ -105,11 +114,12 @@ const VoiceIntake: React.FC = () => {
           }
         `;
 
-        const response = await aiRouter.analyzeAudio({
-          audioData: base64Audio,
-          mimeType: blob.type || 'audio/webm',
-          prompt: prompt
-        });
+        // Use DI with Circuit Breaker protection
+        const response = await aiService.analyzeAudio(
+          base64Audio,
+          blob.type || 'audio/webm',
+          prompt
+        );
 
         if (response && response.content) {
           // Parse JSON
@@ -153,7 +163,14 @@ const VoiceIntake: React.FC = () => {
       };
     } catch (err) {
       console.error("Processing failed:", err);
-      setError("Failed to process audio. Please try again.");
+      
+      // Handle circuit breaker errors
+      if (err && typeof err === 'object' && 'message' in err && 
+          (err as Error).message.includes('Circuit breaker is OPEN')) {
+        setError('AI service temporarily unavailable. Please try again later.');
+      } else {
+        setError("Failed to process audio. Please try again.");
+      }
       setIsProcessing(false);
     }
   };
@@ -196,11 +213,12 @@ const VoiceIntake: React.FC = () => {
           ) : (
             <button
               onClick={isRecording ? stopRecording : startRecording}
+              disabled={circuitState === CircuitState.OPEN || isProcessing}
               className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-xl ring-4 
                 ${isRecording 
                   ? "bg-rose-500 hover:bg-rose-600 ring-rose-500/30 animate-pulse" 
                   : "bg-indigo-600 hover:bg-indigo-500 ring-indigo-500/30"
-                }`}
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {isRecording ? <Square size={32} fill="currentColor" /> : <Mic size={40} />}
             </button>
@@ -217,6 +235,13 @@ const VoiceIntake: React.FC = () => {
           <div className="bg-rose-500/20 border border-rose-500/50 rounded-lg p-3 flex items-center gap-2 text-sm text-rose-200">
             <AlertCircle size={16} />
             {error}
+          </div>
+        )}
+        
+        {circuitState === CircuitState.OPEN && !error && (
+          <div className="bg-amber-500/20 border border-amber-500/50 rounded-lg p-3 flex items-center gap-2 text-sm text-amber-200">
+            <AlertCircle size={16} />
+            AI service is temporarily unavailable. Please wait a moment.
           </div>
         )}
 

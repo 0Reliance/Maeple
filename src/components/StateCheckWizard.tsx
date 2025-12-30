@@ -1,24 +1,35 @@
-import { ArrowRight, Camera, Loader2, X } from 'lucide-react';
+import { ArrowRight, Camera, Loader2, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
-import { analyzeStateFromImage } from '../services/geminiVisionService';
+import { useVisionService } from '@/contexts/DependencyContext';
 import { getBaseline } from '../services/stateCheckService';
 import { getEntries as getJournalEntries } from '../services/storageService';
 import { FacialAnalysis, FacialBaseline, HealthEntry } from '../types';
-import StateCheckCamera from './StateCheckCamera';
+import { CircuitState } from '@/patterns/CircuitBreaker';
+import BiofeedbackCameraModal from './BiofeedbackCameraModal';
 import StateCheckResults from './StateCheckResults';
 
 const StateCheckWizard: React.FC = () => {
-  const [step, setStep] = useState<'INTRO' | 'CAMERA' | 'ANALYZING' | 'RESULTS'>('INTRO');
+  const [step, setStep] = useState<'INTRO' | 'CAMERA' | 'ANALYZING' | 'RESULTS' | 'ERROR'>('INTRO');
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<FacialAnalysis | null>(null);
   const [recentEntry, setRecentEntry] = useState<HealthEntry | null>(null);
   const [baseline, setBaseline] = useState<FacialBaseline | null>(null);
+  const [error, setError] = useState<string>('');
+  const [circuitState, setCircuitState] = useState<CircuitState>(CircuitState.CLOSED);
+  const visionService = useVisionService();
   
   // Progress tracking
   const [progress, setProgress] = useState(0);
   const [currentStage, setCurrentStage] = useState('');
   const [estimatedTime, setEstimatedTime] = useState(30);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Subscribe to circuit breaker state changes
+  useEffect(() => {
+    const unsubscribe = visionService.onStateChange(setCircuitState);
+    return unsubscribe;
+  }, [visionService]);
 
   // Cleanup object URL when imageSrc changes or component unmounts
   useEffect(() => {
@@ -69,6 +80,7 @@ const StateCheckWizard: React.FC = () => {
     setProgress(0);
     setCurrentStage('');
     setEstimatedTime(30);
+    setError('');
     
     const base64 = src.split(',')[1];
     
@@ -76,32 +88,44 @@ const StateCheckWizard: React.FC = () => {
     abortControllerRef.current = new AbortController();
     
     try {
-      const result = await analyzeStateFromImage(base64, {
-        timeout: 30000,
-        onProgress: (stage, progressValue) => {
-          setCurrentStage(stage);
-          setProgress(progressValue);
-          setEstimatedTime(Math.max(0, Math.round((100 - progressValue) * 0.3)));
-        },
-        signal: abortControllerRef.current.signal
-      });
+      // Use DI with Circuit Breaker protection
+      const result = await visionService.analyzeFromImage(base64);
+      
+      // Simulate progress for user feedback
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          const next = prev + 10;
+          if (next >= 100) {
+            clearInterval(progressInterval);
+            return 100;
+          }
+          return next;
+        });
+        setCurrentStage('Analyzing facial features...');
+        setEstimatedTime(Math.max(0, Math.round((100 - progress) * 0.3)));
+      }, 500);
       
       setAnalysis(result);
+      clearInterval(progressInterval);
       setStep('RESULTS');
     } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') {
-        // User cancelled
-        alert('Analysis cancelled');
-      } else if (e instanceof Error && e.message.includes('timeout')) {
-        alert('Analysis timed out. Please try again.');
+      console.error('Analysis failed:', e);
+      
+      if (e && typeof e === 'object' && 'message' in e && 
+          (e as Error).message.includes('Circuit breaker is OPEN')) {
+        setError('AI service temporarily unavailable. Please try again later.');
       } else {
-        console.error('Analysis failed:', e);
-        alert('Analysis failed. Please try again.');
+        setError('Analysis failed. Please try again.');
       }
-      setStep('INTRO');
+      setStep('ERROR');
     } finally {
       abortControllerRef.current = null;
     }
+  };
+
+  const handleRetry = () => {
+    setError('');
+    setStep('INTRO');
   };
 
   const cancelAnalysis = () => {
@@ -120,11 +144,18 @@ const StateCheckWizard: React.FC = () => {
     setAnalysis(null);
     setProgress(0);
     setCurrentStage('');
+    setIsCameraOpen(false);
   };
 
-  if (step === 'CAMERA') {
-    return <StateCheckCamera onCapture={handleCapture} onCancel={() => setStep('INTRO')} />;
-  }
+  const handleOpenCamera = () => {
+    setIsCameraOpen(true);
+    setStep('CAMERA');
+  };
+
+  const handleCloseCamera = () => {
+    setIsCameraOpen(false);
+    setStep('INTRO');
+  };
 
   if (step === 'RESULTS' && analysis && imageSrc) {
     return (
@@ -135,6 +166,47 @@ const StateCheckWizard: React.FC = () => {
         baseline={baseline}
         onClose={reset} 
       />
+    );
+  }
+
+  if (step === 'ERROR') {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-6 max-w-md mx-auto">
+        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center">
+          <AlertCircle size={32} />
+        </div>
+        
+        <div className="text-center space-y-3">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+            Bio-Mirror Check Failed
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {error}
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={reset}
+            className="px-6 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleRetry}
+            disabled={circuitState === CircuitState.OPEN}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Retry
+          </button>
+        </div>
+
+        {circuitState === CircuitState.OPEN && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+            Service is temporarily unavailable. Please wait a moment before retrying.
+          </p>
+        )}
+      </div>
     );
   }
 
@@ -185,7 +257,7 @@ const StateCheckWizard: React.FC = () => {
     );
   }
 
-  return (
+  const introContent = (
     <div className="max-w-3xl mx-auto animate-fadeIn py-6">
       <div className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 space-y-8 text-center">
         
@@ -221,17 +293,36 @@ const StateCheckWizard: React.FC = () => {
         )}
 
         <button 
-          onClick={() => setStep('CAMERA')}
-          className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2"
+          onClick={handleOpenCamera}
+          disabled={circuitState === CircuitState.OPEN}
+          className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Open Bio-Mirror <ArrowRight size={18} />
         </button>
+
+        {circuitState === CircuitState.OPEN && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            AI service is temporarily unavailable.
+          </p>
+        )}
 
         <p className="text-[10px] text-slate-400">
           Analysis happens locally. Images are never stored without permission.
         </p>
       </div>
     </div>
+  );
+
+  // Camera Modal - Rendered as overlay
+  return (
+    <>
+      <BiofeedbackCameraModal
+        isOpen={isCameraOpen}
+        onCapture={handleCapture}
+        onCancel={handleCloseCamera}
+      />
+      {step === 'INTRO' && introContent}
+    </>
   );
 };
 

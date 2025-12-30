@@ -276,16 +276,29 @@ MAEPLE/
 
 ## 🔐 API Keys Configuration
 
+### Authentication (Supabase) ✅
+
+MAEPLE now uses **Supabase** for production-ready authentication:
+
+```bash
+# Supabase credentials (pre-configured)
+VITE_SUPABASE_URL=https://bqmxdempuujeqgmxxbxw.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxbXhkZW1wdXVqZXFnbXh4Ynh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODExMzcsImV4cCI6MjA4MjQ1NzEzN30.8U0HLSDqSETOglvs0VjhZaL0MPqqYVWRxBdlgmNfvog
+```
+
 All required API keys are pre-configured in `.env.example`. Simply copy it to `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
+**For Supabase Setup Guide:** See [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
+
 ### Pre-Configured Services
 
 | Service | Status | Purpose |
 |---------|--------|---------|
+| ✅ **Supabase** | **Configured** | **Authentication, user management** |
 | ✅ Gemini | Configured | Bio-Mirror, Live Coach, vision analysis |
 | ✅ Z.ai | Configured | Code generation, refactoring |
 | ✅ Perplexity | Configured | Web search with AI |
@@ -413,21 +426,92 @@ tests/
 
 ## 🚢 Deployment
 
-### Frontend (Vercel)
+### Quick Deploy to Vercel (Recommended)
+
+**Fastest deployment method - MAEPLE is already deployed and live at:**
+
+🌐 **Production URL:** https://maeple.vercel.app
+
+#### Deploy Updates
 
 ```bash
-# Build application
-npm run build
+# Option 1: Automatic (Git Push)
+git add .
+git commit -m "Your commit message"
+git push origin main
+# Vercel auto-deploys within 30-60 seconds
 
-# Deploy to Vercel
+# Option 2: Manual (CLI)
 vercel --prod
 ```
 
-### Backend (Docker)
+#### First-Time Setup
+
+```bash
+# 1. Install Vercel CLI
+npm install -g vercel
+
+# 2. Login to Vercel
+vercel login
+# Visit https://vercel.com/device and enter the code
+
+# 3. Deploy to production
+vercel --yes --prod
+
+# 4. Add environment variables
+echo "AIzaSyDcOGeN1Ve4But_GpQtHuKNf7zh-5VQAbM" | vercel env add VITE_GEMINI_API_KEY production
+```
+
+### Current Deployment Status
+
+✅ **Live:** https://maeple.vercel.app
+- Build Time: 17.80s
+- Deployment Time: 47s
+- Status: Production Ready
+- Environment Variables: Configured
+- API Key: Active (Gemini)
+
+### Manual Deployment Options
+
+#### Option 1: Vercel CLI (Recommended for quick deploys)
+
+```bash
+# Deploy preview
+vercel
+
+# Deploy to production
+vercel --prod
+
+# Deploy with custom name (deprecated, use project settings)
+vercel --prod
+```
+
+**Vercel Features:**
+- Global CDN deployment
+- Automatic HTTPS/SSL
+- Edge caching
+- Preview deployments for PRs
+- Custom domains (maeple.vercel.app)
+
+#### Option 2: Vercel Dashboard
+
+1. Go to https://vercel.com/new
+2. Import GitHub repository: `https://github.com/0Reliance/Maeple`
+3. Configure build settings:
+   - Framework Preset: `Vite`
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+4. Add environment variables:
+   - `VITE_GEMINI_API_KEY`: Your Gemini API key
+   - `VITE_ENABLE_BIOMIRROR`: `true`
+   - `VITE_ENABLE_VOICE_JOURNAL`: `true`
+5. Click Deploy
+
+#### Option 3: Docker (Backend/Full Stack)
 
 ```bash
 # Build Docker image
-docker build -t maeple-api:latest .
+docker build -t maeple-api:latest -f deploy/Dockerfile.api .
 
 # Run container
 docker run -p 3001:3001 \
@@ -438,14 +522,63 @@ docker run -p 3001:3001 \
 
 ### Environment Variables
 
-Required for production:
+#### Required for Production
+
 ```bash
+# AI Provider
+VITE_GEMINI_API_KEY=AIzaSyDcOGeN1Ve4But_GpQtHuKNf7zh-5VQAbM
+
+# API Configuration (if using separate backend)
 VITE_API_URL=https://your-backend-url.com/api
-DATABASE_URL=postgresql://...
-GEMINI_API_KEY=...
+VITE_BASE_URL=https://maeple.vercel.app
+
+# Feature Flags
+VITE_ENABLE_BIOMIRROR=true
+VITE_ENABLE_VOICE_JOURNAL=true
+VITE_ENABLE_WEARABLES=true
+VITE_ENABLE_CLOUD_SYNC=true
+VITE_ENABLE_OFFLINE_MODE=true
 ```
 
-See [Deployment Guide](deploy/DEPLOY.md) for complete deployment instructions.
+#### Adding Environment Variables via CLI
+
+```bash
+# Add single variable
+echo "value" | vercel env add VARIABLE_NAME production
+
+# List all variables
+vercel env ls
+
+# Remove variable
+vercel env rm VARIABLE_NAME production
+```
+
+### Build Output
+
+Production build generates optimized bundles:
+```
+dist/index.html                                   1.78 kB │ gzip:   0.78 kB
+dist/assets/index.css                               87.25 kB │ gzip:  14.07 kB
+dist/assets/index.js                               876.77 kB │ gzip: 214.50 kB
+dist/assets/analytics.js                            405.61 kB │ gzip: 109.54 kB
+dist/assets/Settings.js                            190.13 kB │ gzip:  44.09 kB
+```
+
+### Deployment Verification
+
+```bash
+# Check deployment status
+vercel ls
+
+# Verify deployment
+curl -I https://maeple.vercel.app
+# Should return: HTTP/2 200
+
+# Check build logs
+vercel logs
+```
+
+See [Deployment Guide](deploy/DEPLOY.md) for complete deployment instructions including Docker, Railway, and Render options.
 
 ---
 

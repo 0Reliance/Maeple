@@ -52,7 +52,36 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        // Let Vite handle chunk splitting automatically to avoid initialization errors
+        // Manual chunk splitting for better code splitting
+        manualChunks: (id) => {
+          // Split React into separate chunk
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+          
+          // Split UI libraries
+          if (id.includes('node_modules/lucide-react')) {
+            return 'ui-vendor';
+          }
+          
+          // Split AI libraries
+          if (id.includes('node_modules/@google/genai')) {
+            return 'ai-vendor';
+          }
+          
+          // Split IndexedDB
+          if (id.includes('node_modules/idb')) {
+            return 'db-vendor';
+          }
+          
+          // Split other large vendor libraries
+          if (id.includes('node_modules/')) {
+            return 'vendor';
+          }
+          
+          // Keep app code separate
+          return undefined;
+        },
         // Add cache busting to asset filenames
         entryFileNames: `assets/[name]-[hash].js`,
         chunkFileNames: `assets/[name]-[hash].js`,
@@ -69,9 +98,13 @@ export default defineConfig({
   resolve: {
     // Path aliases for cleaner imports
     alias: {
-      "@": resolve(__dirname, "./"),
-      "@components": resolve(__dirname, "./components"),
-      "@services": resolve(__dirname, "./services"),
+      "@": resolve(__dirname, "./src"),
+      "@components": resolve(__dirname, "./src/components"),
+      "@services": resolve(__dirname, "./src/services"),
+      "@utils": resolve(__dirname, "./src/utils"),
+      "@stores": resolve(__dirname, "./src/stores"),
+      "@hooks": resolve(__dirname, "./src/hooks"),
+      "@workers": resolve(__dirname, "./src/workers"),
     },
   },
 });

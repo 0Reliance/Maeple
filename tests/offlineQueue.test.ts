@@ -7,7 +7,7 @@ import {
   offlineQueue,
   registerOfflineHandler,
   withOfflineSupport,
-} from '../services/offlineQueue';
+} from '@services/offlineQueue';
 
 // Note: IndexedDB is available via fake-indexeddb in jsdom environment
 

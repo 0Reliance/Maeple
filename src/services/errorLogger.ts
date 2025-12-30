@@ -1,86 +1,52 @@
 /**
- * MAEPLE Error Logging Service
- * 
- * Centralized error tracking that can be extended to external services.
- * Supports: Console, localStorage buffer, and external endpoints.
+ * Error Logging Service
+ * Centralized error tracking and reporting
  */
 
-interface ErrorLogEntry {
-  id: string;
-  timestamp: string;
-  level: 'error' | 'warn' | 'info';
+export interface ErrorLog {
   message: string;
-  stack?: string;
-  componentStack?: string;
-  context?: Record<string, unknown>;
-  userAgent: string;
-  url: string;
+  level: 'error' | 'warning' | 'info';
+  timestamp: string;
+  context?: string;
+  details?: Record<string, unknown>;
+  userId?: string;
+  sessionId?: string;
 }
-
-interface ErrorLogConfig {
-  enabled: boolean;
-  consoleEnabled: boolean;
-  bufferSize: number;
-  externalEndpoint?: string;
-  onError?: (error: ErrorLogEntry) => void;
-}
-
-const STORAGE_KEY = 'maeple_error_log';
-
-const DEFAULT_CONFIG: ErrorLogConfig = {
-  enabled: true,
-  consoleEnabled: true,
-  bufferSize: 50,
-  externalEndpoint: undefined,
-  onError: undefined,
-};
 
 class ErrorLogger {
-  private config: ErrorLogConfig;
-  private buffer: ErrorLogEntry[] = [];
+  private logs: ErrorLog[] = [];
+  private maxLogs = 100;
+  private sessionId: string;
 
-  constructor(config: Partial<ErrorLogConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
-    this.loadBuffer();
-    this.setupGlobalHandlers();
+  constructor() {
+    this.sessionId = this.generateSessionId();
+    this.setupGlobalErrorHandlers();
   }
 
-  private loadBuffer(): void {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        this.buffer = JSON.parse(stored);
-      }
-    } catch (e) {
-      console.warn('Failed to load error buffer:', e);
-      this.buffer = [];
-    }
+  /**
+   * Generate unique session ID
+   */
+  private generateSessionId(): string {
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
   }
 
-  private saveBuffer(): void {
-    try {
-      // Keep only last N entries
-      const trimmed = this.buffer.slice(-this.config.bufferSize);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
-      this.buffer = trimmed;
-    } catch (e) {
-      console.warn('Failed to save error buffer:', e);
-    }
-  }
-
-  private setupGlobalHandlers(): void {
+  /**
+   * Setup global error handlers
+   */
+  private setupGlobalErrorHandlers(): void {
     // Catch unhandled promise rejections
     window.addEventListener('unhandledrejection', (event) => {
       this.error('Unhandled Promise Rejection', {
-        reason: String(event.reason),
+        error: event.reason?.message || String(event.reason),
         stack: event.reason?.stack,
       });
+      event.preventDefault();
     });
 
-    // Catch global errors
+    // Catch uncaught errors
     window.addEventListener('error', (event) => {
       this.error('Uncaught Error', {
-        message: event.message,
+        error: event.message,
         filename: event.filename,
         lineno: event.lineno,
         colno: event.colno,
@@ -89,176 +55,179 @@ class ErrorLogger {
     });
   }
 
-  private createEntry(
-    level: ErrorLogEntry['level'],
-    message: string,
-    context?: Record<string, unknown>
-  ): ErrorLogEntry {
-    return {
-      id: `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date().toISOString(),
-      level,
-      message,
-      stack: context?.stack as string | undefined,
-      componentStack: context?.componentStack as string | undefined,
-      context: context ? { ...context } : undefined,
-      userAgent: navigator.userAgent,
-      url: window.location.href,
-    };
-  }
-
-  private async sendToExternal(entry: ErrorLogEntry): Promise<void> {
-    if (!this.config.externalEndpoint) return;
-
-    try {
-      await fetch(this.config.externalEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(entry),
-      });
-    } catch (e) {
-      // Don't recursively log fetch errors
-      console.warn('Failed to send error to external endpoint:', e);
-    }
-  }
-
-  private log(
-    level: ErrorLogEntry['level'],
-    message: string,
-    context?: Record<string, unknown>
-  ): void {
-    if (!this.config.enabled) return;
-
-    const entry = this.createEntry(level, message, context);
-
-    // Console output
-    if (this.config.consoleEnabled) {
-      const consoleMethod = level === 'error' ? console.error : level === 'warn' ? console.warn : console.info;
-      consoleMethod(`[MAEPLE ${level.toUpperCase()}]`, message, context || '');
-    }
-
-    // Add to buffer
-    this.buffer.push(entry);
-    this.saveBuffer();
-
-    // External logging
-    if (this.config.externalEndpoint) {
-      this.sendToExternal(entry);
-    }
-
-    // Custom handler
-    if (this.config.onError) {
-      this.config.onError(entry);
-    }
-  }
-
   /**
    * Log an error
    */
-  error(message: string, context?: Record<string, unknown>): void {
-    this.log('error', message, context);
+  error(message: string, details?: Record<string, unknown>): void {
+    this.log({
+      message,
+      level: 'error',
+      timestamp: new Date().toISOString(),
+      details,
+    });
+
+    // Also log to console in development
+    if (import.meta.env.DEV) {
+      console.error(`[ErrorLogger] ${message}`, details);
+    }
   }
 
   /**
    * Log a warning
    */
-  warn(message: string, context?: Record<string, unknown>): void {
-    this.log('warn', message, context);
+  warning(message: string, details?: Record<string, unknown>): void {
+    this.log({
+      message,
+      level: 'warning',
+      timestamp: new Date().toISOString(),
+      details,
+    });
+
+    if (import.meta.env.DEV) {
+      console.warn(`[ErrorLogger] ${message}`, details);
+    }
   }
 
   /**
    * Log info
    */
-  info(message: string, context?: Record<string, unknown>): void {
-    this.log('info', message, context);
-  }
-
-  /**
-   * Log an Error object
-   */
-  logError(error: Error, context?: Record<string, unknown>): void {
-    this.error(error.message, {
-      ...context,
-      stack: error.stack,
-      name: error.name,
+  info(message: string, details?: Record<string, unknown>): void {
+    this.log({
+      message,
+      level: 'info',
+      timestamp: new Date().toISOString(),
+      details,
     });
+
+    if (import.meta.env.DEV) {
+      console.info(`[ErrorLogger] ${message}`, details);
+    }
   }
 
   /**
-   * Log a React Error Boundary catch
+   * Add log to internal storage
    */
-  logBoundaryError(error: Error, errorInfo: { componentStack?: string }): void {
-    this.error('React Error Boundary Caught', {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-    });
+  private log(logEntry: Omit<ErrorLog, 'userId' | 'sessionId'>): void {
+    const entry: ErrorLog = {
+      ...logEntry,
+      userId: this.getUserId(),
+      sessionId: this.sessionId,
+    };
+
+    this.logs.push(entry);
+
+    // Keep only maxLogs most recent entries
+    if (this.logs.length > this.maxLogs) {
+      this.logs.shift();
+    }
+
+    // Persist to localStorage for crash recovery
+    this.persistLogs();
   }
 
   /**
-   * Get recent errors for display/debugging
+   * Get user ID from localStorage
    */
-  getRecentErrors(count = 10): ErrorLogEntry[] {
-    return this.buffer.slice(-count);
+  private getUserId(): string | undefined {
+    try {
+      const user = localStorage.getItem('user');
+      return user ? JSON.parse(user).id : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   /**
-   * Clear the error buffer
+   * Persist logs to localStorage
    */
-  clearBuffer(): void {
-    this.buffer = [];
-    localStorage.removeItem(STORAGE_KEY);
+  private persistLogs(): void {
+    try {
+      const recentLogs = this.logs.slice(-20); // Keep last 20 logs
+      localStorage.setItem('errorLogs', JSON.stringify(recentLogs));
+    } catch (error) {
+      console.warn('Failed to persist error logs:', error);
+    }
+  }
+
+  /**
+   * Get all logs
+   */
+  getLogs(): ErrorLog[] {
+    return [...this.logs];
+  }
+
+  /**
+   * Get error logs only
+   */
+  getErrorLogs(): ErrorLog[] {
+    return this.logs.filter((log) => log.level === 'error');
+  }
+
+  /**
+   * Clear all logs
+   */
+  clearLogs(): void {
+    this.logs = [];
+    localStorage.removeItem('errorLogs');
+  }
+
+  /**
+   * Export logs as JSON
+   */
+  exportLogs(): string {
+    return JSON.stringify(this.logs, null, 2);
+  }
+
+  /**
+   * Load persisted logs from localStorage
+   */
+  loadPersistedLogs(): void {
+    try {
+      const persisted = localStorage.getItem('errorLogs');
+      if (persisted) {
+        const logs: ErrorLog[] = JSON.parse(persisted);
+        this.logs = logs;
+      }
+    } catch (error) {
+      console.warn('Failed to load persisted error logs:', error);
+    }
   }
 
   /**
    * Get error statistics
    */
-  getStats(): { total: number; errors: number; warnings: number; lastError?: string } {
-    const errors = this.buffer.filter(e => e.level === 'error').length;
-    const warnings = this.buffer.filter(e => e.level === 'warn').length;
-    const lastEntry = this.buffer[this.buffer.length - 1];
-
-    return {
-      total: this.buffer.length,
-      errors,
-      warnings,
-      lastError: lastEntry?.timestamp,
+  getStats(): {
+    total: number;
+    errors: number;
+    warnings: number;
+    info: number;
+    byContext: Record<string, number>;
+  } {
+    const stats = {
+      total: this.logs.length,
+      errors: 0,
+      warnings: 0,
+      info: 0,
+      byContext: {} as Record<string, number>,
     };
-  }
 
-  /**
-   * Update configuration
-   */
-  updateConfig(config: Partial<ErrorLogConfig>): void {
-    this.config = { ...this.config, ...config };
-  }
+    this.logs.forEach((log) => {
+      // Count by level
+      if (log.level === 'error') stats.errors++;
+      else if (log.level === 'warning') stats.warnings++;
+      else stats.info++;
 
-  /**
-   * Export logs for debugging
-   */
-  exportLogs(): string {
-    return JSON.stringify(this.buffer, null, 2);
+      // Count by context
+      const context = log.context || 'Unknown';
+      stats.byContext[context] = (stats.byContext[context] || 0) + 1;
+    });
+
+    return stats;
   }
 }
 
 // Singleton instance
 export const errorLogger = new ErrorLogger();
 
-// Convenience functions
-export const logError = (message: string, context?: Record<string, unknown>) => 
-  errorLogger.error(message, context);
-
-export const logWarn = (message: string, context?: Record<string, unknown>) => 
-  errorLogger.warn(message, context);
-
-export const logInfo = (message: string, context?: Record<string, unknown>) => 
-  errorLogger.info(message, context);
-
-export const logBoundaryError = (error: Error, errorInfo: { componentStack?: string }) =>
-  errorLogger.logBoundaryError(error, errorInfo);
-
-// Export class for custom instances
-export { ErrorLogger };
-export type { ErrorLogEntry, ErrorLogConfig };
+// Load persisted logs on initialization
+errorLogger.loadPersistedLogs();

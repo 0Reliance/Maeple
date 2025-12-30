@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { userFeedback } from "@services/userFeedbackService";
 import { wearableManager } from "../services/wearables/manager";
 import { ProviderType } from "../services/wearables/types";
 import {
@@ -86,7 +87,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
       setConfigs(wearableManager.getAllConfigs());
     } catch (e) {
       console.error(e);
-      alert("Failed to connect " + provider);
+      userFeedback.processingFailed(`connect to ${provider}`, () => handleConnect(provider));
     } finally {
       setLoading(null);
     }
@@ -98,9 +99,12 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
       const data = await wearableManager.syncRecentData(provider, 7); // Sync last week
       onDataSynced(data);
       setConfigs(wearableManager.getAllConfigs()); // Update timestamp
-      alert("Sync complete!");
+      userFeedback.success({
+        title: 'Sync Complete',
+        message: `${provider} synced successfully.`
+      });
     } catch (e) {
-      alert("Sync failed");
+      userFeedback.processingFailed(`sync ${provider}`, () => handleSync(provider));
     } finally {
       setLoading(null);
     }
@@ -221,9 +225,10 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
       setIsExporting(true);
       try {
         await downloadExport(false);
+        userFeedback.saveSuccess('JSON export');
       } catch (error) {
         console.error("Export failed:", error);
-        alert("Export failed. Please try again.");
+        userFeedback.exportFailed(error as Error, () => handleExportJSON());
       } finally {
         setIsExporting(false);
       }
@@ -233,9 +238,10 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
       setIsExporting(true);
       try {
         await downloadExport(true);
+        userFeedback.saveSuccess('ZIP backup');
       } catch (error) {
         console.error("Export failed:", error);
-        alert("Export failed. Please try again.");
+        userFeedback.exportFailed(error as Error, () => handleExportZIP());
       } finally {
         setIsExporting(false);
       }
@@ -281,11 +287,11 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
       try {
         await clearAllData();
         setShowDeleteConfirm(false);
-        // Reload the page to reset app state
+        // Reload page to reset app state
         window.location.reload();
       } catch (error) {
         console.error("Delete failed:", error);
-        alert("Failed to delete data. Please try again.");
+        userFeedback.processingFailed('delete data', () => handleDeleteAll());
       } finally {
         setIsDeleting(false);
       }

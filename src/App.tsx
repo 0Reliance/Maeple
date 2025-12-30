@@ -33,6 +33,10 @@ import { usePWAInstall } from "./hooks/usePWAInstall";
 
 import { Github } from "lucide-react";
 import UserMenu from "./components/UserMenu";
+import { ErrorBoundary, VisionErrorBoundary } from "./components/ErrorBoundary";
+import ToastNotification from "./components/ToastNotification";
+import { DependencyProvider } from "./contexts/DependencyContext";
+import { getDependencies } from "./factories/dependencyFactory";
 
 // Lazy load heavy components for better performance
 const HealthMetricsDashboard = React.lazy(
@@ -384,10 +388,17 @@ function AppContent() {
 }
 
 function App() {
+  const dependencies = getDependencies();
+
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <DependencyProvider dependencies={dependencies}>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <AppContent />
+          <ToastNotification />
+        </BrowserRouter>
+      </ErrorBoundary>
+    </DependencyProvider>
   );
 }
 

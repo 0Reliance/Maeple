@@ -8,11 +8,12 @@ import {
   Brain,
   Volume2,
   Star,
+  AlertCircle,
 } from "lucide-react";
-// Fixed import path: generateOrEditImage is in geminiVisionService.ts
-import { generateOrEditImage } from "../services/geminiVisionService";
+import { useVisionService } from "@/contexts/DependencyContext";
 import { getEntries } from "../services/storageService";
 import { HealthEntry } from "../types";
+import { CircuitState } from "@/patterns/CircuitBreaker";
 import AILoadingState from "./AILoadingState";
 
 const VisionBoard: React.FC = () => {
@@ -21,6 +22,15 @@ const VisionBoard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [upload, setUpload] = useState<string | null>(null);
   const [recentEntry, setRecentEntry] = useState<HealthEntry | null>(null);
+  const [error, setError] = useState<string>("");
+  const [circuitState, setCircuitState] = useState<CircuitState>(CircuitState.CLOSED);
+  const visionService = useVisionService();
+
+  // Subscribe to circuit breaker state changes
+  useEffect(() => {
+    const unsubscribe = visionService.onStateChange(setCircuitState);
+    return unsubscribe;
+  }, [visionService]);
 
   useEffect(() => {
     const entries = getEntries();
@@ -49,13 +59,21 @@ const VisionBoard: React.FC = () => {
   const handleAction = async () => {
     if (!prompt) return;
     setLoading(true);
+    setError("");
     try {
-      // Strip prefix for API
+      // Use DI with Circuit Breaker protection
       const base64Data = upload ? upload.split(",")[1] : undefined;
-      const result = await generateOrEditImage(prompt, base64Data);
+      const result = await visionService.generateImage(prompt, base64Data);
       setGeneratedImage(result);
     } catch (e) {
-      alert("Failed to generate image. Please try again.");
+      console.error("Image generation failed:", e);
+      
+      if (e && typeof e === 'object' && 'message' in e && 
+          (e as Error).message.includes('Circuit breaker is OPEN')) {
+        setError('AI service temporarily unavailable. Please try again later.');
+      } else {
+        setError('Failed to generate image. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -184,9 +202,9 @@ const VisionBoard: React.FC = () => {
             <div className="absolute bottom-3 right-3">
               <button
                 onClick={handleAction}
-                disabled={loading || !prompt}
+                disabled={loading || !prompt || circuitState === CircuitState.OPEN}
                 className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold transition-all ${
-                  loading || !prompt
+                  loading || !prompt || circuitState === CircuitState.OPEN
                     ? "bg-slate-100 text-slate-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:shadow-purple-200 transform active:scale-95"
                 }`}
@@ -255,6 +273,26 @@ const VisionBoard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {error && (
+        <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle size={20} className="text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-rose-900 dark:text-rose-200">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {circuitState === CircuitState.OPEN && !error && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle size={20} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-amber-900 dark:text-amber-200">
+              AI service is temporarily unavailable. Please wait a moment before trying again.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

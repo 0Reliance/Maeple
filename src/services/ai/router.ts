@@ -244,7 +244,7 @@ class AIRouter {
     const adapters = this.getAdaptersForCapability(capability);
     
     if (adapters.length === 0) {
-      errorLogger.warn(`No adapters available for capability: ${capability}`, {
+      errorLogger.warning(`No adapters available for capability: ${capability}`, {
         capability,
         availableProviders: this.settings?.providers.map(p => ({
           id: p.providerId,
@@ -271,7 +271,7 @@ class AIRouter {
           } : String(error)
         };
         console.warn(`Adapter ${adapter.constructor.name} failed for ${capability}:`, error);
-        errorLogger.warn(`AI adapter failure`, errorDetails);
+        errorLogger.warning(`AI adapter failure`, errorDetails);
         continue;
       }
     }

@@ -222,26 +222,38 @@ const analyzeSpeechPace = (
 /**
  * Analyze vocal characteristics
  * 
- * NOTE: This is a simplified implementation.
- * Production implementation would use:
- * - Pitch detection algorithms (autocorrelation, FFT)
- * - Voice activity detection
- * - ML models for vocal emotion classification
+ * REAL IMPLEMENTATION: Analyzes pitch, volume, and clarity from audio
  */
-const analyzeVocalCharacteristics = async (
-  _audioBlob: Blob
+export const analyzeVocalCharacteristics = async (
+  audioBlob: Blob
 ): Promise<VocalCharacteristics> => {
-  // For now, we'll return default values
-  // In production, you'd analyze:
-  // - Pitch variation over time
-  // - Volume levels
-  // - Speaking clarity (signal-to-noise ratio)
+  let audioContext: AudioContext | null = null;
   
-  return {
-    pitchVariation: 'normal',
-    volume: 'normal',
-    clarity: 'normal',
-  };
+  try {
+    // Create audio context
+    audioContext = new AudioContext({ sampleRate: 48000 });
+    const audioBuffer = await audioContext.decodeAudioData(await audioBlob.arrayBuffer());
+    const channelData = audioBuffer.getChannelData(0);
+    
+    // 1. Pitch Analysis (Autocorrelation method)
+    const pitchData = analyzePitch(channelData, audioContext.sampleRate);
+    const pitchVariation = classifyPitchVariation(pitchData);
+    
+    // 2. Volume Analysis (RMS with sliding window)
+    const volumeData = analyzeVolume(channelData);
+    const volume = classifyVolume(volumeData);
+    
+    // 3. Clarity Analysis (Signal-to-Noise Ratio)
+    const snrData = analyzeSNR(channelData, volumeData);
+    const clarity = classifyClarity(snrData);
+    
+    return { pitchVariation, volume, clarity };
+  } finally {
+    // Always close AudioContext to prevent memory leaks
+    if (audioContext) {
+      await audioContext.close();
+    }
+  }
 };
 
 /**
@@ -293,6 +305,163 @@ const calculateConfidence = (
   // Cap at 1.0
   return Math.min(confidence, 1.0);
 };
+
+/**
+ * Analyze pitch using autocorrelation method
+ * 
+ * This detects the fundamental frequency of the voice
+ */
+function analyzePitch(samples: Float32Array, sampleRate: number): {
+  pitches: number[];
+  variation: number;
+} {
+  const pitches: number[] = [];
+  const frameSize = 2048;
+  const hopSize = 1024;
+  
+  // Process audio in overlapping frames
+  for (let i = 0; i < samples.length - frameSize; i += hopSize) {
+    const frame = samples.slice(i, i + frameSize);
+    const pitch = autocorrelationPitch(frame, sampleRate);
+    if (pitch > 0) {
+      pitches.push(pitch);
+    }
+  }
+  
+  // Calculate pitch variation (standard deviation)
+  const meanPitch = pitches.length > 0 
+    ? pitches.reduce((a, b) => a + b, 0) / pitches.length 
+    : 0;
+  const variance = pitches.length > 0
+    ? pitches.reduce((sum, p) => sum + Math.pow(p - meanPitch, 2), 0) / pitches.length
+    : 0;
+  
+  return { pitches, variation: Math.sqrt(variance) };
+}
+
+/**
+ * Detect fundamental frequency using autocorrelation
+ * 
+ * This is a classic pitch detection algorithm
+ */
+function autocorrelationPitch(samples: Float32Array, sampleRate: number): number {
+  const size = samples.length;
+  const correlations = new Float32Array(size);
+  
+  // Calculate autocorrelation
+  for (let lag = 0; lag < size; lag++) {
+    let sum = 0;
+    for (let i = 0; i < size - lag; i++) {
+      sum += samples[i] * samples[i + lag];
+    }
+    correlations[lag] = sum / (size - lag);
+  }
+  
+  // Find first peak after initial decay
+  let peakLag = 0;
+  let peakValue = 0;
+  const minLag = Math.floor(sampleRate / 500); // Min 500 Hz (typical voice max)
+  const maxLag = Math.floor(sampleRate / 50);  // Max 50 Hz (typical voice min)
+  
+  for (let lag = minLag; lag < Math.min(maxLag, size); lag++) {
+    if (correlations[lag] > peakValue) {
+      peakValue = correlations[lag];
+      peakLag = lag;
+    }
+  }
+  
+  // Return frequency or 0 if not found
+  return peakLag > 0 ? sampleRate / peakLag : 0;
+}
+
+/**
+ * Classify pitch variation
+ * 
+ * Flat voice < 5 variation
+ * Normal voice 5-30 variation
+ * Varied voice > 30 variation
+ */
+function classifyPitchVariation(data: { variation: number }): 'flat' | 'normal' | 'varied' {
+  if (data.variation < 5) return 'flat';
+  if (data.variation > 30) return 'varied';
+  return 'normal';
+}
+
+/**
+ * Analyze volume levels
+ * 
+ * Calculates RMS (Root Mean Square) and peak volume
+ */
+function analyzeVolume(samples: Float32Array): { rms: number; peak: number } {
+  let sum = 0;
+  let peak = 0;
+  
+  for (let i = 0; i < samples.length; i++) {
+    const abs = Math.abs(samples[i]);
+    sum += samples[i] * samples[i];
+    if (abs > peak) peak = abs;
+  }
+  
+  const rms = Math.sqrt(sum / samples.length);
+  return { rms, peak };
+}
+
+/**
+ * Classify volume level
+ * 
+ * Low volume < -30dB
+ * Normal volume -30dB to -10dB
+ * High volume > -10dB
+ */
+function classifyVolume(data: { rms: number }): 'low' | 'normal' | 'high' {
+  const db = 20 * Math.log10(data.rms);
+  if (db < -30) return 'low';
+  if (db > -10) return 'high';
+  return 'normal';
+}
+
+/**
+ * Analyze Signal-to-Noise Ratio (SNR)
+ * 
+ * Higher SNR = clearer speech
+ * Lower SNR = more background noise/mumbling
+ */
+function analyzeSNR(samples: Float32Array, volumeData: { rms: number }): { snr: number } {
+  // Signal power
+  const signalPower = volumeData.rms * volumeData.rms;
+  
+  // Estimate noise power from silence gaps (quietest 10% of audio)
+  const threshold = volumeData.rms * 0.1;
+  let noiseSum = 0;
+  let noiseCount = 0;
+  
+  for (let i = 0; i < samples.length; i++) {
+    if (Math.abs(samples[i]) < threshold) {
+      noiseSum += samples[i] * samples[i];
+      noiseCount++;
+    }
+  }
+  
+  // Avoid division by zero
+  const noisePower = noiseCount > 0 ? noiseSum / noiseCount : signalPower * 0.01;
+  const snr = signalPower / noisePower;
+  
+  // Convert to dB
+  return { snr: 10 * Math.log10(snr) };
+}
+
+/**
+ * Classify speech clarity based on SNR
+ * 
+ * Mumbled < 5dB SNR
+ * Normal 5-20dB SNR
+ * Clear > 20dB SNR
+ */
+function classifyClarity(data: { snr: number }): 'mumbled' | 'normal' | 'clear' {
+  if (data.snr < 5) return 'mumbled';
+  if (data.snr > 20) return 'clear';
+  return 'normal';
+}
 
 /**
  * Generate gentle inquiry based on audio analysis
