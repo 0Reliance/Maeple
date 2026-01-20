@@ -56,14 +56,63 @@ A 7-point grid representing available bandwidth in different domains (0-10 scale
 
 ### 1.5 Bio-Mirror Analysis (`FacialAnalysis`)
 
-Objective physiological analysis derived from computer vision (FACS).
+Objective physiological analysis based on the **Facial Action Coding System (FACS)** developed by Paul Ekman and Wallace Friesen.
 
-- **primaryEmotion**: `string` (Dominant expression)
-- **confidence**: `number` (0-1)
-- **eyeFatigue**: `number` (0-1) - Detects Ptosis/Glazed Gaze.
-- **jawTension**: `number` (0-1) - Detects Masseter tension/Lip Pressor.
-- **maskingScore**: `number` (0-1) - Discrepancy between Zygomatic Major and Orbicularis Oculi.
-- **signs**: `string[]` (List of detected Action Units, e.g., "AU24 Lip Pressor").
+**References:**
+
+- Ekman, P., & Friesen, W. (1978). _Facial Action Coding System_
+- Implementation using Gemini 1.5/2.0 Vision API
+- Research: [iMotions FACS Guide](https://imotions.com/blog/facial-action-coding-system/)
+
+#### Core Structure
+
+**ActionUnit** (NEW v0.97.6):
+
+- **auCode**: `string` - FACS code (e.g., "AU1", "AU4", "AU6", "AU12", "AU24")
+- **name**: `string` - Anatomical name (e.g., "Inner Brow Raiser", "Brow Lowerer")
+- **intensity**: `'A' | 'B' | 'C' | 'D' | 'E'` - FACS intensity scale:
+  - A = Trace (barely visible)
+  - B = Slight (small but clear)
+  - C = Marked (obvious)
+  - D = Severe (pronounced)
+  - E = Maximum (extreme)
+- **intensityNumeric**: `number` (1-5) - Numeric equivalent for calculations
+- **confidence**: `number` (0-1) - AI detection confidence
+
+**FacialAnalysis**:
+
+- **confidence**: `number` (0-1) - Overall analysis confidence
+- **actionUnits**: `ActionUnit[]` - Detected FACS Action Units (NEW)
+- **facsInterpretation**: `object` (NEW) - Structured interpretation:
+  - **duchennSmile**: `boolean` - True if AU6+AU12 detected (genuine smile)
+  - **socialSmile**: `boolean` - True if AU12 without AU6 (posed/masking)
+  - **maskingIndicators**: `string[]` - Signs of emotional suppression
+  - **fatigueIndicators**: `string[]` - Signs of tiredness
+  - **tensionIndicators**: `string[]` - Signs of stress
+- **observations**: `array` - General visual observations (backward compatible)
+- **lighting**: `string` - Lighting conditions
+- **lightingSeverity**: `'low' | 'moderate' | 'high'`
+- **environmentalClues**: `string[]` - Background elements
+- **jawTension**: `number` (0-1) - Derived from AU4, AU24 (legacy)
+- **eyeFatigue**: `number` (0-1) - Derived from ptosis, AU43 (legacy)
+- **primaryEmotion**: `string` - Dominant expression (legacy)
+- **signs**: `array` - Additional detected markers (legacy)
+
+#### Key Action Units Detected
+
+| AU Code | Muscle               | Meaning                  | Neurodivergent Relevance     |
+| ------- | -------------------- | ------------------------ | ---------------------------- |
+| AU1     | Inner Brow Raiser    | Sadness, worry           | Anxiety indicator            |
+| AU4     | Brow Lowerer         | Concentration, distress  | Masking effort, tension      |
+| AU6     | Cheek Raiser         | Genuine smile component  | Authenticity marker          |
+| AU7     | Lid Tightener        | Concentration, squinting | Fatigue, sensory sensitivity |
+| AU12    | Lip Corner Puller    | Smile                    | Can be genuine or social     |
+| AU14    | Dimpler              | Contempt, suppression    | Emotional suppression        |
+| AU15    | Lip Corner Depressor | Sadness                  | Distress indicator           |
+| AU17    | Chin Raiser          | Doubt, sadness           | Emotional state              |
+| AU24    | Lip Pressor          | Tension, stress          | Key masking indicator        |
+| AU43    | Eyes Closed          | Fatigue                  | Burnout warning sign         |
+| AU45    | Blink (excessive)    | Fatigue                  | Cognitive overload           |
 
 ### 1.6 Bio-Mirror Baseline (`FacialBaseline`)
 

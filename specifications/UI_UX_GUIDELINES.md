@@ -1,6 +1,7 @@
 # MAEPLE UI/UX Guidelines
 
-**Version**: 2.0.0
+**Version**: 2.1.0  
+**Last Updated**: January 20, 2026
 
 ## 1. Design Philosophy
 
@@ -34,17 +35,38 @@ MAEPLE uses Tailwind CSS with the `class` strategy for dark mode.
 
 ### 3.1 Navigation
 
-- **MobileNav**: Bottom bar navigation visible on all devices.
-- **Drawer**: Slide-out menu for core navigation items.
-- **UserMenu**: Top-right dropdown for secondary tools (Settings, Resources, Legal) and account actions.
-- **PWA Install**: A discrete "Install App" button appears in the top-right corner (desktop) or menu (mobile) when the browser supports installation.
+- **MobileNav**: Bottom bar navigation visible on all devices with 5 items:
+  - **Patterns** → Dashboard
+  - **Reflect** → Bio-Mirror
+  - **Capture** (center action) → Journal
+  - **Guide** → Live Coach
+  - **Menu** → Settings
+- **UserMenu**: Top-right dropdown for account actions and secondary features:
+  - Settings, Vision Board, Clinical Report
+  - Resources, Guide & Vision, Terms & Legal
+  - Sign Out
+- **PWA Install**: A discrete "Install App" button appears in the top-right corner when the browser supports installation.
 
 ### 3.2 Dashboard & Cards
 
+- **Card Base Class**: Uses `position: relative` for proper absolute child positioning
+- **Card Hover**: Default cards only show shadow/border changes on hover (no transform)
+- **Card Hoverable**: Use `.card-hoverable` class or `hoverable={true}` prop for scale-on-hover behavior
 - **Clean Design**: Cards should not have redundant internal headers if the page title already provides context.
 - **Capacity Check-in**: Uses gradient sliders and card layout for clear, calm input.
 - **Context Cards**: Grid layout with pastel color coding based on capacity levels (Blue/Purple/Pink).
 - **Visual Hierarchy**: Primary actions (Capture) are prominent; secondary details are subtle.
+
+**Card Component Props**:
+```tsx
+<Card hoverable={false}>  {/* Default: shadow/border hover only */}
+  <form>...</form>
+</Card>
+
+<Card hoverable={true}>   {/* Scales on hover for clickable cards */}
+  <div onClick={handleClick}>...</div>
+</Card>
+```
 
 ### 3.3 Feedback
 

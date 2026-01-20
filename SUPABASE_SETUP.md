@@ -2,9 +2,18 @@
 
 ## Overview
 
-Maeple now uses **Supabase** for production-ready authentication that works seamlessly on Vercel.
+Maeple uses **Supabase** for **production** authentication and user management on Vercel.
 
-## Why Supabase?
+> **Note:** For local development, the Docker stack includes a full PostgreSQL database with JWT-based authentication. See [LOCAL_DB_STATUS.md](LOCAL_DB_STATUS.md) for local setup details.
+
+## Local vs Production
+
+| Environment | Database | Auth | Setup |
+|-------------|----------|------|-------|
+| **Local** | PostgreSQL 16 (Docker) | JWT via local API | `docker-compose up -d` |
+| **Production** | Supabase (Cloud) | Supabase Auth | Configure env vars |
+
+## Why Supabase for Production?
 
 ✅ **No serverless functions needed** - Works entirely client-side
 ✅ **Vercel-compatible** - Deploys without additional configuration
@@ -37,13 +46,13 @@ Once your project is ready:
 2. Copy these values:
 
 ```
-Project URL: https://bqmxdempuujeqgmxxbxw.supabase.co
-Anon/public key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxbXhkZW1wdXVqZXFnbXh4Ynh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODExMzcsImV4cCI6MjA4MjQ1NzEzN30.8U0HLSDqSETOglvs0VjhZaL0MPqqYVWRxBdlgmNfvog
+Project URL: https://your-project.supabase.co
+Anon/public key: your-anon-key-here
 ```
 
 ⚠️ **Important**: Never commit your service_role key! Only use the anon/public key in your frontend.
 
-**Maeple Project** is already configured with these credentials.
+Note: Use your own Supabase project credentials for your environment.
 
 ---
 
@@ -52,11 +61,13 @@ Anon/public key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 ### For Local Development:
 
 1. Copy `.env.example` to `.env`:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Edit `.env` and add your Supabase credentials:
+
    ```env
    VITE_SUPABASE_URL=https://your-project.supabase.co
    VITE_SUPABASE_ANON_KEY=your-anon-key-here
@@ -107,7 +118,7 @@ Customize auth behavior in Supabase:
 
 After configuration, test auth flow:
 
-1. Open your app: `https://maeple.vercel.app` (or `http://localhost:5173` locally)
+1. Open your app: `https://your-app-url` (or `http://localhost:5173` locally)
 2. Click **Sign Up**
 3. Enter email and password
 4. Click **Create Account**
@@ -124,6 +135,7 @@ After configuration, test auth flow:
 **Cause**: Environment variables not set correctly
 
 **Fix**:
+
 1. Check `.env` file exists and has correct values
 2. For Vercel: Check environment variables in project settings
 3. Restart your dev server after updating `.env`
@@ -133,6 +145,7 @@ After configuration, test auth flow:
 **Cause**: Network connectivity or incorrect URL
 
 **Fix**:
+
 1. Verify `VITE_SUPABASE_URL` is correct (includes `https://`)
 2. Check Supabase status page: https://status.supabase.com
 3. Ensure your VPN or firewall isn't blocking requests
@@ -142,6 +155,7 @@ After configuration, test auth flow:
 **Cause**: Wrong email/password or user doesn't exist
 
 **Fix**:
+
 1. Try signing up again (if user doesn't exist)
 2. Check for typos in email/password
 3. Verify email confirmation is enabled in Supabase settings
@@ -151,6 +165,7 @@ After configuration, test auth flow:
 **Cause**: User signed up but didn't confirm email
 
 **Fix**:
+
 1. Check inbox (including spam folder)
 2. In Supabase dashboard, go to **Authentication** → **Users**
 3. Manually confirm user (for testing):
@@ -163,7 +178,7 @@ After configuration, test auth flow:
 
 ### OAuth Login (Google, GitHub, etc.)
 
-Already implemented! Just enable providers in Supabase:
+Implemented in this repo. Enable providers in Supabase:
 
 1. Go to **Authentication** → **Providers**
 2. Enable desired providers (Google, GitHub, GitLab)
@@ -172,7 +187,7 @@ Already implemented! Just enable providers in Supabase:
 
 ### Password Reset
 
-Already implemented:
+Implemented in this repo:
 
 1. User clicks "Forgot Password" in login form
 2. Enters email
@@ -181,16 +196,16 @@ Already implemented:
 
 ### User Profile Updates
 
-Already implemented:
+Implemented in this repo:
 
 ```typescript
-import { updateProfile } from './services/authService';
+import { updateProfile } from "./services/authService";
 
 // Update user's display name
-await updateProfile({ full_name: 'John Doe' });
+await updateProfile({ full_name: "John Doe" });
 
 // Update avatar
-await updateProfile({ avatar_url: 'https://...' });
+await updateProfile({ avatar_url: "https://..." });
 ```
 
 ---
@@ -248,11 +263,12 @@ If you were previously using custom serverless functions:
 ✅ **No changes needed** to your React components
 ✅ **Auth service handles the switch** automatically
 ✅ **All existing auth methods still work**:
-   - `signInWithEmail()`
-   - `signUpWithEmail()`
-   - `signOut()`
-   - `updateProfile()`
-   - etc.
+
+- `signInWithEmail()`
+- `signUpWithEmail()`
+- `signOut()`
+- `updateProfile()`
+- etc.
 
 Just configure Supabase credentials, and it works!
 
@@ -278,6 +294,7 @@ Just configure Supabase credentials, and it works!
 - ✅ Unlimited API requests
 
 **Upgrade needed only if**:
+
 - More than 50k monthly users
 - More than 500MB database
 - Need dedicated support

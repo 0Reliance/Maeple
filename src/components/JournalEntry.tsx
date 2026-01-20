@@ -1,4 +1,7 @@
+import { useAIService } from "@/contexts/DependencyContext";
+import { CircuitState } from "@/patterns/CircuitBreaker";
 import {
+  AlertCircle,
   Brain,
   ChevronDown,
   ChevronUp,
@@ -8,13 +11,14 @@ import {
   Users,
   X,
   Zap,
-  AlertCircle,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
+import { faceAnalysisToObservation, useObservations } from "../contexts/ObservationContext";
 import { AudioAnalysisResult } from "../services/audioAnalysisService";
-import { useAIService } from "@/contexts/DependencyContext";
-import { CircuitState } from "@/patterns/CircuitBreaker";
+import { useCorrelationAnalysis } from "../services/correlationService";
+import { useDraft } from "../services/draftService";
 import {
   CapacityProfile,
   HealthEntry,
@@ -24,32 +28,114 @@ import {
 } from "../types";
 import AILoadingState from "./AILoadingState";
 import GentleInquiry from "./GentleInquiry";
-import QuickCaptureMenu from "./QuickCaptureMenu";
 import RecordVoiceButton from "./RecordVoiceButton";
-import StateCheckWizard from "./StateCheckWizard";
 import VoiceObservations from "./VoiceObservations";
 import { Button } from "./ui/Button";
 import { Card, CardDescription } from "./ui/Card";
 import { Textarea } from "./ui/Input";
 
+// Zod schema for AI response validation
+// Note: moodScore uses 1-10 scale to match HealthEntry.mood type
+const AIResponseSchema = z
+  .object({
+    moodScore: z.number().min(1).max(10).optional().default(5),
+    moodLabel: z.string().optional().default("Neutral"),
+    medications: z
+      .array(
+        z.object({
+          name: z.string(),
+          amount: z.string().optional(),
+          unit: z.string().optional(),
+        })
+      )
+      .optional()
+      .default([]),
+    symptoms: z
+      .array(
+        z.object({
+          name: z.string(),
+          severity: z.number().min(1).max(10).optional(),
+        })
+      )
+      .optional()
+      .default([]),
+    activityTypes: z.array(z.string()).optional().default([]),
+    strengths: z.array(z.string()).optional().default([]),
+    strategies: z
+      .array(
+        z.object({
+          id: z.string().optional(),
+          title: z.string(),
+          action: z.string(),
+          type: z.enum(["REST", "FOCUS", "SOCIAL", "SENSORY", "EXECUTIVE"]).optional(),
+          icon: z.string().optional(),
+          relevanceScore: z.number().optional().default(0.7),
+        })
+      )
+      .optional()
+      .default([]),
+    summary: z.string().optional().default("Entry analyzed"),
+    analysisReasoning: z.string().optional().default(""),
+    objectiveObservations: z
+      .array(
+        z.object({
+          category: z.enum(["lighting", "noise", "tension", "fatigue", "speech-pace", "tone"]),
+          value: z.string(),
+          severity: z.enum(["low", "moderate", "high"]),
+          evidence: z.string(),
+        })
+      )
+      .optional()
+      .default([]),
+    gentleInquiry: z.string().nullable().optional(),
+    neuroMetrics: z
+      .object({
+        environmentalMentions: z.array(z.string()).optional().default([]),
+        socialMentions: z.array(z.string()).optional().default([]),
+        executiveMentions: z.array(z.string()).optional().default([]),
+        physicalMentions: z.array(z.string()).optional().default([]),
+      })
+      .optional()
+      .default({
+        environmentalMentions: [],
+        socialMentions: [],
+        executiveMentions: [],
+        physicalMentions: [],
+      }),
+  })
+  .transform(data => ({
+    ...data,
+    // Ensure strategies have required fields
+    strategies: data.strategies.map((s, idx) => ({
+      id: s.id || `strategy-${Date.now()}-${idx}`,
+      title: s.title,
+      action: s.action,
+      type: s.type || ("REST" as const),
+      icon: s.icon,
+      relevanceScore: s.relevanceScore,
+    })),
+  }));
+
 interface Props {
   onEntryAdded: (entry: HealthEntry) => void;
 }
 
-type CaptureMode = "menu" | "text" | "voice" | "bio-mirror";
-
 const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
-  // Capture Mode State
-  const [captureMode, setCaptureMode] = useState<CaptureMode>("menu");
-
-  const handleMethodSelect = (method: CaptureMode) => {
-    setCaptureMode(method);
-  };
   const [text, setText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>("");
   const [circuitState, setCircuitState] = useState<CircuitState>(CircuitState.CLOSED);
   const aiService = useAIService();
+
+  // Draft Service for auto-save
+  const { draft, markDirty, save: saveDraft } = useDraft();
+  const draftLoadedRef = useRef(false);
+
+  // Correlation Service for pattern analysis
+  const { analyze: analyzeCorrelation } = useCorrelationAnalysis();
+
+  // Observation Context for unified data flow
+  const { observations, add: addObservation, correlate: correlateObservation } = useObservations();
 
   // Subscribe to circuit breaker state changes
   useEffect(() => {
@@ -58,8 +144,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
   }, [aiService]);
 
   // Voice Observations State
-  const [voiceObservations, setVoiceObservations] =
-    useState<AudioAnalysisResult | null>(null);
+  const [voiceObservations, setVoiceObservations] = useState<AudioAnalysisResult | null>(null);
 
   // Photo/Bio-Mirror Observations State
   const [photoObservations, setPhotoObservations] = useState<any>(null);
@@ -71,6 +156,10 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
 
   const handlePhotoAnalysis = (analysis: any) => {
     setPhotoObservations(analysis);
+    // Add to ObservationContext for correlation
+    if (analysis) {
+      addObservation(faceAnalysisToObservation(analysis));
+    }
   };
 
   // Phase 1: Energy Capacity
@@ -84,8 +173,45 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     sensory: 6,
     executive: 5,
   });
-  const [suggestedCapacity, setSuggestedCapacity] =
-    useState<Partial<CapacityProfile>>({});
+  const [suggestedCapacity, setSuggestedCapacity] = useState<Partial<CapacityProfile>>({});
+
+  const updateCapacity = (key: keyof CapacityProfile, val: number) => {
+    setCapacity(prev => ({ ...prev, [key]: val }));
+  };
+
+  const calculateAverageEnergy = () => {
+    const values = Object.values(capacity) as number[];
+    return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+  };
+
+  // Load draft on mount (once) - must be after capacity state is defined
+  useEffect(() => {
+    if (draft?.data && !draftLoadedRef.current) {
+      draftLoadedRef.current = true;
+      const draftData = draft.data as Partial<HealthEntry>;
+      if (draftData.notes) {
+        setText(draftData.notes);
+      }
+      if (draftData.neuroMetrics?.capacity) {
+        setCapacity(draftData.neuroMetrics.capacity);
+      }
+    }
+  }, [draft]);
+
+  // Auto-save draft when content changes (debounced via markDirty)
+  useEffect(() => {
+    if (text.length > 0) {
+      markDirty({
+        notes: text,
+        neuroMetrics: {
+          spoonLevel: calculateAverageEnergy(),
+          sensoryLoad: 0,
+          contextSwitches: 0,
+          capacity,
+        },
+      });
+    }
+  }, [text, capacity, markDirty]);
 
   // Recalculate suggestions when observations change
   React.useEffect(() => {
@@ -95,10 +221,13 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
 
       // Update capacity with suggestions if not already set
       if (Object.keys(suggestions).length > 0) {
-        setCapacity((prev) => ({
-          ...prev,
-          ...suggestions,
-        }) as CapacityProfile);
+        setCapacity(
+          prev =>
+            ({
+              ...prev,
+              ...suggestions,
+            }) as CapacityProfile
+        );
       }
     } else {
       setSuggestedCapacity({});
@@ -106,9 +235,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
   }, [voiceObservations, photoObservations]);
 
   // Phase 3: Immediate Strategy Feedback
-  const [lastStrategies, setLastStrategies] = useState<
-    StrategyRecommendation[]
-  >([]);
+  const [lastStrategies, setLastStrategies] = useState<StrategyRecommendation[]>([]);
   const [lastReasoning, setLastReasoning] = useState<string | null>(null);
 
   const handleTranscript = (
@@ -116,7 +243,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     audioBlob?: Blob,
     analysis?: AudioAnalysisResult
   ) => {
-    setText((prev) => {
+    setText(prev => {
       const trimmed = prev.trim();
       return trimmed ? `${trimmed} ${transcript}` : transcript;
     });
@@ -125,15 +252,6 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     if (analysis) {
       setVoiceObservations(analysis);
     }
-  };
-
-  const updateCapacity = (key: keyof CapacityProfile, val: number) => {
-    setCapacity((prev) => ({ ...prev, [key]: val }));
-  };
-
-  const calculateAverageEnergy = () => {
-    const values = Object.values(capacity) as number[];
-    return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
   };
 
   const getSuggestedCapacity = (): Partial<CapacityProfile> => {
@@ -157,8 +275,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
       }
 
       const fastPace = voiceObservations.observations.some(
-        (obs: any) =>
-          obs.category === "speech-pace" && obs.value.includes("fast")
+        (obs: any) => obs.category === "speech-pace" && obs.value.includes("fast")
       );
       if (fastPace) {
         suggestions.executive = 4;
@@ -185,8 +302,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
       }
 
       const highTension = photoObservations.observations.some(
-        (obs: any) =>
-          obs.category === "tension" && obs.value.includes("high")
+        (obs: any) => obs.category === "tension" && obs.value.includes("high")
       );
       if (highTension) {
         suggestions.emotional = 4;
@@ -194,8 +310,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
       }
 
       const fatigueIndicators = photoObservations.observations.some(
-        (obs: any) =>
-          obs.category === "fatigue" && obs.severity !== "low"
+        (obs: any) => obs.category === "fatigue" && obs.severity !== "low"
       );
       if (fatigueIndicators) {
         suggestions.physical = 4;
@@ -206,9 +321,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     return suggestions;
   };
 
-  const getInformedByContext = (
-    field: keyof CapacityProfile
-  ): string | null => {
+  const getInformedByContext = (field: keyof CapacityProfile): string | null => {
     const reasons: string[] = [];
 
     // Voice analysis reasons
@@ -217,10 +330,8 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         const noiseObs = voiceObservations.observations.find(
           (obs: any) => obs.category === "noise"
         );
-        if (noiseObs?.severity === "high")
-          reasons.push("high noise level detected");
-        else if (noiseObs?.severity === "moderate")
-          reasons.push("moderate noise detected");
+        if (noiseObs?.severity === "high") reasons.push("high noise level detected");
+        else if (noiseObs?.severity === "moderate") reasons.push("moderate noise detected");
       }
       if (field === "executive") {
         const paceObs = voiceObservations.observations.find(
@@ -229,11 +340,8 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         if (paceObs) reasons.push("speech pace analysis");
       }
       if (field === "emotional") {
-        const toneObs = voiceObservations.observations.find(
-          (obs: any) => obs.category === "tone"
-        );
-        if (toneObs?.severity === "high")
-          reasons.push("tension detected in voice tone");
+        const toneObs = voiceObservations.observations.find((obs: any) => obs.category === "tone");
+        if (toneObs?.severity === "high") reasons.push("tension detected in voice tone");
       }
     }
 
@@ -277,7 +385,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         
         Return a JSON object matching this schema:
         {
-          "moodScore": 1-5,
+          "moodScore": 1-10,
           "moodLabel": "...",
           "medications": [{"name": "...", "amount": "...", "unit": "..."}],
           "symptoms": [{"name": "...", "severity": 1-10}],
@@ -290,34 +398,19 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
           "gentleInquiry": "... or null"
         }
       `;
-      
+
       const response = await aiService.analyze(prompt);
-      
+
       let parsed: ParsedResponse;
       try {
-        const cleanJson = response.content.replace(/```json\n|\n```/g, '').trim();
-        parsed = JSON.parse(cleanJson);
+        const cleanJson = response.content.replace(/```json\n|\n```/g, "").trim();
+        const jsonData = JSON.parse(cleanJson);
+        // Validate and sanitize with Zod
+        parsed = AIResponseSchema.parse(jsonData) as ParsedResponse;
       } catch (e) {
-        console.warn("Failed to parse JSON, using fallback", e);
-        parsed = {
-          moodScore: 3,
-          moodLabel: "Neutral",
-          medications: [],
-          symptoms: [],
-          neuroMetrics: {
-            environmentalMentions: [],
-            socialMentions: [],
-            executiveMentions: [],
-            physicalMentions: [],
-          },
-          activityTypes: [],
-          strengths: [],
-          summary: response.content || "Entry analyzed",
-          strategies: [],
-          analysisReasoning: "",
-          objectiveObservations: [],
-          gentleInquiry: undefined,
-        };
+        console.warn("Failed to parse or validate AI response, using fallback", e);
+        // Use Zod defaults for safe fallback
+        parsed = AIResponseSchema.parse({}) as ParsedResponse;
       }
 
       // Build objective observations array
@@ -346,10 +439,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
       }
 
       // 3. Add text observations if AI extracted them
-      if (
-        parsed.objectiveObservations &&
-        parsed.objectiveObservations.length > 0
-      ) {
+      if (parsed.objectiveObservations && parsed.objectiveObservations.length > 0) {
         objectiveObservations.push({
           type: "text",
           source: "text-input",
@@ -365,12 +455,12 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         rawText: text,
         mood: parsed.moodScore,
         moodLabel: parsed.moodLabel,
-        medications: parsed.medications.map((m) => ({
+        medications: parsed.medications.map(m => ({
           name: m.name,
           dosage: m.amount,
           unit: m.unit,
         })),
-        symptoms: parsed.symptoms.map((s) => ({
+        symptoms: parsed.symptoms.map(s => ({
           name: s.name,
           severity: s.severity,
         })),
@@ -381,15 +471,22 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
           spoonLevel: calculateAverageEnergy(),
           sensoryLoad: 0,
           contextSwitches: 0,
-          maskingScore: 0,
           capacity: capacity,
         },
         notes: parsed.summary,
         aiStrategies: parsed.strategies,
         aiReasoning: parsed.analysisReasoning,
-        objectiveObservations:
-          objectiveObservations.length > 0 ? objectiveObservations : undefined,
+        objectiveObservations: objectiveObservations.length > 0 ? objectiveObservations : undefined,
       };
+
+      // Run correlation analysis on entry save
+      const correlation = analyzeCorrelation(newEntry, observations);
+      if (correlation.insights.length > 0) {
+        // Attach correlation insights to entry
+        (newEntry as any).correlationInsights = correlation.insights;
+        (newEntry as any).correlationScore = correlation.score;
+        (newEntry as any).maskingDetected = correlation.masking.detected;
+      }
 
       // Handle gentle inquiry - display if provided, otherwise save entry
       if (parsed.gentleInquiry) {
@@ -398,6 +495,8 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         setPendingEntry(newEntry);
       } else {
         onEntryAdded(newEntry);
+        // Clear draft on successful save
+        saveDraft({ notes: "" });
         resetForm();
       }
 
@@ -405,12 +504,16 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
       setLastReasoning(parsed.analysisReasoning || null);
     } catch (e) {
       console.error("Failed to process entry", e);
-      
-      if (e && typeof e === 'object' && 'message' in e && 
-          (e as Error).message.includes('Circuit breaker is OPEN')) {
-        setError('AI service temporarily unavailable. Please try again later.');
+
+      if (
+        e &&
+        typeof e === "object" &&
+        "message" in e &&
+        (e as Error).message.includes("Circuit breaker is OPEN")
+      ) {
+        setError("AI service temporarily unavailable. Please try again later.");
       } else {
-        setError('Failed to analyze entry. Please try again.');
+        setError("Failed to analyze entry. Please try again.");
       }
     } finally {
       setIsProcessing(false);
@@ -422,6 +525,8 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
       setShowInquiry(false);
       if (pendingEntry) {
         onEntryAdded(pendingEntry);
+        // Clear draft on successful save
+        saveDraft({ notes: "" });
       }
       resetForm();
       return;
@@ -435,6 +540,8 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     };
 
     onEntryAdded(entryWithInquiry);
+    // Clear draft on successful save
+    saveDraft({ notes: "" });
     resetForm();
   };
 
@@ -442,6 +549,8 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     setShowInquiry(false);
     if (pendingEntry) {
       onEntryAdded(pendingEntry);
+      // Clear draft on successful save
+      saveDraft({ notes: "" });
     }
     resetForm();
   };
@@ -521,14 +630,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     },
   };
 
-  const CapacitySlider = ({
-    label,
-    icon: Icon,
-    value,
-    field,
-    color,
-    suggested,
-  }: any) => {
+  const CapacitySlider = ({ label, icon: Icon, value, field, color, suggested }: any) => {
     const styles = colorStyles[color] || colorStyles.blue;
     const informedBy = getInformedByContext(field);
     const isSuggested = suggested !== undefined && value === suggested;
@@ -537,23 +639,13 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center gap-2">
-            <div
-              className={`p-1.5 rounded-full ${styles.bg} ${styles.text}`}
-            >
+            <div className={`p-1.5 rounded-full ${styles.bg} ${styles.text}`}>
               <Icon size={14} />
             </div>
-            <span className="text-sm font-medium text-text-primary">
-              {label}
-            </span>
-            {isSuggested && (
-              <span className="text-xs text-primary font-medium">
-                (Suggested)
-              </span>
-            )}
+            <span className="text-sm font-medium text-text-primary">{label}</span>
+            {isSuggested && <span className="text-xs text-primary font-medium">(Suggested)</span>}
           </div>
-          <span className="text-sm font-bold text-text-primary">
-            {value}/10
-          </span>
+          <span className="text-sm font-bold text-text-primary">{value}/10</span>
         </div>
 
         {informedBy && (
@@ -573,9 +665,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
             min="1"
             max="10"
             value={value}
-            onChange={(e) =>
-              updateCapacity(field, parseInt(e.target.value))
-            }
+            onChange={e => updateCapacity(field, parseInt(e.target.value))}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
         </div>
@@ -585,37 +675,12 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
 
   return (
     <div className="space-y-lg animate-fadeIn">
-      {/* Quick Capture Menu - Mode Selection */}
-      {captureMode === "menu" && (
-        <QuickCaptureMenu
-          onMethodSelect={handleMethodSelect}
-          disabled={isProcessing}
-        />
-      )}
-
-      {/* Bio-Mirror / Photo Mode */}
-      {captureMode === "bio-mirror" && (
-        <div className="space-y-6">
-          <Card>
-            <button
-              onClick={() => setCaptureMode("menu")}
-              className="text-small text-text-tertiary hover:text-text-primary transition-colors"
-            >
-              ← Back to menu
-            </button>
-            <div className="mt-4">
-              <StateCheckWizard />
-            </div>
-          </Card>
-        </div>
-      )}
-
       {/* Gentle Inquiry Overlay */}
       {showInquiry && gentleInquiry && (
         <Card className="bg-primary/10 border-primary/20">
           <GentleInquiry
             inquiry={gentleInquiry}
-            onResponse={(response) => {
+            onResponse={response => {
               setInquiryResponse(response);
               handleInquirySubmit();
             }}
@@ -637,9 +702,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
 
           <div className="flex items-center gap-2 mb-4 pr-8">
             <Compass size={24} className="text-white/80" />
-            <h3 className="text-h2 font-display font-semibold">
-              Today's Insights
-            </h3>
+            <h3 className="text-h2 font-display font-semibold">Today's Insights</h3>
           </div>
 
           {lastReasoning && (
@@ -649,17 +712,13 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
           )}
 
           <div className="grid md:grid-cols-3 gap-lg">
-            {lastStrategies.map((strat) => (
+            {lastStrategies.map(strat => (
               <div
                 key={strat.id}
                 className="bg-white/10 border border-white/20 p-lg rounded-xl backdrop-blur-sm"
               >
-                <span className="font-bold text-small text-white block mb-2">
-                  {strat.title}
-                </span>
-                <p className="text-base text-white/90 leading-relaxed">
-                  {strat.action}
-                </p>
+                <span className="font-bold text-small text-white block mb-2">{strat.title}</span>
+                <p className="text-base text-white/90 leading-relaxed">{strat.action}</p>
               </div>
             ))}
           </div>
@@ -688,9 +747,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
               <h3 className="text-h2 font-display font-semibold text-text-primary">
                 Energy Check-in
               </h3>
-              <CardDescription>
-                Set your baseline before journaling.
-              </CardDescription>
+              <CardDescription>Set your baseline before journaling.</CardDescription>
             </div>
             <button
               onClick={() => setShowCapacity(!showCapacity)}
@@ -745,7 +802,10 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         {/* Error Display */}
         {error && (
           <div className="mb-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-4 flex items-start gap-3">
-            <AlertCircle size={20} className="text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
+            <AlertCircle
+              size={20}
+              className="text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5"
+            />
             <div className="flex-1">
               <p className="text-sm text-rose-900 dark:text-rose-200">{error}</p>
             </div>
@@ -754,7 +814,10 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
 
         {circuitState === CircuitState.OPEN && !error && (
           <div className="mb-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
-            <AlertCircle size={20} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <AlertCircle
+              size={20}
+              className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+            />
             <div className="flex-1">
               <p className="text-sm text-amber-900 dark:text-amber-200">
                 AI service is temporarily unavailable. Please wait a moment before trying again.
@@ -770,14 +833,14 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
               Capture Your Moment
             </p>
             <p className="text-small text-text-secondary">
-              Note your <strong>environment</strong>, <strong>interactions</strong>,
-              and <strong>energy levels</strong>.
+              Note your <strong>environment</strong>, <strong>interactions</strong>, and{" "}
+              <strong>energy levels</strong>.
             </p>
           </div>
 
           <Textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={e => setText(e.target.value)}
             placeholder="How are you feeling right now? (e.g., 'Overwhelmed by noise', 'In peak focus')"
             className="resize-none"
             rows={4}
@@ -787,7 +850,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
           <div className="absolute right-4 bottom-4">
             <RecordVoiceButton
               onTranscript={handleTranscript}
-              onAnalysisReady={(analysis) => setVoiceObservations(analysis)}
+              onAnalysisReady={analysis => setVoiceObservations(analysis)}
               isDisabled={isProcessing}
             />
           </div>

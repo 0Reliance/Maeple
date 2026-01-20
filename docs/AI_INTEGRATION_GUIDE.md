@@ -604,7 +604,7 @@ export class AICache {
 ```typescript
 // Bio-Mirror facial analysis
 const analysis = await gemini.generate({
-  model: 'gemini-2.0-flash-exp',
+  model: 'gemini-2.5-flash',
   contents: [{
     role: 'user',
     parts: [

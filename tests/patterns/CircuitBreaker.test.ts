@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CircuitBreaker, CircuitState, CircuitBreakerOpenError } from '@/patterns/CircuitBreaker';
+import { CircuitBreaker, CircuitState, CircuitBreakerOpenError, createCircuitBreaker, withCircuitBreaker } from '../../src/patterns/CircuitBreaker';
 
 describe('CircuitBreaker', () => {
   let circuitBreaker: CircuitBreaker;
@@ -78,11 +78,12 @@ describe('CircuitBreaker', () => {
   describe('OPEN State', () => {
     it('should throw CircuitBreakerOpenError when OPEN', async () => {
       const mockFn = vi.fn().mockResolvedValue('success');
+      const failingFn = vi.fn().mockRejectedValue(new Error('fail'));
       
       // Force OPEN state
       for (let i = 0; i < 5; i++) {
         try {
-          await circuitBreaker.execute(mockFn);
+          await circuitBreaker.execute(failingFn);
         } catch (e) {
           // Expected to fail
         }
@@ -95,8 +96,8 @@ describe('CircuitBreaker', () => {
         CircuitBreakerOpenError
       );
       
-      // Should not call the function
-      expect(mockFn).toHaveBeenCalledTimes(5);
+      // Should not call the function (5 calls were from the setup loop)
+      expect(mockFn).not.toHaveBeenCalled();
     });
 
     it('should allow execution after reset timeout', async () => {
@@ -140,10 +141,12 @@ describe('CircuitBreaker', () => {
       
       // Advance time past reset timeout
       vi.advanceTimersByTime(1000);
+      
+      // First execution triggers transition to HALF_OPEN
+      await circuitBreaker.execute(successFn);
       expect(circuitBreaker.getState()).toBe(CircuitState.HALF_OPEN);
       
-      // Make 2 successful calls
-      await circuitBreaker.execute(successFn);
+      // Second successful call
       await circuitBreaker.execute(successFn);
       
       // Should transition to CLOSED
@@ -166,10 +169,10 @@ describe('CircuitBreaker', () => {
       
       // Advance time past reset timeout
       vi.advanceTimersByTime(1000);
-      expect(circuitBreaker.getState()).toBe(CircuitState.HALF_OPEN);
       
-      // One success
+      // First execution triggers transition to HALF_OPEN
       await circuitBreaker.execute(successFn);
+      expect(circuitBreaker.getState()).toBe(CircuitState.HALF_OPEN);
       
       // Fail once
       try {
@@ -184,12 +187,12 @@ describe('CircuitBreaker', () => {
   });
 
   describe('State Change Callback', () => {
-    it('should call onStateChange callback', () => {
+    it('should call onStateChange callback', async () => {
       const failFn = vi.fn().mockRejectedValue(new Error('fail'));
       
       // Force OPEN state
       for (let i = 0; i < 5; i++) {
-        circuitBreaker.execute(failFn).catch(() => {});
+        await circuitBreaker.execute(failFn).catch(() => {});
       }
       
       expect(stateChangeCallback).toHaveBeenCalledTimes(1);
@@ -242,14 +245,12 @@ describe('CircuitBreaker', () => {
 
   describe('Factory Function', () => {
     it('should create circuit breaker with default config', () => {
-      const { createCircuitBreaker } = require('@/patterns/CircuitBreaker');
       const breaker = createCircuitBreaker();
       
       expect(breaker.getState()).toBe(CircuitState.CLOSED);
     });
 
-    it('should merge config with defaults', () => {
-      const { createCircuitBreaker } = require('@/patterns/CircuitBreaker');
+    it('should merge config with defaults', async () => {
       const breaker = createCircuitBreaker({
         failureThreshold: 10,
       });
@@ -257,7 +258,7 @@ describe('CircuitBreaker', () => {
       // Should not throw with 5 failures
       const failFn = vi.fn().mockRejectedValue(new Error('fail'));
       for (let i = 0; i < 5; i++) {
-        breaker.execute(failFn).catch(() => {});
+        await breaker.execute(failFn).catch(() => {});
       }
       
       expect(breaker.getState()).toBe(CircuitState.CLOSED);
@@ -267,7 +268,6 @@ describe('CircuitBreaker', () => {
 
   describe('Decorator', () => {
     it('should wrap function with circuit breaker', async () => {
-      const { withCircuitBreaker } = require('@/patterns/CircuitBreaker');
       
       let callCount = 0;
       const mockFn = vi.fn().mockImplementation(() => {

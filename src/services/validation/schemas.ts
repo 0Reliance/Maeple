@@ -155,7 +155,6 @@ export const FacialBaselineSchema = z.object({
   timestamp: z.string().datetime(),
   neutralTension: z.number().min(1).max(10),
   neutralFatigue: z.number().min(1).max(10),
-  neutralMasking: z.number().min(1).max(10),
 });
 
 /**

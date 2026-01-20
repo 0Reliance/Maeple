@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { aiRouter } from '../../services/ai/router';
-import { AISettings } from '../../services/ai/types';
+import { aiRouter } from '../../src/services/ai/router';
+import { AISettings } from '../../src/services/ai/types';
 
 // Mock adapters
-vi.mock('../../services/ai/adapters/gemini', () => {
+vi.mock('../../src/services/ai/adapters/gemini', () => {
   return {
     GeminiAdapter: class {
       constructor() {}
@@ -13,7 +13,7 @@ vi.mock('../../services/ai/adapters/gemini', () => {
   }
 });
 
-vi.mock('../../services/ai/adapters/openai', () => {
+vi.mock('../../src/services/ai/adapters/openai', () => {
   return {
     OpenAIAdapter: class {
       constructor() {}

@@ -151,10 +151,28 @@ const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Error Message */}
+            {/* Error Message - Enhanced for network errors */}
             {error && (
-              <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300 text-sm">
-                {error}
+              <div className={`p-3 rounded-lg text-sm ${
+                error.includes('offline') || error.includes('connect') || error.includes('network')
+                  ? 'bg-amber-500/20 border border-amber-500/50 text-amber-300'
+                  : 'bg-red-500/20 border border-red-500/50 text-red-300'
+              }`}>
+                <div className="flex items-start gap-2">
+                  {(error.includes('offline') || error.includes('connect') || error.includes('network')) && (
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
+                    </svg>
+                  )}
+                  <div>
+                    <p>{error}</p>
+                    {(error.includes('offline') || error.includes('connect')) && (
+                      <p className="mt-1 text-xs opacity-75">
+                        💡 You can still use the app - all data is saved locally.
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -169,6 +187,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Your name"
+                  autoComplete="name"
                   className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
@@ -185,6 +204,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
+                autoComplete="email"
                 className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
@@ -202,6 +222,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                   placeholder="••••••••"
                   required
                   minLength={6}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
                   className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
@@ -252,9 +273,19 @@ const AuthModal: React.FC<AuthModalProps> = ({
                       resetForm();
                       setMode("signup");
                     }}
-                    className="text-teal-400 hover:text-teal-300"
+                    className="text-teal-400 hover:text-teal-300 block w-full"
                   >
                     Don't have an account? Sign up
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetForm();
+                      setMode("magic");
+                    }}
+                    className="text-slate-400 hover:text-white text-xs"
+                  >
+                    Sign in with magic link instead
                   </button>
                 </>
               )}

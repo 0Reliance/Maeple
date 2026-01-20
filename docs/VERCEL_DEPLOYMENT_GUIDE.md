@@ -1,6 +1,7 @@
 # Vercel Deployment Guide for Maeple
 
 ## Table of Contents
+
 1. [Prerequisites](#prerequisites)
 2. [Quick Start Deployment](#quick-start-deployment)
 3. [Detailed Setup](#detailed-setup)
@@ -47,13 +48,14 @@ Output Directory: dist
 Install Command: npm install
 ```
 
-**Click "Deploy"** - Vercel will build and deploy automatically!
+Click **Deploy** and Vercel will build and deploy automatically.
 
 ### Step 3: Access Your Deployment
 
 After 2-3 minutes, you'll see:
+
 - ✅ "Congratulations!" message
-- 🔗 Production URL: `https://maeple-xyz.vercel.app`
+- 🔗 Production URL: `https://your-project.vercel.app`
 - 📊 Live deployment logs
 - 🔍 Preview URLs for each commit
 
@@ -120,6 +122,7 @@ The `vercel.json` file in Maeple root handles configuration:
 ```
 
 **Configuration Explained**:
+
 - `rewrites`: SPA routing support (all routes → index.html)
 - `buildCommand`: Command to build production bundle
 - `outputDirectory`: Where build output is created
@@ -135,13 +138,13 @@ The `vercel.json` file in Maeple root handles configuration:
 
 Navigate to **Settings → Environment Variables** in Vercel dashboard:
 
-| Variable | Description | Example | Required |
-|-----------|-------------|-----------|-----------|
-| `VITE_SUPABASE_URL` | Supabase project URL | `https://xyz.supabase.co` | Yes |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | `eyJhbGciOiJIUzI1NiIsInR5cCI6...` | Yes |
-| `VITE_GEMINI_API_KEY` | Google Gemini API key | `AIzaSy...` | Yes |
-| `VITE_OPENROUTER_API_KEY` | OpenRouter API key | `sk-or-v1...` | Optional |
-| `VITE_ANTHROPIC_API_KEY` | Anthropic API key | `sk-ant-...` | Optional |
+| Variable                  | Description            | Example                   | Required |
+| ------------------------- | ---------------------- | ------------------------- | -------- |
+| `VITE_SUPABASE_URL`       | Supabase project URL   | `https://xyz.supabase.co` | Yes      |
+| `VITE_SUPABASE_ANON_KEY`  | Supabase anonymous key | `your-supabase-anon-key`  | Yes      |
+| `VITE_GEMINI_API_KEY`     | Google Gemini API key  | `your-gemini-api-key`     | Yes      |
+| `VITE_OPENROUTER_API_KEY` | OpenRouter API key     | `sk-or-v1...`             | Optional |
+| `VITE_ANTHROPIC_API_KEY`  | Anthropic API key      | `sk-ant-...`              | Optional |
 
 ### Adding Environment Variables
 
@@ -159,6 +162,7 @@ Navigate to **Settings → Environment Variables** in Vercel dashboard:
 ### Getting Your API Keys
 
 #### Supabase
+
 1. Go to [supabase.com/dashboard](https://supabase.com/dashboard)
 2. Select your project
 3. Navigate to **Settings → API**
@@ -167,11 +171,13 @@ Navigate to **Settings → Environment Variables** in Vercel dashboard:
    - **anon public** key → `VITE_SUPABASE_ANON_KEY`
 
 #### Google Gemini
+
 1. Go to [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
 2. Click **"Create API Key"**
 3. Copy the key → `VITE_GEMINI_API_KEY`
 
 #### OpenRouter (Optional)
+
 1. Go to [openrouter.ai/keys](https://openrouter.ai/keys)
 2. Create account
 3. Generate API key → `VITE_OPENROUTER_API_KEY`
@@ -228,6 +234,7 @@ Node Version: 22.x
 #### Enable CI/CD with GitHub
 
 When you push to GitHub:
+
 - **main branch**: Auto-deploys to Production
 - **other branches**: Auto-deploys to Preview
 - **pull requests**: Creates preview deployments
@@ -235,11 +242,13 @@ When you push to GitHub:
 #### Build Caching
 
 Vercel automatically caches:
+
 - `node_modules/` between builds
 - NPM packages for faster installs
 - Build artifacts
 
 To clear cache:
+
 ```bash
 # Add empty commit to trigger fresh build
 git commit --allow-empty -m "Clear build cache"
@@ -264,6 +273,7 @@ git push
 - No manual DNS configuration required
 
 **Steps**:
+
 1. Update nameservers at your registrar:
    ```
    ns1.vercel-dns.com
@@ -286,8 +296,9 @@ TTL: 300
 ### Enabling HTTPS
 
 Vercel provides **automatic SSL certificates** for:
+
 - ✅ Custom domains
-- ✅ Auto-generated domains (*.vercel.app)
+- ✅ Auto-generated domains (\*.vercel.app)
 - ✅ Subdomains (app.yourdomain.com)
 
 No manual configuration needed!
@@ -348,11 +359,13 @@ Vercel provides built-in analytics:
 #### Issue 1: Build Fails - "Module not found"
 
 **Error**:
+
 ```
 Error: Cannot find module './components/SomeComponent'
 ```
 
 **Solution**:
+
 ```bash
 # Check file paths in imports
 # Fix import statements:
@@ -368,11 +381,13 @@ git push
 #### Issue 2: Build Fails - "TypeScript errors"
 
 **Error**:
+
 ```
 error TS2322: Type 'string' is not assignable to type 'number'
 ```
 
 **Solution**:
+
 ```bash
 # Run type check locally to see all errors
 cd Maeple
@@ -390,7 +405,9 @@ git push
 **Symptom**: API calls failing in production
 
 **Solution**:
+
 1. Check variable names in Vercel dashboard:
+
    ```
    VITE_SUPABASE_URL  ✅ (starts with VITE_)
    SUPABASE_URL        ❌ (wrong prefix)
@@ -408,6 +425,7 @@ git push
 **Symptom**: White screen, no content
 
 **Solution**:
+
 1. Check build output in Vercel dashboard:
    - Did `npm run build` complete successfully?
    - Is `dist/` directory generated?
@@ -431,7 +449,9 @@ git push
 **Symptom**: Build takes 10+ minutes
 
 **Solution**:
+
 1. Check for large files:
+
    ```bash
    # Find large files in repo
    find . -type f -size +10M -exec ls -lh {} \;
@@ -450,6 +470,7 @@ git push
 **Symptom**: PR previews show errors
 
 **Solution**:
+
 1. Ensure environment variables are set for **Preview**
 2. Check if API keys work for preview URLs
 3. Verify routing works in preview environment
@@ -501,13 +522,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['lucide-react']
-        }
-      }
-    }
-  }
-})
+          vendor: ["react", "react-dom"],
+          ui: ["lucide-react"],
+        },
+      },
+    },
+  },
+});
 ```
 
 ### 4. Environment-Specific Config
@@ -516,9 +537,7 @@ export default defineConfig({
 // Access environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const isProduction = import.meta.env.PROD;
-const apiUrl = isProduction 
-  ? 'https://api.production.com'
-  : 'https://api.dev.com';
+const apiUrl = isProduction ? "https://api.production.com" : "https://api.dev.com";
 ```
 
 ### 5. Error Handling
@@ -526,8 +545,8 @@ const apiUrl = isProduction
 ```typescript
 // src/services/errorLogger.ts
 export const logError = (error: Error, context?: any) => {
-  console.error('[Error]', error, context);
-  
+  console.error("[Error]", error, context);
+
   // In production, send to error tracking
   if (import.meta.env.PROD) {
     // Sentry, LogRocket, etc.
@@ -544,11 +563,7 @@ export const measureRender = (componentName: string) => {
     performance.mark(`${componentName}-start`);
     return () => {
       performance.mark(`${componentName}-end`);
-      performance.measure(
-        componentName,
-        `${componentName}-start`,
-        `${componentName}-end`
-      );
+      performance.measure(componentName, `${componentName}-start`, `${componentName}-end`);
     };
   }
 };
@@ -608,7 +623,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.ORG_ID }}
           vercel-project-id: ${{ secrets.PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: "--prod"
 ```
 
 ---
@@ -618,38 +633,45 @@ jobs:
 After each deployment, verify:
 
 ### 1. Application Loads
+
 - [ ] Homepage loads without errors
 - [ ] No console errors in browser
 - [ ] All assets load correctly
 
 ### 2. Authentication
+
 - [ ] Login works
 - [ ] Registration works
 - [ ] Logout works
 - [ ] Session persists across page reloads
 
 ### 3. Core Features
+
 - [ ] Journal entries create successfully
 - [ ] Dashboard displays correctly
 - [ ] Biofeedback camera works
 - [ ] Settings page accessible
 
 ### 4. API Integration
+
 - [ ] Supabase connection works
 - [ ] AI providers respond correctly
 - [ ] Wearables sync (if applicable)
 
 ### 5. Responsive Design
+
 - [ ] Mobile view works (iPhone/Android)
 - [ ] Tablet view works (iPad)
 - [ ] Desktop view works
 
 ### 6. Performance
+
 - [ ] Page load time < 3 seconds
 - [ ] First Contentful Paint < 1.5 seconds
 - [ ] Lighthouse score > 90
 
 ### 7. Security
+
 - [ ] HTTPS enabled
 - [ ] Environment variables not exposed
 - [ ] API keys secure
@@ -660,17 +682,20 @@ After each deployment, verify:
 ## Resources
 
 ### Official Documentation
+
 - [Vercel Docs](https://vercel.com/docs)
 - [Vercel CLI](https://vercel.com/docs/cli)
 - [Vite on Vercel](https://vercel.com/guides/vite)
 - [Environment Variables](https://vercel.com/docs/projects/environment-variables)
 
 ### Maeple-Specific
+
 - [Maeple README](../../README.md)
 - [Deployment Readiness](./DEPLOYMENT_READINESS.md)
 - [Setup Guide](../SETUP.md)
 
 ### External Tools
+
 - [GitHub Integration](https://vercel.com/docs/git-integrations)
 - [Custom Domains](https://vercel.com/docs/custom-domains)
 - [Analytics Dashboard](https://vercel.com/docs/analytics)
@@ -680,10 +705,12 @@ After each deployment, verify:
 ## Quick Reference
 
 ### Deployment URLs
-- **Production**: `https://maeple.vercel.app` (or your custom domain)
-- **Preview**: `https://maeple-branch-name.vercel.app`
+
+- **Production**: `https://your-app-url` (or your custom domain)
+- **Preview**: `https://your-project-git-branch.vercel.app`
 
 ### Useful Commands
+
 ```bash
 # Deploy from local
 vercel --prod
@@ -696,6 +723,7 @@ vercel inspect
 ```
 
 ### Environment Variables Template
+
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
@@ -709,11 +737,13 @@ VITE_ANTHROPIC_API_KEY=your-anthropic-key
 ## Support
 
 ### Get Help
+
 - [Vercel Support](https://vercel.com/support)
 - [Vercel Community](https://vercel.com/community)
 - [Maeple GitHub Issues](https://github.com/poziverse/maeple/issues)
 
 ### Common Issues Search
+
 - Search Vercel docs: [vercel.com/docs](https://vercel.com/docs)
 - Search GitHub issues: [github.com/vercel/vercel](https://github.com/vercel/vercel/issues)
 

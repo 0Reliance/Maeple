@@ -1,17 +1,13 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import MobileNav from '../../components/MobileNav';
-import { View } from '../../types';
+import MobileNav from "../../src/components/MobileNav";
+import { View } from "../../src/types";
 
 describe('MobileNav Component', () => {
-  const mockOnToggleMenu = vi.fn();
-
   const defaultProps = {
     currentView: View.JOURNAL,
-    onToggleMenu: mockOnToggleMenu,
-    isMenuOpen: false
   };
 
   const renderWithRouter = (ui: React.ReactElement) => {
@@ -25,9 +21,9 @@ describe('MobileNav Component', () => {
   it('renders all navigation items', () => {
     renderWithRouter(<MobileNav {...defaultProps} />);
     expect(screen.getByText('Patterns')).toBeInTheDocument();
-    expect(screen.getByText('Bio-Mirror')).toBeInTheDocument();
+    expect(screen.getByText('Reflect')).toBeInTheDocument();
     expect(screen.getByText('Capture')).toBeInTheDocument();
-    expect(screen.getByText('Coach')).toBeInTheDocument();
+    expect(screen.getByText('Guide')).toBeInTheDocument();
     expect(screen.getByText('Menu')).toBeInTheDocument();
   });
 
@@ -40,25 +36,24 @@ describe('MobileNav Component', () => {
     );
     
     const dashboardLink = screen.getByText('Patterns').closest('a');
-    expect(dashboardLink).toHaveClass('text-teal-600');
+    expect(dashboardLink).toHaveClass('text-primary');
     
-    const coachLink = screen.getByText('Coach').closest('a');
-    expect(coachLink).toHaveClass('text-slate-400');
+    const coachLink = screen.getByText('Guide').closest('a');
+    expect(coachLink).toHaveClass('text-text-tertiary');
   });
 
   it('contains correct links', () => {
     renderWithRouter(<MobileNav {...defaultProps} />);
     
     expect(screen.getByText('Patterns').closest('a')).toHaveAttribute('href', '/dashboard');
-    expect(screen.getByText('Bio-Mirror').closest('a')).toHaveAttribute('href', '/bio-mirror');
-    expect(screen.getByText('Coach').closest('a')).toHaveAttribute('href', '/coach');
+    expect(screen.getByText('Reflect').closest('a')).toHaveAttribute('href', '/bio-mirror');
+    expect(screen.getByText('Guide').closest('a')).toHaveAttribute('href', '/coach');
     expect(screen.getByText('Capture').closest('a')).toHaveAttribute('href', '/journal');
   });
 
-  it('calls onToggleMenu when menu is clicked', () => {
+  it('menu button links to settings', () => {
     renderWithRouter(<MobileNav {...defaultProps} />);
     
-    fireEvent.click(screen.getByText('Menu'));
-    expect(mockOnToggleMenu).toHaveBeenCalled();
+    expect(screen.getByText('Menu').closest('a')).toHaveAttribute('href', '/settings');
   });
 });

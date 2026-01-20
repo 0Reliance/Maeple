@@ -6,7 +6,7 @@ const PENDING_KEY = "maeple_pending_sync";
 
 // Simple pending change interface (avoid circular deps)
 interface PendingChange {
-  type: "entry" | "settings" | "stateCheck";
+  type: "entry" | "settings";
   action: "create" | "update" | "delete";
   id: string;
   timestamp: string;
@@ -20,7 +20,7 @@ const queuePendingChange = (
 ) => {
   const stored = localStorage.getItem(PENDING_KEY);
   const pending: PendingChange[] = stored ? JSON.parse(stored) : [];
-  const filtered = pending.filter((p) => !(p.id === id && p.type === type));
+  const filtered = pending.filter(p => !(p.id === id && p.type === type));
   filtered.push({ type, action, id, timestamp: new Date().toISOString() });
   localStorage.setItem(PENDING_KEY, JSON.stringify(filtered));
 };
@@ -32,7 +32,7 @@ export const getEntries = (): HealthEntry[] => {
 
 export const saveEntry = (entry: HealthEntry, skipSync = false) => {
   const entries = getEntries();
-  const existingIndex = entries.findIndex((e) => e.id === entry.id);
+  const existingIndex = entries.findIndex(e => e.id === entry.id);
 
   let updated: HealthEntry[];
   let action: "create" | "update";
@@ -60,7 +60,7 @@ export const saveEntry = (entry: HealthEntry, skipSync = false) => {
 
 export const deleteEntry = (id: string, skipSync = false) => {
   const entries = getEntries();
-  const updated = entries.filter((e) => e.id !== id);
+  const updated = entries.filter(e => e.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
   // Queue for cloud sync

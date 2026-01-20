@@ -1,28 +1,61 @@
-
-// Simple wrapper for Web Crypto API to handle local encryption
+/**
+ * MAEPLE Encryption Service
+ * 
+ * Provides AES-GCM 256-bit encryption for sensitive biometric data.
+ * 
+ * SECURITY CONSIDERATIONS:
+ * ========================
+ * Current implementation stores the encryption key in localStorage.
+ * This provides protection against:
+ * - Casual observers looking at localStorage directly
+ * - Data at rest (if device is stolen but not unlocked)
+ * 
+ * This does NOT protect against:
+ * - XSS attacks (JavaScript can read localStorage)
+ * - Root/admin access to the device
+ * - Browser extensions with storage permissions
+ * 
+ * FUTURE IMPROVEMENTS (TODO):
+ * 1. Use Web Authentication API (WebAuthn) for key derivation from biometrics
+ * 2. On mobile (Capacitor): Use platform secure storage (iOS Keychain / Android Keystore)
+ * 3. Implement password-based key derivation (PBKDF2) for user-derived keys
+ * 4. Consider IndexedDB with encryption-at-rest on supported browsers
+ * 
+ * For production with highly sensitive data, consider:
+ * - Server-side encryption with user-held keys
+ * - Hardware security modules (HSM) integration
+ * - Zero-knowledge proof systems
+ */
 
 const ALG = "AES-GCM";
+const STORAGE_KEY = "maeple_key";
 
-const getKey = async () => {
-  // In a real app, we'd derive this from a user password or store it in a secure enclave.
-  // For this local-first MVP, we'll store a key in localStorage if not present, 
-  // acknowledging that this protects against casual snooping but not root access.
-  const storedKey = localStorage.getItem("maeple_key");
+/**
+ * Get or create the encryption key
+ * 
+ * WARNING: Key is stored in localStorage which is accessible to JavaScript.
+ * See security considerations above.
+ */
+const getKey = async (): Promise<CryptoKey> => {
+  const storedKey = localStorage.getItem(STORAGE_KEY);
   if (storedKey) {
     return importKey(storedKey);
   } else {
     const key = await window.crypto.subtle.generateKey(
       { name: ALG, length: 256 },
-      true,
+      true, // extractable - needed for export/import
       ["encrypt", "decrypt"]
     );
     const exported = await window.crypto.subtle.exportKey("jwk", key);
-    localStorage.setItem("maeple_key", JSON.stringify(exported));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(exported));
     return key;
   }
 };
 
-const importKey = async (jwkStr: string) => {
+/**
+ * Import a JWK key from string
+ */
+const importKey = async (jwkStr: string): Promise<CryptoKey> => {
   const jwk = JSON.parse(jwkStr);
   return window.crypto.subtle.importKey(
     "jwk",
@@ -31,6 +64,22 @@ const importKey = async (jwkStr: string) => {
     true,
     ["encrypt", "decrypt"]
   );
+};
+
+/**
+ * Check if encryption key exists (useful for migration/reset scenarios)
+ */
+export const hasEncryptionKey = (): boolean => {
+  return localStorage.getItem(STORAGE_KEY) !== null;
+};
+
+/**
+ * Reset encryption key (WARNING: existing encrypted data will be unrecoverable)
+ */
+export const resetEncryptionKey = async (): Promise<void> => {
+  localStorage.removeItem(STORAGE_KEY);
+  // Generate new key on next getKey() call
+  await getKey();
 };
 
 export const encryptData = async (data: unknown): Promise<{ cipher: string; iv: string }> => {

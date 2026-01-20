@@ -1,8 +1,12 @@
 # MAEPLE - Mental And Emotional Pattern Literacy Engine
 
+[![Version](https://img.shields.io/badge/Version-0.97.7-purple)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2+-blue)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18.2.0-61DAFB)](https://react.dev/)
+[![React](https://img.shields.io/badge/React-19.2-61DAFB)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7.2-646CFF)](https://vitejs.dev/)
+[![Database](https://img.shields.io/badge/Database-PostgreSQL%2016-336791)](https://www.postgresql.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen)](tests/)
 
 > A neuro-affirming health intelligence platform designed to help users, particularly those with ADHD, Autism, or CPTSD, understand their mental and emotional patterns through objective and subjective data correlation.
 
@@ -10,7 +14,7 @@
 
 ## 🌟 What is MAEPLE?
 
-MAEPLE represents a **paradigm shift** from traditional "symptom surveillance" to **pattern literacy**. Instead of tracking deficits and symptoms, MAEPLE helps users:
+MAEPLE focuses on **pattern literacy**—helping you understand context and recurring patterns, and (optionally) correlate subjective reports with objective signals. MAEPLE helps users:
 
 - **Understand Context**: Track energy levels across 7 dimensions (Focus, Social, Sensory, Emotional, Physical, Structure, Executive)
 - **Identify Patterns**: Recognize recurring situations that trigger specific states
@@ -20,14 +24,16 @@ MAEPLE represents a **paradigm shift** from traditional "symptom surveillance" t
 ### Key Features
 
 #### 🎯 Multi-Mode Journaling
+
 - **Text Entry** with real-time feedback and AI analysis
 - **Voice Recording** with live transcription and audio analysis
-- **Photo Capture (Bio-Mirror)** with FACS-based visual analysis
+- **Photo Capture (Bio-Mirror)** with enhanced FACS-based visual analysis (still image capture; not micro-expression detection) (v0.97.6: structured Action Unit detection, Duchenne smile analysis, intensity ratings)
 - **Objective Observations** from voice (noise, tone, pace) and photo (fatigue, tension, environment)
 - **Informed Capacity Calibration** with AI suggestions based on observed state
 - **Gentle Inquiry System** for contextual, optional AI questions
 
 #### 🔬 Bio-Mirror Technology
+
 - **Facial Action Coding System (FACS)** for objective physiological analysis
 - Detects fatigue, tension, and masking
 - Compares subjective mood with facial expressions to identify dissociation
@@ -35,6 +41,7 @@ MAEPLE represents a **paradigm shift** from traditional "symptom surveillance" t
 - **Enhanced with multi-modal analysis** (voice + photo + text)
 
 #### 🤖 AI-Powered Pattern Recognition
+
 - Multi-provider AI architecture (Gemini, OpenAI, Anthropic, Z.ai, Perplexity)
 - Automatic trigger identification and strategy suggestions
 - Predictive capacity forecasting
@@ -43,6 +50,7 @@ MAEPLE represents a **paradigm shift** from traditional "symptom surveillance" t
 - **Neuro-affirming gentle inquiries** generated from observations
 
 #### 📊 7-Dimensional Capacity Grid
+
 ```
 Focus      ••••••••••  Cognitive bandwidth
 Social     ••••••••••  Interaction capacity
@@ -54,17 +62,45 @@ Executive   ••••••••••  Planning ability
 ```
 
 #### 🔄 Offline-First Architecture
+
 - **Local-First Storage**: Primary data lives on your device
-- **Optional Cloud Sync**: You choose when to sync
+- **Optional Cloud Sync**: Entries + settings only (Bio-Mirror history is backed up via export/import)
 - **Encrypted Biometrics**: AES-GCM 256-bit encryption
 - **No Surveillance**: Data for personal insight, not tracking
 
 #### ⌚ Wearables Integration
+
 - Oura Ring (sleep, HRV, heart rate)
 - Apple Health (activity, respiratory rate)
 - Garmin (stress score, body battery)
 - Fitbit (steps, sleep stages)
 - Whoop (recovery, strain)
+
+---
+
+## 🌐 Deployment Environments
+
+MAEPLE has two deployment environments:
+
+### Production Environment
+
+- **URL**: https://maeple.vercel.app
+- **Platform**: Vercel
+- **Purpose**: Public production deployment
+- **Access**: Available to all users
+- **Status**: Production Ready ✅
+
+### Local Development Environment
+
+- **URL**: http://maeple.0reliance.com (or http://localhost:80 on VM-125)
+- **Platform**: Docker Compose
+- **Purpose**: Development and testing
+- **Access**: Internal network only
+- **Status**: Running ✅
+
+**Quick Access:**
+- **Production**: https://maeple.vercel.app
+- **Local Dev**: http://maeple.0reliance.com (VM-125)
 
 ---
 
@@ -74,10 +110,32 @@ Executive   ••••••••••  Planning ability
 
 - **Node.js** 22+ ([Download](https://nodejs.org/))
 - **npm** or **yarn**
-- **PostgreSQL** 14+ (for backend)
+- **Docker** (recommended for local development)
 - **Git** (for version control)
 
-### Installation
+### Local Docker Stack (Recommended)
+
+The easiest way to run MAEPLE locally with full database integration:
+
+```bash
+# Clone and start
+git clone https://github.com/0Reliance/Maeple.git
+cd Maeple/deploy
+docker-compose up -d
+
+# Access points:
+# Frontend: http://localhost:80
+# API: http://localhost:3001
+# Database: localhost:5432
+```
+
+| Service | Container | Port |
+|---------|-----------|------|
+| PostgreSQL 16 | deploy-db-1 | 5432 |
+| Express API | deploy-api-1 | 3001 |
+| Web Frontend | deploy-web-1 | 80 |
+
+### Installation (Development Server)
 
 #### Option 1: Automated Setup (Recommended)
 
@@ -91,7 +149,7 @@ bash scripts/setup-dev.sh
 
 # This will:
 # ✓ Check Node.js version
-# ✓ Create .env file with pre-configured API keys
+# ✓ Create a .env file from .env.example
 # ✓ Install all dependencies
 # ✓ Run health checks
 # ✓ Optionally install VS Code extensions
@@ -106,7 +164,7 @@ npm install
 # 2. Set up environment variables
 cp .env.example .env
 
-# 3. Edit .env (all keys are pre-configured, just verify)
+# 3. Edit .env to add your own API keys
 # See docs/QUICK_REFERENCE.md for API key details
 
 # 4. Run type checking
@@ -135,6 +193,7 @@ npm run check-all
 
 ### Getting Started Guides
 
+- **[Documentation Index](docs/INDEX.md)** - Start here for the full docs hub
 - **[Quick Reference](docs/QUICK_REFERENCE.md)** - Fast lookup for common tasks, commands, and troubleshooting
 - **[Development Tooling Guide](docs/DEVELOPMENT_TOOLING.md)** - Complete development environment setup
 - **[AI Integration Guide](docs/AI_INTEGRATION_GUIDE.md)** - How to use multiple AI providers together
@@ -241,15 +300,17 @@ MAEPLE/
 ### Technology Stack
 
 #### Frontend
-- **React 18** - UI framework
+
+- **React 19** - UI framework with concurrent features
 - **TypeScript 5.2+** - Type safety
-- **Vite** - Build tool
-- **Zustand** - State management
-- **Tailwind CSS** - Styling
+- **Vite 7** - Build tool
+- **Zustand 5** - State management
+- **Tailwind CSS 3.4** - Styling
 - **React Router DOM 7** - Routing
-- **Capacitor** - Native mobile apps
+- **Capacitor 8** - Native mobile apps
 
 #### Backend
+
 - **Node.js** - Runtime
 - **Express** - Web framework
 - **PostgreSQL** - Database
@@ -257,6 +318,7 @@ MAEPLE/
 - **bcrypt** - Password hashing
 
 #### AI Services
+
 - **Google Gemini** - Primary multimodal AI (vision, text, audio)
 - **Z.ai** - Advanced code generation
 - **OpenAI** - GPT-4, DALL-E, Whisper
@@ -266,11 +328,12 @@ MAEPLE/
 - **ElevenLabs** - Text-to-speech
 
 #### Development Tools
-- **ESLint** - Linting
-- **Prettier** - Formatting
+
+- **ESLint 8** - Linting
+- **Prettier 3** - Formatting
 - **Vitest** - Testing
-- **React Testing Library** - Component testing
-- **TypeScript** - Static typing
+- **React Testing Library 16** - Component testing
+- **TypeScript 5** - Static typing
 
 ---
 
@@ -278,15 +341,15 @@ MAEPLE/
 
 ### Authentication (Supabase) ✅
 
-MAEPLE now uses **Supabase** for production-ready authentication:
+MAEPLE uses **Supabase** for authentication and user management:
 
 ```bash
-# Supabase credentials (pre-configured)
-VITE_SUPABASE_URL=https://bqmxdempuujeqgmxxbxw.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxbXhkZW1wdXVqZXFnbXh4Ynh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODExMzcsImV4cCI6MjA4MjQ1NzEzN30.8U0HLSDqSETOglvs0VjhZaL0MPqqYVWRxBdlgmNfvog
+# Supabase (configure in .env)
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-All required API keys are pre-configured in `.env.example`. Simply copy it to `.env`:
+API keys are configured via `.env.example`. Copy it to `.env` and add your own keys:
 
 ```bash
 cp .env.example .env
@@ -294,22 +357,22 @@ cp .env.example .env
 
 **For Supabase Setup Guide:** See [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
 
-### Pre-Configured Services
+### Included Integrations
 
-| Service | Status | Purpose |
-|---------|--------|---------|
-| ✅ **Supabase** | **Configured** | **Authentication, user management** |
-| ✅ Gemini | Configured | Bio-Mirror, Live Coach, vision analysis |
-| ✅ Z.ai | Configured | Code generation, refactoring |
-| ✅ Perplexity | Configured | Web search with AI |
-| ✅ Brave Search | Configured | Web search for MCP |
-| ✅ ElevenLabs | Configured | Voice synthesis |
-| ✅ Jina AI | Configured | Content extraction |
-| ✅ Giphy | Configured | GIF integration |
-| ✅ Resend | Configured | Email notifications |
-| ✅ OpenRouter | Configured | Free model access |
-| ✅ Firecrawl | Configured | Web scraping |
-| ✅ GitHub Genpozi | Configured | Repository access |
+| Service        | Status    | Purpose                                 |
+| -------------- | --------- | --------------------------------------- |
+| Supabase       | Supported | Authentication, user management         |
+| Gemini         | Supported | Bio-Mirror, Live Coach, vision analysis |
+| Z.ai           | Supported | Code generation, refactoring            |
+| Perplexity     | Supported | Web search with AI                      |
+| Brave Search   | Supported | Web search for MCP                      |
+| ElevenLabs     | Supported | Voice synthesis                         |
+| Jina AI        | Supported | Content extraction                      |
+| Giphy          | Supported | GIF integration                         |
+| Resend         | Supported | Email notifications                     |
+| OpenRouter     | Supported | Free model access                       |
+| Firecrawl      | Supported | Web scraping                            |
+| GitHub Genpozi | Supported | Repository access                       |
 
 ### Optional Services
 
@@ -333,7 +396,7 @@ See [API Keys Reference](docs/QUICK_REFERENCE.md#api-keys-configuration) for com
 
 ## 🧩 MCP (Model Context Protocol) Integration
 
-MAEPLE includes 5 pre-configured MCP servers for AI-assisted development:
+MAEPLE includes configuration for 5 MCP servers for AI-assisted development:
 
 1. **Filesystem Server** - Read/write project files
 2. **Git Server** - Git operations and version control
@@ -356,6 +419,7 @@ MAEPLE uses a **capability-based routing system** to leverage strengths of diffe
 Some providers (like Z.ai) don't have native vision capabilities. MAEPLE solves this through:
 
 **Multi-Provider Pipeline**:
+
 1. **Vision Analysis** (Gemini/OpenAI) - Analyze image
 2. **Data Extraction** - Extract structured facial data
 3. **Code Generation** (Z.ai) - Generate code from extracted data
@@ -373,13 +437,13 @@ const code = await zai.generateCode(`
 
 ### Provider Selection
 
-| Task | Primary | Fallback |
-|-------|----------|-----------|
-| Vision Analysis | Gemini | OpenAI |
-| Code Generation | Z.ai | Anthropic, Gemini |
-| Text Analysis | Anthropic | Gemini, OpenAI |
-| Web Search | Perplexity | Brave Search, Jina |
-| Voice Synthesis | ElevenLabs | Gemini |
+| Task            | Primary    | Fallback           |
+| --------------- | ---------- | ------------------ |
+| Vision Analysis | Gemini     | OpenAI             |
+| Code Generation | Z.ai       | Anthropic, Gemini  |
+| Text Analysis   | Anthropic  | Gemini, OpenAI     |
+| Web Search      | Perplexity | Brave Search, Jina |
+| Voice Synthesis | ElevenLabs | Gemini             |
 
 See [AI Integration Guide](docs/AI_INTEGRATION_GUIDE.md) for complete documentation.
 
@@ -426,11 +490,9 @@ tests/
 
 ## 🚢 Deployment
 
-### Quick Deploy to Vercel (Recommended)
+### Deploy to Vercel
 
-**Fastest deployment method - MAEPLE is already deployed and live at:**
-
-🌐 **Production URL:** https://maeple.vercel.app
+If you want to host the web app, Vercel is a straightforward option for the Vite frontend.
 
 #### Deploy Updates
 
@@ -459,17 +521,8 @@ vercel login
 vercel --yes --prod
 
 # 4. Add environment variables
-echo "AIzaSyDcOGeN1Ve4But_GpQtHuKNf7zh-5VQAbM" | vercel env add VITE_GEMINI_API_KEY production
+echo "your_key_here" | vercel env add VITE_GEMINI_API_KEY production
 ```
-
-### Current Deployment Status
-
-✅ **Live:** https://maeple.vercel.app
-- Build Time: 17.80s
-- Deployment Time: 47s
-- Status: Production Ready
-- Environment Variables: Configured
-- API Key: Active (Gemini)
 
 ### Manual Deployment Options
 
@@ -487,11 +540,12 @@ vercel --prod
 ```
 
 **Vercel Features:**
+
 - Global CDN deployment
 - Automatic HTTPS/SSL
 - Edge caching
 - Preview deployments for PRs
-- Custom domains (maeple.vercel.app)
+- Custom domains (via Vercel project settings)
 
 #### Option 2: Vercel Dashboard
 
@@ -526,11 +580,11 @@ docker run -p 3001:3001 \
 
 ```bash
 # AI Provider
-VITE_GEMINI_API_KEY=AIzaSyDcOGeN1Ve4But_GpQtHuKNf7zh-5VQAbM
+VITE_GEMINI_API_KEY=your_key_here
 
 # API Configuration (if using separate backend)
 VITE_API_URL=https://your-backend-url.com/api
-VITE_BASE_URL=https://maeple.vercel.app
+VITE_BASE_URL=https://your-app-url
 
 # Feature Flags
 VITE_ENABLE_BIOMIRROR=true
@@ -555,7 +609,8 @@ vercel env rm VARIABLE_NAME production
 
 ### Build Output
 
-Production build generates optimized bundles:
+Production build generates optimized bundles (example output):
+
 ```
 dist/index.html                                   1.78 kB │ gzip:   0.78 kB
 dist/assets/index.css                               87.25 kB │ gzip:  14.07 kB
@@ -571,8 +626,7 @@ dist/assets/Settings.js                            190.13 kB │ gzip:  44.09 kB
 vercel ls
 
 # Verify deployment
-curl -I https://maeple.vercel.app
-# Should return: HTTP/2 200
+curl -I https://your-app-url
 
 # Check build logs
 vercel logs
@@ -584,11 +638,9 @@ See [Deployment Guide](deploy/DEPLOY.md) for complete deployment instructions in
 
 ## 📖 Why MAEPLE Matters
 
-### Paradigm Shift
+### Design Goals
 
-Traditional mental health apps focus on **symptom surveillance** - tracking "bad days," monitoring deficits, and comparing to neurotypical norms.
-
-MAEPLE shifts this paradigm to **pattern literacy**:
+Many mental health trackers emphasize symptom checklists and trends over time. MAEPLE emphasizes **pattern literacy**:
 
 - ✅ **Focus on Context** - What situations trigger certain states?
 - ✅ **Pattern Recognition** - What recurring patterns exist?
@@ -604,53 +656,56 @@ MAEPLE is built on a neuro-affirming framework:
 - Supports self-awareness rather than comparison
 - Validates lived experience with objective data
 
-### Objective Reality Check
+### Optional Objective Check-ins
 
 Many neurodivergent individuals experience **masking** or **dissociation**, where internal state doesn't match external presentation. MAEPLE's Bio-Mirror technology:
 
-- Provides objective feedback via facial analysis
-- Identifies when masking may be occurring
-- Validates or challenges self-perception
-- Helps users trust their own experience
+- Provides structured feedback via facial analysis
+- Highlights potential masking-related patterns
+- Supports reflection alongside self-report
+- Helps users compare subjective and observed signals
 
 ---
 
 ## 🔮 Roadmap
 
 ### Phase 1: Foundation ✅ (Complete)
+
 - [x] Core health entry system
 - [x] Capacity grid implementation
 - [x] Basic AI analysis
 - [x] Offline-first architecture
 - [x] Local storage with sync
 
-### Phase 2: Enhanced Intelligence (In Progress)
-- [ ] Advanced Bio-Mirror with emotion recognition
+### Phase 2: Enhanced Intelligence ✅ (Complete)
+
+- [x] Advanced Bio-Mirror with facial analysis
+- [x] Multi-provider AI architecture (Gemini, OpenAI, Anthropic, Z.ai, Perplexity)
+- [x] Voice journal with live transcription
+- [x] Objective observation system
+- [x] Circuit breaker pattern for resilience
+
+### Phase 3: Platform Maturity ✅ (Complete)
+
+- [x] React 19 upgrade with concurrent features
+- [x] Comprehensive test suite
+- [x] Supabase authentication
+- [x] Mobile support (Capacitor 8)
+- [x] TypeScript strict mode compliance
+
+### Phase 4: Wearables & Integration (In Progress)
+
 - [ ] Wearables integration for all major platforms
 - [ ] Predictive capacity forecasting
 - [ ] Custom strategy recommendations
-- [ ] Social sharing (with privacy controls)
+- [ ] Healthcare provider portal
 
-### Phase 3: Community and Collaboration
+### Phase 5: Community & Ecosystem
+
 - [ ] Anonymous pattern sharing
 - [ ] Community strategies library
-- [ ] Healthcare provider portal
-- [ ] Group/couple tracking
-- [ ] Research contribution opt-in
-
-### Phase 4: Advanced Features
-- [ ] Voice journal with sentiment analysis
-- [ ] Environmental context detection
-- [ ] Medication tracking and correlation
-- [ ] Therapy session notes integration
-- [ ] Crisis detection and safety protocols
-
-### Phase 5: Ecosystem Integration
 - [ ] EHR integration (Epic, Cerner)
-- [ ] Telehealth platform integration
 - [ ] Research partnerships
-- [ ] Clinical validation studies
-- [ ] Insurance reimbursement support
 
 See [Complete Specifications](specifications/COMPLETE_SPECIFICATIONS.md#future-roadmap) for details.
 
@@ -697,6 +752,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Reporting Issues
 
 When reporting issues, please include:
+
 - MAEPLE version (`npm list maeple`)
 - Node.js version (`node --version`)
 - npm version (`npm --version`)
@@ -716,6 +772,7 @@ When reporting issues, please include:
 ## 🙏 Acknowledgments
 
 MAEPLE is built with gratitude for:
+
 - The neurodivergent community who inspire and guide this work
 - Open source maintainers whose tools we depend on
 - Healthcare providers who value data-driven approaches
@@ -734,4 +791,4 @@ MAEPLE is built with gratitude for:
 
 **Built with ❤️ for the neurodivergent community**
 
-© 2025 MAEPLE. All rights reserved.
+© 2024-2026 MAEPLE. All rights reserved.

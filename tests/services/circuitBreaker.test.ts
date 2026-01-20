@@ -238,7 +238,11 @@ describe('CircuitBreaker', () => {
       // Fast forward past timeout
       vi.advanceTimersByTime(1001);
 
-      // Should be in HALF_OPEN now
+      // Make next call succeed to verify transition to HALF_OPEN
+      mockFn.mockResolvedValueOnce('success');
+      await circuitBreaker.execute();
+
+      // Should be in HALF_OPEN now (1 success < 2 threshold)
       expect(circuitBreaker.getState()).toBe(CircuitState.HALF_OPEN);
       expect(circuitBreaker.isHalfOpen()).toBe(true);
     });
@@ -335,7 +339,7 @@ describe('CircuitBreaker', () => {
   });
 
   describe('state change callbacks', () => {
-    it('should call onStateChange when state changes', () => {
+    it('should call onStateChange when state changes', async () => {
       const stateChanges: CircuitState[] = [];
       mockFn.mockResolvedValue('success');
       

@@ -107,7 +107,7 @@ const VoiceIntake: React.FC = () => {
             "moodLabel": "...",
             "medications": [{"name": "...", "amount": "..."}],
             "symptoms": [{"name": "...", "severity": 1-10}],
-            "neuroMetrics": {"sensoryLoad": 1-10, "contextSwitches": 0, "maskingScore": 1-10},
+            "neuroMetrics": {"sensoryLoad": 1-10, "contextSwitches": 0},
             "activityTypes": ["#Tag"],
             "strengths": ["..."],
             "strategies": [{"title": "...", "action": "...", "type": "REST"}]

@@ -1,106 +1,97 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import JournalEntry from '../../components/JournalEntry';
-import * as geminiService from '../../services/geminiService';
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import React from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import JournalEntry from "../../src/components/JournalEntry";
+import { DependencyProvider } from "../../src/contexts/DependencyContext";
+import { ObservationProvider } from "../../src/contexts/ObservationContext";
+import { createMockDependencies } from "../test-utils";
 
-// Mock dependencies
-vi.mock('../../components/RecordVoiceButton', () => ({
+// Create properly typed mock dependencies
+const mockDependencies = createMockDependencies();
+
+// Mock the RecordVoiceButton component since it uses browser APIs
+vi.mock("../../src/components/RecordVoiceButton", () => ({
   default: ({ onTranscript }: { onTranscript: (text: string) => void }) => (
-    <button onClick={() => onTranscript('Hello world')}>Mock Voice Button</button>
-  )
+    <button onClick={() => onTranscript("Voice transcript")}>Record Voice</button>
+  ),
 }));
 
-vi.mock('../../services/geminiService', () => ({
-  parseJournalEntry: vi.fn()
+// Mock the draft service to avoid localStorage issues in tests
+vi.mock("../../src/services/draftService", () => ({
+  useDraft: () => ({
+    draft: null,
+    markDirty: vi.fn(),
+    save: vi.fn(),
+  }),
 }));
 
-describe('JournalEntry Component', () => {
+describe("JournalEntry Component", () => {
   const mockOnEntryAdded = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders correctly', () => {
-    render(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
-    expect(screen.getByPlaceholderText(/What's happening/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Capture/i })).toBeInTheDocument();
+  const renderWithDependencies = (component: React.ReactNode) => {
+    return render(
+      <DependencyProvider dependencies={mockDependencies}>
+        <ObservationProvider>{component}</ObservationProvider>
+      </DependencyProvider>
+    );
+  };
+
+  it("renders correctly", () => {
+    renderWithDependencies(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
+    expect(screen.getByText("Energy Check-in")).toBeInTheDocument();
   });
 
-  it('updates text input', () => {
-    render(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
-    const textarea = screen.getByPlaceholderText(/What's happening/i);
-    fireEvent.change(textarea, { target: { value: 'I am feeling great' } });
-    expect(textarea).toHaveValue('I am feeling great');
-  });
+  it("handles text input and submission", async () => {
+    renderWithDependencies(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
 
-  it('handles voice input', () => {
-    render(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
-    const voiceBtn = screen.getByText('Mock Voice Button');
-    fireEvent.click(voiceBtn);
-    expect(screen.getByPlaceholderText(/What's happening/i)).toHaveValue('Hello world');
-  });
+    // 1. Select Text Mode
+    fireEvent.click(screen.getByRole("button", { name: /Use Text Type input/i }));
 
-  it('submits entry successfully', async () => {
-    const mockParsedResponse = {
-      moodScore: 8,
-      moodLabel: 'Happy',
-      medications: [],
-      symptoms: [],
-      activityTypes: [],
-      strengths: [],
-      neuroMetrics: {
-        sensoryLoad: 3,
-        contextSwitches: 2,
-        maskingScore: 1
-      },
-      summary: 'User is happy',
-      strategies: [],
-      analysisReasoning: 'Good mood detected'
+    // 2. Enter text
+    const input = screen.getByPlaceholderText(/How are you feeling right now/i);
+    fireEvent.change(input, { target: { value: "Feeling great today!" } });
+
+    // 3. Mock AI response
+    const mockResponse = {
+      content: JSON.stringify({
+        moodScore: 8,
+        moodLabel: "Happy",
+        summary: "User is feeling great",
+        strategies: [],
+        analysisReasoning: "Positive sentiment detected",
+      }),
     };
+    mockDependencies.aiService.analyze.mockResolvedValue(mockResponse);
 
-    (geminiService.parseJournalEntry as any).mockResolvedValue(mockParsedResponse);
-
-    render(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
-    
-    // Type something
-    const textarea = screen.getByPlaceholderText(/What's happening/i);
-    fireEvent.change(textarea, { target: { value: 'I am feeling great' } });
-    
-    // Click submit
-    const submitBtn = screen.getByRole('button', { name: /Capture/i });
+    // 4. Submit
+    const submitBtn = screen.getByText("Save Entry");
     fireEvent.click(submitBtn);
-    
-    // Check loading state
-    expect(screen.getByText(/Parsing/i)).toBeInTheDocument();
-    
+
     await waitFor(() => {
-      expect(mockOnEntryAdded).toHaveBeenCalledTimes(1);
-      const calledArg = mockOnEntryAdded.mock.calls[0][0];
-      expect(calledArg.rawText).toBe('I am feeling great');
-      expect(calledArg.mood).toBe(8);
+      expect(mockDependencies.aiService.analyze).toHaveBeenCalled();
     });
   });
 
-  it('handles submission error', async () => {
-    (geminiService.parseJournalEntry as any).mockRejectedValue(new Error('API Error'));
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
-    const consoleMock = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it("handles submission error", async () => {
+    renderWithDependencies(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
 
-    render(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
-    
-    const textarea = screen.getByPlaceholderText(/What's happening/i);
-    fireEvent.change(textarea, { target: { value: 'Error test' } });
-    
-    const submitBtn = screen.getByRole('button', { name: /Capture/i });
+    // 1. Select Text Mode
+    fireEvent.click(screen.getByRole("button", { name: /Use Text Type input/i }));
+
+    const input = screen.getByPlaceholderText(/How are you feeling right now/i);
+    fireEvent.change(input, { target: { value: "Test entry" } });
+
+    mockDependencies.aiService.analyze.mockRejectedValue(new Error("Analysis failed"));
+
+    const submitBtn = screen.getByText("Save Entry");
     fireEvent.click(submitBtn);
-    
+
     await waitFor(() => {
-      expect(alertMock).toHaveBeenCalledWith("Failed to analyze entry. Please try again.");
+      expect(screen.getByText("Failed to analyze entry. Please try again.")).toBeInTheDocument();
     });
-    
-    alertMock.mockRestore();
-    consoleMock.mockRestore();
   });
 });

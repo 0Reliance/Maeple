@@ -25,7 +25,6 @@ const createEntry = (overrides: Partial<HealthEntry> = {}): HealthEntry => ({
     spoonLevel: 5,
     sensoryLoad: 5,
     contextSwitches: 3,
-    maskingScore: 3,
     capacity: {
       focus: 6,
       social: 5,
@@ -106,7 +105,6 @@ describe('Analytics Service', () => {
           neuroMetrics: {
             ...createEntry().neuroMetrics,
             sensoryLoad: i % 2 === 0 ? 9 : 3,
-            maskingScore: i % 3 === 0 ? 9 : 2,
             capacity: {
               ...createEntry().neuroMetrics.capacity,
               focus: i % 2 === 0 ? 9 : 2,
@@ -224,7 +222,6 @@ describe('Analytics Service', () => {
             ...createEntry().neuroMetrics,
             spoonLevel: 6,
             sensoryLoad: 4,
-            maskingScore: 2,
             contextSwitches: 3,
           }
         })
@@ -242,7 +239,6 @@ describe('Analytics Service', () => {
             ...createEntry().neuroMetrics,
             spoonLevel: 2,
             sensoryLoad: 9,
-            maskingScore: 8,
             contextSwitches: 10,
           }
         })
@@ -262,8 +258,6 @@ describe('Analytics Service', () => {
             ...createEntry().neuroMetrics,
             spoonLevel: 5,
             sensoryLoad: 5,
-            maskingScore: 4,
-            contextSwitches: 4,
           }
         })
       );

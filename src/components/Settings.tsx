@@ -28,6 +28,7 @@ import {
   Moon,
   Sun,
   Monitor,
+  HelpCircle,
 } from "lucide-react";
 import { WearableDataPoint, UserSettings } from "../types";
 import { useAppStore } from "../stores";
@@ -57,7 +58,7 @@ interface Props {
 }
 
 const Settings: React.FC<Props> = ({ onDataSynced }) => {
-  const { userSettings, updateSettings } = useAppStore();
+  const { userSettings, updateSettings, setShowOnboarding } = useAppStore();
   const [configs, setConfigs] = useState(wearableManager.getAllConfigs());
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -509,7 +510,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                 userSettings.theme === "system"
                   ? "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
-                  : "border-slate-100 hover:border-slate-200 text-slate-600 dark:text-slate-300 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-600"
+                  : "border-slate-100 hover:border-slate-200 text-slate-600 dark:text-slate-400 dark:border-slate-700 dark:hover:border-slate-600"
               }`}
             >
               <Monitor size={24} />
@@ -571,6 +572,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
                 value={safetyContact}
                 onChange={(e) => setSafetyContact(e.target.value)}
                 placeholder="e.g. Partner, Therapist, or Best Friend"
+                autoComplete="tel"
                 className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-200 focus:outline-none"
               />
             </div>
@@ -670,6 +672,30 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               {settingsSaved ? "Saved" : "Save Context"}
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* Help & Resources Section */}
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <HelpCircle className="text-indigo-500" size={20} />
+          Help & Resources
+        </h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-4">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Need a refresher on how MAEPLE works? Replay the onboarding tutorial anytime.
+          </p>
+          <button
+            onClick={() => {
+              // Reset the onboarding complete flag so it shows again
+              localStorage.removeItem('maeple_onboarding_complete');
+              setShowOnboarding(true);
+            }}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+          >
+            <RefreshCw size={18} />
+            Replay Onboarding Tutorial
+          </button>
         </div>
       </section>
 

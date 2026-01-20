@@ -294,4 +294,15 @@ class AIRouter {
   }
 }
 
-export const aiRouter = new AIRouter();
+// Singleton pattern - only initialize on first call
+let routerInstance: AIRouter | null = null;
+
+export function getAIRouter(): AIRouter {
+  if (!routerInstance) {
+    routerInstance = new AIRouter();
+  }
+  return routerInstance;
+}
+
+// Direct export - initialize immediately to avoid circular dependency issues
+export const aiRouter = getAIRouter();

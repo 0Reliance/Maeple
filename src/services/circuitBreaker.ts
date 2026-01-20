@@ -3,10 +3,12 @@
  * Prevents cascading failures by temporarily disabling failing services
  */
 
+import { logInfo, logError } from './errorLogger';
+
 export enum CircuitState {
-  CLOSED = 'closed',      // Normal operation
-  OPEN = 'open',          // Failure threshold exceeded
-  HALF_OPEN = 'half-open'  // Testing if service recovered
+  CLOSED = 'CLOSED',      // Normal operation
+  OPEN = 'OPEN',          // Failure threshold exceeded
+  HALF_OPEN = 'HALF_OPEN'  // Testing if service recovered
 }
 
 export interface CircuitBreakerConfig {
@@ -58,6 +60,7 @@ export class CircuitBreaker<T> {
       return result;
     } catch (error) {
       this.onFailure();
+      logError('[CircuitBreaker] Execution failed', { error });
       throw error;
     }
   }
@@ -100,7 +103,7 @@ export class CircuitBreaker<T> {
       const oldState = this.state;
       this.state = newState;
       
-      console.log(`[CircuitBreaker] State transition: ${oldState} -> ${newState}`);
+      logInfo(`[CircuitBreaker] State transition: ${oldState} -> ${newState}`);
       
       if (this.config.onStateChange) {
         this.config.onStateChange(newState);

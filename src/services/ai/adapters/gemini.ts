@@ -187,7 +187,7 @@ export class GeminiAdapter extends BaseAIAdapter {
     try {
       // Lightweight check using countTokens
       await this.client.models.countTokens({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         contents: "ping",
       });
       return true;
@@ -201,7 +201,7 @@ export class GeminiAdapter extends BaseAIAdapter {
     this.trackRequest();
     try {
       const session = await this.client.live.connect({
-        model: 'gemini-2.0-flash-exp',
+        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
         config: {
           responseModalities: [Modality.AUDIO, Modality.TEXT],
           systemInstruction: config.systemInstruction,

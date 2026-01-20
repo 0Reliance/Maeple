@@ -1,5 +1,342 @@
 # MAEPLE Changelog
 
+## v0.97.7 (January 20, 2026)
+
+**Status**: ✅ Local Database Integration Complete + Navigation Simplification + Card Interaction Fix
+
+### 🎯 Card Interaction Fix
+
+Fixed critical UI bug where sliders, textarea, and buttons on the Capture/Journal screen were unclickable:
+
+#### Root Cause
+- `.card` CSS class was missing `position: relative`, causing absolutely positioned child elements (sliders, overlays, buttons) to position incorrectly
+- Aggressive hover transforms (`translateY(-4px) scale(1.01)`) on all cards caused interaction issues, especially on touch devices
+
+#### Resolution
+- Added `relative` positioning to `.card` base styles in `index.css`
+- Removed transform from default card hover (kept shadow/border changes only)
+- Added new `.card-hoverable` class for cards that should scale on hover
+- Changed Card component default `hoverable` prop from `true` to `false`
+
+#### Files Modified
+- `src/index.css` - Card base styles and hover behavior
+- `src/components/ui/Card.tsx` - Hoverable prop default
+
+---
+
+### 🗄️ Local Database Stack
+
+Full local development environment now operational with Docker:
+
+- **PostgreSQL 16** - Primary database (port 5432)
+- **Express API** - Backend server (port 3001)
+- **Nginx Frontend** - Production build (port 80)
+
+#### Features Verified
+- ✅ User authentication (signup, signin, JWT tokens)
+- ✅ Entry CRUD operations (create, read, update, delete)
+- ✅ Settings management (get, update)
+- ✅ Bulk sync endpoint for migration
+- ✅ Health check with database status
+
+### 🎨 Navigation Simplification
+
+**Removed the sidebar drawer entirely.** Navigation is now cleaner and more focused:
+
+#### Bottom Navigation (MobileNav)
+| Item | Destination |
+|------|-------------|
+| Patterns | Dashboard |
+| Reflect | Bio-Mirror |
+| Capture (center) | Journal |
+| Guide | Live Coach |
+| Menu | Settings |
+
+#### User Menu (Top-Right Dropdown)
+| Section | Items |
+|---------|-------|
+| Primary | Settings, Vision Board, Clinical Report |
+| Secondary | Resources, Guide & Vision, Terms & Legal |
+| Account | Sign Out |
+
+**Why**: The sidebar duplicated items already available in the bottom nav and user menu. Removing it simplifies the codebase, eliminates state management bugs, and provides a cleaner mobile-first experience.
+
+### 🛠️ Technical Changes
+- Removed sidebar `<aside>` element from App.tsx
+- Removed `mobileMenuOpen` state and overlay
+- Simplified MobileNav props (removed `onToggleMenu`, `isMenuOpen`)
+- Menu button now navigates directly to Settings
+- Added Vision Board and Clinical Report to UserMenu
+- Updated MobileNav tests
+
+#### Architecture
+```
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│   Frontend   │───▶│  API Server  │───▶│  PostgreSQL  │
+│   (nginx)    │    │  (Express)   │    │    (16)      │
+│   Port: 80   │    │  Port: 3001  │    │  Port: 5432  │
+└──────────────┘    └──────────────┘    └──────────────┘
+```
+
+#### Key Changes
+- Disabled non-essential Supabase services in config.toml
+- Added LOCAL_DB_STATUS.md documentation
+- Updated all documentation with current status
+- Increased VM disk space (20GB → 100GB)
+- Increased VM RAM (8GB → 12GB)
+
+---
+
+## v0.97.6 (January 6, 2026)
+
+**Status**: ✅ Complete Codebase Review - All 25 Issues Resolved
+
+### 🔍 Comprehensive Codebase Review
+
+A thorough review of the entire MAEPLE codebase identified and resolved 25 concerns across three implementation phases.
+
+#### Phase 1: Critical Fixes (13 issues)
+
+- **ObservationContext** - Wired `ObservationProvider` into App.tsx
+- **Vision Progress** - Connected progress callback to UI
+- **Abort Signal** - Cancel button now works during AI analysis
+- **Memory Leak** - Fixed BiofeedbackCameraModal cleanup
+- **Version String** - Updated to v0.97.5
+- **Dead Import** - Removed unused Virtuoso from JournalView
+- **Cache TTL** - Fixed zero TTL handling
+- **Draft Service** - Integrated `useDraft()` into JournalEntry
+- **Voice Transcript** - Fixed timing with accumulated ref
+- **Correlation Service** - Integrated on entry save
+- **StrictMode** - Enabled in development only
+- **Circuit Breaker** - Removed duplicate from geminiVisionService
+- **Auth Sync** - Verified already working correctly
+
+#### Phase 2: Medium/Low Priority (6 issues)
+
+- **Camera Auto-start** - Added optional `autoStart` prop to StateCheckCamera
+- **Supabase Config** - Exposed `isSupabaseConfigured` in AuthState
+- **AI Validation** - Added comprehensive Zod schema for AI responses
+- **CSS Definition** - Deleted unnecessary `src/index.css.d.ts`
+- **Sync State** - Initialize `pendingChanges` from localStorage
+- **Video CSS** - Updated to safer `contain: layout paint`
+
+#### Phase 3: Final Resolution (2 issues)
+
+- **Accessibility** - Fixed mouse event blocking with CSS isolation
+- **Test Types** - Created typed mock factory functions
+
+#### Accepted As Correct (4 issues)
+
+- Rate limiter queue behavior
+- Image worker race condition handling
+- AudioContext resource cleanup
+- Sync state persistence
+
+### 📊 Final Metrics
+
+| Metric          | Value      |
+| --------------- | ---------- |
+| Build Time      | 9.67s      |
+| Tests           | 246 passed |
+| Issues Resolved | 25/25      |
+
+---
+
+## v0.97.5 (January 4, 2026)
+
+**Status**: ✅ Camera Stability Complete (v2.2.3)
+
+### 🔧 Camera Stability Fix - v2.2.3 Final
+
+Fixes intro card flickering when hovering over camera modal.
+
+#### Root Cause Fixed
+
+| Issue               | Cause                                                   | Fix                                     |
+| ------------------- | ------------------------------------------------------- | --------------------------------------- |
+| Intro card flicker  | StateCheckWizard rendered both camera AND intro content | Added `!isCameraOpen` guard             |
+| Mouse event leakage | Parent components received mouse events through portal  | `stopPropagation()` on all mouse events |
+
+#### Code Changes
+
+- **ENHANCED** `src/components/StateCheckWizard.tsx`
+  - Return statement now uses: `{!isCameraOpen && step === 'INTRO' && introContent}`
+  - Prevents intro card from rendering while camera is open
+- **ENHANCED** `src/components/BiofeedbackCameraModal.tsx`
+  - Portal container has `pointerEvents: 'auto'` to capture all events
+  - Added `onMouseMove`, `onMouseOver`, `onMouseEnter`, `onMouseLeave` with `stopPropagation()`
+  - Prevents mouse events from bubbling to parent components
+
+---
+
+## v0.97.4 (January 4, 2026)
+
+**Status**: ✅ Camera Mouse Sensitivity Fixed (v2.2.2)
+
+### 🔧 Camera Stability Fix - v2.2.2 Mouse Motion Fix
+
+Fixes camera flickering triggered by mouse motion over the window.
+
+#### Root Causes Fixed
+
+| Issue                | Cause                                             | Fix                                 |
+| -------------------- | ------------------------------------------------- | ----------------------------------- |
+| Double-rendering     | React.StrictMode caused dual mount/unmount cycles | Disabled StrictMode                 |
+| GPU thrashing        | `backdrop-blur` effects forced recompositing      | Removed all backdrop-blur           |
+| Layout recalculation | `transition-all` triggered on any hover           | Use specific transitions only       |
+| Parent re-renders    | Missing React.memo caused cascade                 | Wrapped camera components with memo |
+
+#### Code Changes
+
+- **MODIFIED** `src/index.tsx`
+  - Disabled React.StrictMode (comment explains rationale)
+- **ENHANCED** `src/components/BiofeedbackCameraModal.tsx`
+  - GPU optimization: `willChange: 'transform'`, `contain: 'strict'`, `isolation: 'isolate'`
+  - Removed all `backdrop-blur` effects
+  - Replaced `transition-all` with specific `transition-colors`, `transition-opacity`
+  - Wrapped with `React.memo()` to prevent re-renders from parent
+- **ENHANCED** `src/components/StateCheckCamera.tsx`
+  - Same GPU optimizations and memo wrapping as BiofeedbackCameraModal
+
+---
+
+## v0.97.3 (January 4, 2026)
+
+**Status**: ✅ Camera Stability Enhanced (v2.2.1)
+
+### 🔧 Camera Stability Fix - v2.2.1 Enhancement
+
+This release fixes persistent camera flickering that remained after v0.97.2 refactoring.
+
+#### Root Causes Fixed
+
+| Issue                | Cause                                                               | Fix                      |
+| -------------------- | ------------------------------------------------------------------- | ------------------------ |
+| Dependency cascade   | `initializeCamera` depended on `cleanup` → both recreated on render | Empty deps, use refs     |
+| Always-mounted modal | Camera initialized even when hidden                                 | Conditional render       |
+| Layout instability   | Video had no stable dimensions                                      | Inline style + minHeight |
+
+#### Code Changes
+
+- **ENHANCED** `src/hooks/useCameraCapture.ts` (317 lines, was 286)
+  - Config values (`resolutions`, `maxRetries`) stored in `useRef`
+  - `initializeCamera` callback has empty dependency array
+  - `initializeCamera` accepts `facingMode` as explicit parameter
+  - Main `useEffect` depends ONLY on `isActive` and `facingMode`
+- **ENHANCED** `src/components/BiofeedbackCameraModal.tsx`
+  - Video element uses inline `style={}` instead of Tailwind for stability
+  - Video container has `minHeight: 60vh` to prevent layout shifts
+- **ENHANCED** `src/components/StateCheckWizard.tsx`
+  - Modal conditionally rendered only when `isOpen` is true
+
+#### Documentation Updates
+
+- **UPDATED** `specifications/SYSTEM_ARCHITECTURE.md` → v2.2.1
+- **UPDATED** `specifications/COMPLETE_SPECIFICATIONS.md` → v2.2.1
+- **UPDATED** `docs/BIOMIRROR_TROUBLESHOOTING.md` → v2.2.1 fixes documented
+- **UPDATED** `docs/TESTING_GUIDE.md` → v2.2.1
+- **UPDATED** `TESTING_STATUS.md` → v2.2.1
+- **UPDATED** `PHASE_1_TESTING.md` → v2.2.1 test cases
+- **UPDATED** `REFACTORING_PLAN.md` → v2.2.1 completion
+- **UPDATED** `IMPLEMENTATION_COMPLETE.md` → v2.2.1 details
+- **UPDATED** `docs/INDEX.md` → v2.2.1 references
+
+---
+
+## v0.97.2 (January 4, 2026)
+
+**Status**: ✅ Major Refactoring Complete
+
+### 🔧 Architecture Refactoring (5 Phases)
+
+#### Phase 1: Camera Stability Fix
+
+- **NEW** `src/hooks/useCameraCapture.ts` (286 lines)
+  - Custom hook using `useRef` for MediaStream (prevents re-renders)
+  - Single `useEffect` for lifecycle management
+  - Resolution fallback (HD → SD → Low)
+  - Context-aware error messages
+- **REFACTORED** `BiofeedbackCameraModal.tsx` - Eliminated camera flickering
+- **REFACTORED** `StateCheckCamera.tsx` - Applied identical pattern
+
+#### Phase 2: Vision Service Enhancement
+
+- **ENHANCED** `geminiVisionService.ts`
+  - Timeout increased from 30s to 45s
+  - Real progress callbacks (not simulated)
+  - Offline fallback with basic analysis
+  - Improved error handling
+- **UPDATED** `StateCheckWizard.tsx` - Real progress tracking integration
+
+#### Phase 3: Unified Data Flow
+
+- **NEW** `src/contexts/ObservationContext.tsx` (240 lines)
+  - `useReducer` pattern for observation management
+  - Centralized visual/audio/text observation storage
+  - Query methods (by type, source, time range)
+  - Helper functions: `faceAnalysisToObservation`, `createTextObservation`
+
+#### Phase 4: Enhanced Logging
+
+- **NEW** `src/services/draftService.ts` (388 lines)
+  - Auto-save every 30 seconds
+  - Multiple draft versions (max 10)
+  - 7-day retention with cleanup
+  - Recovery on app restart
+  - React hook: `useDraft()`
+
+#### Phase 5: Correlation Engine
+
+- **NEW** `src/services/correlationService.ts` (397 lines)
+  - Real-time subjective vs objective analysis
+  - Masking detection with confidence scoring
+  - Pattern detection (meeting stress, sensory overload, etc.)
+  - Actionable recommendations
+  - React hook: `useCorrelationAnalysis()`
+
+### 📊 Code Metrics
+
+- **4 new files** created (1,311 lines)
+- **4 files** refactored
+- **Zero compilation errors**
+- All TypeScript strict mode compliant
+
+### 📚 Documentation Updates
+
+- **NEW** `docs/TESTING_GUIDE.md` - Comprehensive testing procedures
+- **UPDATED** `specifications/SYSTEM_ARCHITECTURE.md` - New services documented
+- **UPDATED** `specifications/COMPLETE_SPECIFICATIONS.md` - v2.2.0 changes
+- **UPDATED** `docs/BIOMIRROR_TROUBLESHOOTING.md` - Post-refactoring status
+- **UPDATED** `docs/INDEX.md` - Added testing guide
+
+---
+
+## v0.97.1 (January 4, 2026)
+
+**Status**: ✅ Production Ready
+
+### 🛠️ Code Quality & Bug Fixes
+
+- **TypeScript Compilation**: Fixed all TypeScript errors preventing build
+  - Fixed undeclared variables in `comparisonEngine.ts` (`score`, `masking`, `discrepancyScore`)
+  - Added `isMaskingLikely` to `ComparisonResult` interface
+  - Added `maskingScore` to `NeuroMetrics` interface
+  - Fixed `FacialBaseline` creation with required `neutralMasking` property
+- **Tailwind CSS**: Fixed duplicate conflicting classes in Settings.tsx
+- **Circuit Breaker**:
+  - Standardized `CircuitState` enum values across all files
+  - Implemented proper event subscription in `VisionServiceAdapter` and `AIServiceAdapter`
+- **Supabase Client**: Added null-safety guard to prevent invalid API calls when credentials missing
+- **Test Infrastructure**: Added vitest and jest-dom types to TypeScript configuration
+
+### 📊 Test Coverage
+
+- All 246 tests passing
+- Production build successful (8.68s)
+- TypeScript type checking passes
+
+---
+
 ## v0.97.0 (Beta) - December 17, 2025
 
 **Status**: ✅ Production Release (Beta)
@@ -216,26 +553,22 @@ Add other provider keys in-app: Settings → AI Providers.
 ### 🔧 Critical Fixes
 
 1. **Environment Configuration** ✅
-
    - Fixed Vite environment variable handling
    - Updated `vite.config.ts` to properly expose `VITE_GEMINI_API_KEY` as `process.env.API_KEY`
    - Created `.env.example` template for developers
    - Created `.env` file with placeholder (requires user's actual API key)
 
 2. **Metadata Fix** ✅
-
    - Changed project name from "BROKEN POZIMIND" to "POZIMIND"
    - Updated `metadata.json`
 
 3. **Build Configuration** ✅
-
    - Fixed JSX syntax error in `Guide.tsx` (escaped `>` character)
    - Installed missing `@types/node` dependency
    - Optimized Tailwind content configuration to avoid scanning `node_modules`
    - Build now completes successfully
 
 4. **Error Handling** ✅
-
    - Added comprehensive `ErrorBoundary` component
    - Integrated error boundary into app entry point (`index.tsx`)
    - Added API key validation with helpful error messages in Gemini services
@@ -249,7 +582,6 @@ Add other provider keys in-app: Settings → AI Providers.
 ### 📚 Documentation
 
 1. **New Files**
-
    - `SETUP.md` - Comprehensive setup guide with troubleshooting
    - `.env.example` - Template for environment configuration
    - `components/ErrorBoundary.tsx` - Error boundary component
@@ -262,13 +594,11 @@ Add other provider keys in-app: Settings → AI Providers.
 ### 🔍 Code Quality Improvements
 
 1. **Type Safety**
-
    - All TypeScript errors resolved
    - Build passes successfully
    - Added `@types/node` for Node.js type definitions
 
 2. **API Configuration**
-
    - Centralized API key validation
    - Better error messages for missing/invalid API keys
    - Clear setup instructions in error states
@@ -328,12 +658,10 @@ Before deploying to production, verify:
 ## Known Limitations
 
 1. **Bundle Size** - 944 KB is large but acceptable for feature-rich app
-
    - Future optimization: Consider code splitting for routes
    - Future optimization: Lazy load heavy components (Live Coach, Vision)
 
 2. **API Key Security** - Currently exposed in client-side code
-
    - This is normal for client-side apps with user-provided keys
    - Consider adding a proxy server for production deployments
 
@@ -346,13 +674,11 @@ Before deploying to production, verify:
 ## Next Steps for Development
 
 1. **Immediate**
-
    - User adds their API key to `.env`
    - Test all features with real API key
    - Verify camera/mic permissions work
 
 2. **Short Term**
-
    - Add unit tests for critical services
    - Add integration tests for journal flow
    - Set up CI/CD pipeline

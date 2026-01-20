@@ -14,6 +14,7 @@ import {
 
 interface OnboardingWizardProps {
   onComplete: () => void;
+  onSkip?: () => void;
 }
 
 interface Step {
@@ -24,7 +25,7 @@ interface Step {
   icon: React.ReactNode;
 }
 
-const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
+const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, onSkip }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -38,21 +39,29 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
     }, 300);
   };
 
+  const handleSkip = () => {
+    setIsExiting(true);
+    // Don't mark as complete - user can see onboarding again
+    setTimeout(() => {
+      onSkip?.();
+    }, 300);
+  };
+
   const steps: Step[] = [
     {
       id: 'welcome',
-      title: 'Welcome to MAEPLE',
-      subtitle: 'Your Mental And Emotional Pattern Literacy Engine',
+      title: 'Understand Yourself Better',
+      subtitle: 'Without judgment, without pressure',
       icon: <Sparkles size={32} className="text-amber-500" />,
       content: (
         <div className="space-y-4">
           <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-            MAEPLE helps you understand your unique neurological patterns—not to fix you, but to help you <span className="font-semibold text-slate-800 dark:text-slate-100">work with</span> your brain, not against it.
+            MAEPLE helps you see your own patterns clearly. Not to fix you, but to help you <span className="font-semibold text-slate-800 dark:text-slate-100">work with</span> yourself—exactly as you are.
           </p>
           <div className="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-xl border border-amber-100 dark:border-amber-800">
             <p className="text-amber-800 dark:text-amber-200 text-sm flex items-start gap-2">
               <Heart size={18} className="shrink-0 mt-0.5" />
-              <span>Created by and for neurodivergent minds who need a gentler approach to self-tracking.</span>
+              <span>Created by and for neurodivergent minds. No shame. No expectations. Just awareness.</span>
             </p>
           </div>
         </div>
@@ -60,28 +69,28 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
     },
     {
       id: 'patterns',
-      title: 'Pattern Literacy Over Surveillance',
-      subtitle: 'Learn your patterns, don\'t police them',
+      title: 'See Your Patterns Clearly',
+      subtitle: 'Know yourself so you can plan your life',
       icon: <Brain size={32} className="text-indigo-500" />,
       content: (
         <div className="space-y-4">
           <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-            Traditional mood trackers ask "What did you do wrong?" MAEPLE asks "What patterns are you noticing?"
+            Most self-tracking apps ask "What did you do wrong?" We ask "What's really going on with you right now?"
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
-              <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium mb-1">
-                <Zap size={16} className="text-amber-500" />
+          <div className="space-y-3">
+            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium mb-2">
+                <Zap size={18} className="text-amber-500" />
                 Capacity Tracking
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Track your 7 capacity dimensions across social, sensory, focus, and more</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Track 7 dimensions of your wellbeing—social, sensory, focus, and more. Know when you're running on fumes.</p>
             </div>
-            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
-              <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium mb-1">
-                <Eye size={16} className="text-rose-500" />
-                Bio-Mirror
+            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium mb-2">
+                <Eye size={18} className="text-rose-500" />
+                Pattern Recognition
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">AI analysis helps you see what you might not notice about yourself</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">After a few entries, you'll start seeing what makes you tick. Real, actionable patterns.</p>
             </div>
           </div>
         </div>
@@ -90,7 +99,7 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
     {
       id: 'mae',
       title: 'Meet Mae',
-      subtitle: 'Your empathetic pattern companion',
+      subtitle: 'Your personal pattern analyst',
       icon: <Heart size={32} className="text-rose-500" />,
       content: (
         <div className="space-y-4">
@@ -100,40 +109,42 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
             </div>
             <div>
               <p className="font-bold text-slate-800 dark:text-slate-100">Mae</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Empathetic Pattern Guide</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Your empathetic pattern guide</p>
             </div>
           </div>
           <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-            Mae reads your journal entries and helps translate your experiences into actionable strategies—without judgment, without prescriptions, just pattern recognition.
+            Mae reads what you write and helps you see patterns you might miss. She translates your experiences into strategies that actually fit <em>your</em> brain—not someone else's.
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 italic">
-            "You're not broken—you're just running different software."
-          </p>
+          <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800">
+            <p className="text-indigo-800 dark:text-indigo-200 text-sm">
+              💡 <span className="font-medium">Not a diagnosis. Not prescriptive. Just honest pattern recognition.</span>
+            </p>
+          </div>
         </div>
       ),
     },
     {
       id: 'privacy',
-      title: 'Privacy First',
-      subtitle: 'Your data stays on your device',
+      title: 'Your Data Stays Yours',
+      subtitle: 'Privacy is not optional',
       icon: <Shield size={32} className="text-emerald-500" />,
       content: (
         <div className="space-y-4">
           <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-            MAEPLE is <span className="font-semibold">local-first</span>. Your journal entries, capacity data, and patterns never leave your device.
+            Your journal, your capacity ratings, your patterns—they all stay on <span className="font-semibold">your device</span>. We never see them. We never store them. Period.
           </p>
           <div className="space-y-2">
-            <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
-              <Lock size={18} className="text-emerald-600" />
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-100 dark:border-emerald-800">
+              <Lock size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span className="text-sm text-emerald-800 dark:text-emerald-200">Encrypted local storage</span>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
-              <Check size={18} className="text-emerald-600" />
-              <span className="text-sm text-emerald-800 dark:text-emerald-200">No accounts required</span>
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-100 dark:border-emerald-800">
+              <Check size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="text-sm text-emerald-800 dark:text-emerald-200">No account required. Ever.</span>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
-              <Check size={18} className="text-emerald-600" />
-              <span className="text-sm text-emerald-800 dark:text-emerald-200">Export your data anytime</span>
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-100 dark:border-emerald-800">
+              <Check size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="text-sm text-emerald-800 dark:text-emerald-200">Export everything anytime</span>
             </div>
           </div>
         </div>
@@ -142,30 +153,30 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
     {
       id: 'start',
       title: 'Ready to Begin?',
-      subtitle: 'Start your pattern literacy journey',
+      subtitle: 'Your pattern journey starts with one entry',
       icon: <Sparkles size={32} className="text-indigo-500" />,
       content: (
         <div className="space-y-4">
           <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-            Here's how to get the most from MAEPLE:
+            Getting started is simple. Here's what works:
           </p>
           <ol className="space-y-3">
             <li className="flex items-start gap-3">
               <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-bold shrink-0">1</span>
-              <span className="text-slate-700 dark:text-slate-200"><span className="font-medium">Journal daily</span> — Just a few sentences about how you're feeling</span>
+              <span className="text-slate-700 dark:text-slate-200"><span className="font-medium">Write a quick entry</span> — Just a few sentences about how you're feeling right now</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-bold shrink-0">2</span>
-              <span className="text-slate-700 dark:text-slate-200"><span className="font-medium">Use the sliders</span> — Rate your capacity across different dimensions</span>
+              <span className="text-slate-700 dark:text-slate-200"><span className="font-medium">Rate your capacity</span> — Use the sliders to show where you're at right now</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-bold shrink-0">3</span>
-              <span className="text-slate-700 dark:text-slate-200"><span className="font-medium">Check your patterns</span> — Visit the Dashboard after 3+ entries</span>
+              <span className="text-slate-700 dark:text-slate-200"><span className="font-medium">Keep going</span> — After 3-5 entries, patterns will start becoming visible</span>
             </li>
           </ol>
-          <div className="pt-2">
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-              No pressure. No streaks. Just awareness.
+          <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800 mt-4">
+            <p className="text-indigo-800 dark:text-indigo-200 text-sm">
+              ⏰ <span className="font-medium">Real talk:</span> This isn't a weekend sprint. Real patterns emerge over weeks. Be patient with yourself.
             </p>
           </div>
         </div>
@@ -215,37 +226,47 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
+        <div className="flex items-center justify-between gap-3 p-6 bg-slate-50 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
           <button
-            onClick={() => setCurrentStep(prev => prev - 1)}
-            disabled={currentStep === 0}
-            className={`flex items-center gap-1 px-4 py-2 rounded-xl font-medium transition-all ${
-              currentStep === 0
-                ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700'
-            }`}
+            onClick={handleSkip}
+            className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium transition-colors text-sm"
+            title="Skip onboarding for now. You can view it again anytime."
           >
-            <ChevronLeft size={18} />
-            Back
+            Skip
           </button>
 
-          {isLastStep ? (
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleComplete}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              onClick={() => setCurrentStep(prev => prev - 1)}
+              disabled={currentStep === 0}
+              className={`flex items-center gap-1 px-4 py-2 rounded-xl font-medium transition-all ${
+                currentStep === 0
+                  ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
-              Start Journaling
-              <Sparkles size={18} />
+              <ChevronLeft size={18} />
+              Back
             </button>
-          ) : (
-            <button
-              onClick={() => setCurrentStep(prev => prev + 1)}
-              className="flex items-center gap-1 px-6 py-3 bg-slate-900 dark:bg-slate-700 text-white rounded-xl font-medium hover:bg-slate-800 dark:hover:bg-slate-600 transition-all"
-            >
-              Next
-              <ChevronRight size={18} />
-            </button>
-          )}
+
+            {isLastStep ? (
+              <button
+                onClick={handleComplete}
+                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                Start Journaling
+                <Sparkles size={18} />
+              </button>
+            ) : (
+              <button
+                onClick={() => setCurrentStep(prev => prev + 1)}
+                className="flex items-center gap-1 px-6 py-2 bg-slate-900 dark:bg-slate-700 text-white rounded-xl font-medium hover:bg-slate-800 dark:hover:bg-slate-600 transition-all"
+              >
+                Next
+                <ChevronRight size={18} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

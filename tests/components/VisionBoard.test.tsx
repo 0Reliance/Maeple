@@ -1,15 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, mockDependencies } from '../test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import VisionBoard from '../../components/VisionBoard';
-import * as geminiVisionService from '../../services/geminiVisionService';
-import * as storageService from '../../services/storageService';
+import VisionBoard from '../../src/components/VisionBoard';
+import * as storageService from '../../src/services/storageService';
 
 // Mock services
-vi.mock('../../services/geminiVisionService', () => ({
-  generateOrEditImage: vi.fn(),
-}));
-
-vi.mock('../../services/storageService', () => ({
+vi.mock('../../src/services/storageService', () => ({
   getEntries: vi.fn(),
 }));
 
@@ -24,7 +19,7 @@ describe('VisionBoard Component', () => {
     tags: [],
     activityTypes: [],
     strengths: ['Creativity'],
-    neuroMetrics: { spoonLevel: 5, sensoryLoad: 8, contextSwitches: 2, maskingScore: 1, capacity: {} as any },
+    neuroMetrics: { spoonLevel: 5, sensoryLoad: 8, contextSwitches: 2, capacity: {} as any },
     notes: 'Feeling good',
     rawText: 'Feeling good'
   };
@@ -32,11 +27,14 @@ describe('VisionBoard Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (storageService.getEntries as any).mockReturnValue([mockEntry]);
+    // Reset mock dependencies
+    mockDependencies.visionService.generateImage.mockReset();
+    mockDependencies.visionService.generateImage.mockResolvedValue('base64-image-data');
   });
 
   it('renders initial state correctly', () => {
     render(<VisionBoard />);
-    expect(screen.getByText('Visual Therapy AI')).toBeInTheDocument();
+    expect(screen.getByText('Visual Therapy')).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Describe what you want to visualize/)).toBeInTheDocument();
     expect(screen.getByText('Generate')).toBeInTheDocument();
   });
@@ -60,7 +58,7 @@ describe('VisionBoard Component', () => {
 
   it('generates image when generate button is clicked', async () => {
     const mockImage = 'data:image/png;base64,fakeimage';
-    (geminiVisionService.generateOrEditImage as any).mockResolvedValue(mockImage);
+    mockDependencies.visionService.generateImage.mockResolvedValue(mockImage);
 
     render(<VisionBoard />);
     
@@ -71,7 +69,7 @@ describe('VisionBoard Component', () => {
     fireEvent.click(generateButton);
 
     await waitFor(() => {
-      expect(geminiVisionService.generateOrEditImage).toHaveBeenCalledWith('A beautiful sunset', undefined);
+      expect(mockDependencies.visionService.generateImage).toHaveBeenCalledWith('A beautiful sunset', undefined);
     });
 
     await waitFor(() => {
@@ -82,9 +80,8 @@ describe('VisionBoard Component', () => {
   });
 
   it('handles generation error', async () => {
-    (geminiVisionService.generateOrEditImage as any).mockRejectedValue(new Error('Failed'));
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
-
+    mockDependencies.visionService.generateImage.mockRejectedValue(new Error('Failed to generate'));
+    
     render(<VisionBoard />);
     
     const input = screen.getByPlaceholderText(/Describe what you want to visualize/);
@@ -94,7 +91,7 @@ describe('VisionBoard Component', () => {
     fireEvent.click(generateButton);
 
     await waitFor(() => {
-      expect(alertMock).toHaveBeenCalledWith('Failed to generate image. Please try again.');
+      expect(screen.getByText(/Failed to generate/)).toBeInTheDocument();
     });
   });
 });

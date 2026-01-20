@@ -5,15 +5,10 @@
  * Implements a hybrid offline-first sync strategy.
  */
 
-import { HealthEntry, UserSettings } from "../types";
-import {
-  getEntries,
-  getUserSettings,
-  saveUserSettings,
-  bulkSaveEntries,
-} from "./storageService";
+import { HealthEntry } from "../types";
 import * as apiClient from "./apiClient";
 import { isCloudSyncAvailable } from "./authService";
+import { bulkSaveEntries, getEntries, getUserSettings, saveUserSettings } from "./storageService";
 
 // ============================================
 // SYNC STATE
@@ -26,28 +21,46 @@ export interface SyncState {
   error?: string;
 }
 
+// Pending changes queue (for offline support)
+const PENDING_KEY = "maeple_pending_sync";
+const LAST_SYNC_KEY = "maeple_last_sync";
+
+interface PendingChange {
+  type: "entry" | "settings";
+  action: "create" | "update" | "delete";
+  id: string;
+  timestamp: string;
+}
+
+// Initialize state with persisted values
 let syncState: SyncState = {
   status: "idle",
   lastSyncAt: null,
   pendingChanges: 0,
 };
 
-let syncListeners: Array<(state: SyncState) => void> = [];
-
-// Pending changes queue (for offline support)
-const PENDING_KEY = "maeple_pending_sync";
-const LAST_SYNC_KEY = "maeple_last_sync";
-
-interface PendingChange {
-  type: "entry" | "settings" | "stateCheck";
-  action: "create" | "update" | "delete";
-  id: string;
-  timestamp: string;
+// Defer loading to avoid circular dependencies with storage
+if (typeof window !== "undefined") {
+  try {
+    const stored = localStorage.getItem(PENDING_KEY);
+    if (stored) {
+      syncState.pendingChanges = JSON.parse(stored).length;
+    }
+  } catch (e) {
+    console.warn("Failed to load initial sync state:", e);
+  }
 }
+
+let syncListeners: Array<(state: SyncState) => void> = [];
 
 // ============================================
 // STATE MANAGEMENT
 // ============================================
+
+const getPendingChanges = (): PendingChange[] => {
+  const stored = localStorage.getItem(PENDING_KEY);
+  return stored ? JSON.parse(stored) : [];
+};
 
 const getLastSyncTime = (): Date | null => {
   const stored = localStorage.getItem(LAST_SYNC_KEY);
@@ -59,12 +72,10 @@ export const getSyncState = (): SyncState => ({
   lastSyncAt: getLastSyncTime(),
 });
 
-export const onSyncStateChange = (
-  callback: (state: SyncState) => void
-): (() => void) => {
+export const onSyncStateChange = (callback: (state: SyncState) => void): (() => void) => {
   syncListeners.push(callback);
   return () => {
-    syncListeners = syncListeners.filter((cb) => cb !== callback);
+    syncListeners = syncListeners.filter(cb => cb !== callback);
   };
 };
 
@@ -73,21 +84,16 @@ const updateSyncState = (updates: Partial<SyncState>) => {
   if (updates.lastSyncAt) {
     localStorage.setItem(LAST_SYNC_KEY, updates.lastSyncAt.toISOString());
   }
-  syncListeners.forEach((cb) => cb(syncState));
+  syncListeners.forEach(cb => cb(syncState));
 };
 
 // ============================================
 // PENDING CHANGES QUEUE
 // ============================================
 
-const getPendingChanges = (): PendingChange[] => {
-  const stored = localStorage.getItem(PENDING_KEY);
-  return stored ? JSON.parse(stored) : [];
-};
-
 const removePendingChange = (id: string, type: string) => {
   const pending = getPendingChanges();
-  const filtered = pending.filter((p) => !(p.id === id && p.type === type));
+  const filtered = pending.filter(p => !(p.id === id && p.type === type));
   localStorage.setItem(PENDING_KEY, JSON.stringify(filtered));
   updateSyncState({ pendingChanges: filtered.length });
 };
@@ -134,7 +140,7 @@ export const processPendingChanges = async (): Promise<void> => {
           await apiClient.deleteEntry(change.id);
         } else {
           const entries = getEntries();
-          const entry = entries.find((e) => e.id === change.id);
+          const entry = entries.find(e => e.id === change.id);
           if (entry) {
             if (change.action === "create") {
               await apiClient.createEntry(entry);
@@ -230,12 +236,10 @@ export const pullFromCloud = async (): Promise<{
 
   try {
     // Get cloud data
-    const { entries: cloudEntries, error: entriesError } =
-      await apiClient.getEntries();
+    const { entries: cloudEntries, error: entriesError } = await apiClient.getEntries();
     if (entriesError) throw new Error(entriesError);
 
-    const { settings: cloudSettings, error: settingsError } =
-      await apiClient.getSettings();
+    const { settings: cloudSettings, error: settingsError } = await apiClient.getSettings();
     if (settingsError) throw new Error(settingsError);
 
     // Get local data
@@ -245,7 +249,7 @@ export const pullFromCloud = async (): Promise<{
     let addedCount = 0;
     let updatedCount = 0;
     const entriesToSave: HealthEntry[] = [];
-    const localMap = new Map(localEntries.map((e) => [e.id, e]));
+    const localMap = new Map(localEntries.map(e => [e.id, e]));
 
     if (cloudEntries) {
       for (const cloudEntry of cloudEntries) {
@@ -257,12 +261,8 @@ export const pullFromCloud = async (): Promise<{
           addedCount++;
         } else {
           // Conflict resolution: Last Write Wins
-          const cloudTime = new Date(
-            cloudEntry.updatedAt || cloudEntry.timestamp
-          ).getTime();
-          const localTime = new Date(
-            localEntry.updatedAt || localEntry.timestamp
-          ).getTime();
+          const cloudTime = new Date(cloudEntry.updatedAt || cloudEntry.timestamp).getTime();
+          const localTime = new Date(localEntry.updatedAt || localEntry.timestamp).getTime();
 
           // If cloud is newer (by at least 1 second to avoid clock skew issues)
           if (cloudTime > localTime + 1000) {

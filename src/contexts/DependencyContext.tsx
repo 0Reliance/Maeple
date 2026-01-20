@@ -1,17 +1,22 @@
-import { createContext, useContext, ReactNode, FC } from 'react';
-import { CircuitState } from '../patterns/CircuitBreaker';
+import { createContext, FC, ReactNode, useContext } from "react";
+import { CircuitState } from "../patterns/CircuitBreaker";
 
 /**
  * Dependency Injection Context
- * 
+ *
  * Provides all application dependencies through context
  * Enables testability by allowing mock implementations
  * Clear dependency graph for better architecture
  */
 
 // Service Interfaces
+export interface VisionServiceOptions {
+  onProgress?: (stage: string, progress: number) => void;
+  signal?: AbortSignal;
+}
+
 export interface VisionService {
-  analyzeFromImage(imageData: string): Promise<any>;
+  analyzeFromImage(imageData: string, options?: VisionServiceOptions): Promise<any>;
   generateImage(prompt: string, base64Image?: string): Promise<any>;
   getState(): CircuitState;
   onStateChange(callback: (state: CircuitState) => void): () => void;
@@ -82,28 +87,21 @@ interface DependencyProviderProps {
   children: ReactNode;
 }
 
-export const DependencyProvider: FC<DependencyProviderProps> = ({
-  dependencies,
-  children
-}) => {
-  return (
-    <DependencyContext.Provider value={dependencies}>
-      {children}
-    </DependencyContext.Provider>
-  );
+export const DependencyProvider: FC<DependencyProviderProps> = ({ dependencies, children }) => {
+  return <DependencyContext.Provider value={dependencies}>{children}</DependencyContext.Provider>;
 };
 
 // Hook to use dependencies
 export function useDependencies(): AppDependencies {
   const dependencies = useContext(DependencyContext);
-  
+
   if (!dependencies) {
     throw new Error(
-      'useDependencies must be used within a DependencyProvider. ' +
-      'Make sure your app is wrapped with <DependencyProvider>.'
+      "useDependencies must be used within a DependencyProvider. " +
+        "Make sure your app is wrapped with <DependencyProvider>."
     );
   }
-  
+
   return dependencies;
 }
 

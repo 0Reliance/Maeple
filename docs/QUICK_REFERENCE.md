@@ -1,7 +1,27 @@
 # MAEPLE Development Quick Reference
 
-**Version**: 1.0.0  
-**Last Updated**: December 26, 2025
+**App Version**: 0.97.7  
+**Last Updated**: January 20, 2026  
+**Local Database**: ✅ Fully Operational
+
+---
+
+## What's New (Jan 2026)
+
+### Local Database Integration (Jan 20)
+
+- **PostgreSQL 16** running in Docker on port 5432
+- **Express API** with JWT authentication on port 3001
+- **Full CRUD** operations verified for entries and settings
+- See [LOCAL_DB_STATUS.md](../LOCAL_DB_STATUS.md) for details
+
+### Onboarding System Improvements
+
+- **5-step tutorial** with user-focused messaging
+- **Skip button** on every step for graceful exit
+- **Dual first-entry detection** (localStorage + entries check)
+- **Replay feature** in Settings → Help & Resources
+- See [TESTING_GUIDE.md](TESTING_GUIDE.md) for testing procedures
 
 ---
 
@@ -49,6 +69,7 @@ npm run dev
 ## Available Commands
 
 ### Development
+
 ```bash
 npm run dev              # Start development server
 npm run build            # Build for production
@@ -57,6 +78,7 @@ npm run health           # Run health check
 ```
 
 ### Code Quality
+
 ```bash
 npm run lint             # Run ESLint
 npm run lint:fix         # Fix ESLint errors
@@ -67,6 +89,7 @@ npm run typecheck:watch  # Watch mode for type checking
 ```
 
 ### Testing
+
 ```bash
 npm test                 # Run tests in watch mode
 npm run test:run        # Run tests once
@@ -76,6 +99,7 @@ npm run test:all         # Run all checks (build, analyze, test:ai)
 ```
 
 ### Comprehensive Checks
+
 ```bash
 npm run check-all        # Run lint + typecheck + tests
 npm run fix-all          # Run lint:fix + format + typecheck
@@ -87,30 +111,30 @@ npm run fix-all          # Run lint:fix + format + typecheck
 
 ### Pre-Configured Keys (in .env.example)
 
-| Service | API Key Variable | Status |
-|---------|-----------------|--------|
-| Gemini | `VITE_GEMINI_API_KEY` | ✅ Configured |
-| Z.ai | `ZAI_API_KEY` | ✅ Configured |
-| Perplexity | `PERPLEXITY_API_KEY` | ✅ Configured |
-| Brave Search | `BRAVE_API_KEY` | ✅ Configured |
-| ElevenLabs | `ELEVENLABS_API_KEY` | ✅ Configured |
-| Jina AI | `JINA_API_KEY` | ✅ Configured |
-| Giphy | `GIFY_API_KEY` | ✅ Configured |
-| Resend | `RESEND_API_KEY` | ✅ Configured |
-| OpenRouter | `OPENROUTER_API_KEY` | ✅ Configured |
-| Firecrawl | `FIRECRAWL_API_KEY` | ✅ Configured |
-| Moonshot Kimi | `MOONSHOT_KIMI_API_KEY` | ✅ Configured |
-| GitHub Genpozi | `GITHUB_GENPOZI_TOKEN` | ✅ Configured |
+| Service        | API Key Variable        | Status        |
+| -------------- | ----------------------- | ------------- |
+| Gemini         | `VITE_GEMINI_API_KEY`   | ✅ Configured |
+| Z.ai           | `ZAI_API_KEY`           | ✅ Configured |
+| Perplexity     | `PERPLEXITY_API_KEY`    | ✅ Configured |
+| Brave Search   | `BRAVE_API_KEY`         | ✅ Configured |
+| ElevenLabs     | `ELEVENLABS_API_KEY`    | ✅ Configured |
+| Jina AI        | `JINA_API_KEY`          | ✅ Configured |
+| Giphy          | `GIFY_API_KEY`          | ✅ Configured |
+| Resend         | `RESEND_API_KEY`        | ✅ Configured |
+| OpenRouter     | `OPENROUTER_API_KEY`    | ✅ Configured |
+| Firecrawl      | `FIRECRAWL_API_KEY`     | ✅ Configured |
+| Moonshot Kimi  | `MOONSHOT_KIMI_API_KEY` | ✅ Configured |
+| GitHub Genpozi | `GITHUB_GENPOZI_TOKEN`  | ✅ Configured |
 
 ### Keys to Add (Optional)
 
-| Service | API Key Variable | Get Key From |
-|---------|-----------------|--------------|
-| OpenAI | `OPENAI_API_KEY` | https://platform.openai.com/api-keys |
-| Anthropic | `ANTHROPIC_API_KEY` | https://console.anthropic.com/ |
-| Oura Ring | `VITE_OURA_CLIENT_ID` | https://cloud.ouraring.com/oauth/applications |
-| Whoop | `VITE_WHOOP_CLIENT_ID` | https://developer.whoop.com/ |
-| Garmin | `VITE_GARMIN_CONSUMER_KEY` | https://developer.garmin.com/ |
+| Service   | API Key Variable           | Get Key From                                  |
+| --------- | -------------------------- | --------------------------------------------- |
+| OpenAI    | `OPENAI_API_KEY`           | https://platform.openai.com/api-keys          |
+| Anthropic | `ANTHROPIC_API_KEY`        | https://console.anthropic.com/                |
+| Oura Ring | `VITE_OURA_CLIENT_ID`      | https://cloud.ouraring.com/oauth/applications |
+| Whoop     | `VITE_WHOOP_CLIENT_ID`     | https://developer.whoop.com/                  |
+| Garmin    | `VITE_GARMIN_CONSUMER_KEY` | https://developer.garmin.com/                 |
 
 ---
 
@@ -148,6 +172,7 @@ npm run fix-all          # Run lint:fix + format + typecheck
 Configuration is in `mcp-config.json` and `.vscode/settings.json`.
 
 **Key Settings:**
+
 ```json
 {
   "mcp.enabled": true,
@@ -163,13 +188,13 @@ Configuration is in `mcp-config.json` and `.vscode/settings.json`.
 
 ### Vision Capabilities
 
-| Provider | Vision Support | Primary Use |
-|----------|---------------|-------------|
-| ✅ Gemini | Native | Bio-Mirror, Live Coach |
-| ✅ OpenAI | Native | Image analysis, DALL-E |
-| ❌ Z.ai | None | Code generation (needs preprocessing) |
-| ❌ Anthropic | None | Text analysis |
-| ❌ Perplexity | None | Web search |
+| Provider      | Vision Support | Primary Use                           |
+| ------------- | -------------- | ------------------------------------- |
+| ✅ Gemini     | Native         | Bio-Mirror, Live Coach                |
+| ✅ OpenAI     | Native         | Image analysis, DALL-E                |
+| ❌ Z.ai       | None           | Code generation (needs preprocessing) |
+| ❌ Anthropic  | None           | Text analysis                         |
+| ❌ Perplexity | None           | Web search                            |
 
 ### Multi-Provider Pattern for Vision
 
@@ -179,7 +204,7 @@ When using Z.ai (no vision) with image data:
 // Step 1: Vision analysis with Gemini
 const visionData = await gemini.analyzeImage({
   image: imageData,
-  prompt: "Describe facial features, fatigue, tension..."
+  prompt: "Describe facial features, fatigue, tension...",
 });
 
 // Step 2: Use vision data with Z.ai for code
@@ -193,14 +218,14 @@ const code = await zai.generateCode(`
 
 ### Provider Selection by Task
 
-| Task | Primary Provider | Fallback |
-|------|-----------------|-----------|
-| Vision Analysis | Gemini | OpenAI |
-| Code Generation | Z.ai | Anthropic, Gemini |
-| Text Analysis | Anthropic | Gemini, OpenAI |
-| Web Search | Perplexity | Brave Search, Jina |
-| Voice Synthesis | ElevenLabs | Gemini (text-to-speech) |
-| Real-time Coaching | Gemini (multimodal) | Anthropic |
+| Task               | Primary Provider    | Fallback                |
+| ------------------ | ------------------- | ----------------------- |
+| Vision Analysis    | Gemini              | OpenAI                  |
+| Code Generation    | Z.ai                | Anthropic, Gemini       |
+| Text Analysis      | Anthropic           | Gemini, OpenAI          |
+| Web Search         | Perplexity          | Brave Search, Jina      |
+| Voice Synthesis    | ElevenLabs          | Gemini (text-to-speech) |
+| Real-time Coaching | Gemini (multimodal) | Anthropic               |
 
 ---
 
@@ -327,6 +352,7 @@ npm run format:check
 ### TypeScript Errors
 
 **Problem**: Type errors after installing new packages
+
 ```bash
 # Solution 1: Reinstall dependencies
 rm -rf node_modules package-lock.json
@@ -337,6 +363,7 @@ npm run typecheck -- --force
 ```
 
 **Problem**: `Cannot find module` errors
+
 ```bash
 # Solution: Check tsconfig paths are correct
 # Ensure imports use @/* alias for src/ directory
@@ -346,6 +373,7 @@ import { MyComponent } from '@/components/MyComponent';
 ### ESLint Errors
 
 **Problem**: ESLint errors that won't auto-fix
+
 ```bash
 # Solution: Check ESLint configuration
 cat .eslintrc.js
@@ -359,6 +387,7 @@ cat .eslintrc.js
 ### Build Errors
 
 **Problem**: Build fails with TypeScript errors
+
 ```bash
 # Solution 1: Fix type errors first
 npm run typecheck
@@ -375,6 +404,7 @@ npm run build
 ### MCP Server Issues
 
 **Problem**: MCP servers not connecting
+
 ```bash
 # Solution 1: Check MCP configuration
 cat mcp-config.json
@@ -392,6 +422,7 @@ grep -r "API_KEY" .env
 ### AI Provider Issues
 
 **Problem**: AI requests failing
+
 ```bash
 # Solution 1: Test AI providers
 npm run test:ai
@@ -409,6 +440,7 @@ curl https://api.openai.com/v1/models
 ### Database Issues
 
 **Problem**: Database connection fails
+
 ```bash
 # Solution 1: Check PostgreSQL is running
 sudo systemctl status postgresql
@@ -463,7 +495,7 @@ npm run load-test
 psql $DATABASE_URL -f scripts/analyze-queries.sql
 
 # Add indexes if needed
-CREATE INDEX idx_health_entries_user_timestamp 
+CREATE INDEX idx_health_entries_user_timestamp
 ON health_entries (user_id, timestamp DESC);
 
 # Vacuum database
@@ -494,7 +526,7 @@ const clientKey = process.env.ZAI_API_KEY; // Never do this!
 
 ```typescript
 // Biometric data is automatically encrypted
-import { encryptionService } from '@/services/encryptionService';
+import { encryptionService } from "@/services/encryptionService";
 
 // Encrypt before storing
 const encrypted = await encryptionService.encrypt(imageBuffer, userKey);
@@ -512,7 +544,7 @@ const decrypted = await encryptionService.decrypt(encrypted, iv, userKey);
 // - 100 requests/minute per IP
 
 // Custom rate limits
-import { rateLimiter } from '@/services/rateLimiter';
+import { rateLimiter } from "@/services/rateLimiter";
 
 await rateLimiter.check(userId, 55, 60000); // 55 per minute
 ```
@@ -522,20 +554,24 @@ await rateLimiter.check(userId, 55, 60000); // 55 per minute
 ## Documentation Links
 
 ### Core Documentation
+
 - [Complete Specifications](../specifications/COMPLETE_SPECIFICATIONS.md) - Full system documentation
 - [Development Tooling Guide](./DEVELOPMENT_TOOLING.md) - Detailed tooling setup
 - [AI Integration Guide](./AI_INTEGRATION_GUIDE.md) - AI provider usage
 - [This Quick Reference](./QUICK_REFERENCE.md) - Fast lookup guide
 
 ### API Documentation
+
 - [API Reference](../specifications/API_REFERENCE.md) - REST API documentation
 - [Data Models](../specifications/DATA_MODELS.md) - Data structure documentation
 
 ### Architecture
+
 - [System Architecture](../specifications/SYSTEM_ARCHITECTURE.md) - Architecture overview
 - [Data Analysis Logic](../specifications/DATA_ANALYSIS_LOGIC.md) - Analysis algorithms
 
 ### External Resources
+
 - [React Documentation](https://react.dev/)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Vite Guide](https://vitejs.dev/guide/)
@@ -560,6 +596,7 @@ await rateLimiter.check(userId, 55, 60000); // 55 per minute
 ### Reporting Issues
 
 When reporting issues, include:
+
 - MAEPLE version (from package.json)
 - Node.js version (`node --version`)
 - npm version (`npm --version`)
@@ -581,24 +618,28 @@ When reporting issues, include:
 ## Keyboard Shortcuts (VS Code)
 
 ### General
+
 - `Ctrl/Cmd + P` - Quick Open
 - `Ctrl/Cmd + Shift + P` - Command Palette
 - `Ctrl/Cmd + `` - Terminal
 - `Ctrl/Cmd + B` - Toggle sidebar
 
 ### Editing
+
 - `Alt/Option + Up/Down` - Move line
 - `Shift + Alt/Option + Up/Down` - Copy line
 - `Ctrl/Cmd + /` - Toggle comment
 - `Ctrl/Cmd + D` - Select next occurrence
 
 ### TypeScript
+
 - `F12` - Go to definition
 - `Shift + F12` - Peek definition
 - `F2` - Rename symbol
 - `Ctrl/Cmd + .` - Quick fix
 
 ### Testing
+
 - `Ctrl/Cmd + Shift + T` - Go to test file
 - `Ctrl/Cmd + ;` - Toggle test coverage
 
@@ -621,15 +662,15 @@ export const MyComponent: React.FC<MyComponentProps> = ({
   onSave
 }) => {
   const [data, setData] = useState<string>('');
-  
+
   useEffect(() => {
     // Component mount logic
   }, []);
-  
+
   const handleSave = () => {
     onSave(data);
   };
-  
+
   return (
     <div>
       <h1>{title}</h1>
@@ -646,7 +687,7 @@ export const MyComponent: React.FC<MyComponentProps> = ({
 ### Zustand Store
 
 ```typescript
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface AppState {
   count: number;
@@ -654,10 +695,10 @@ interface AppState {
   decrement: () => void;
 }
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>(set => ({
   count: 0,
-  increment: () => set((state) => ({ count: state.count + 1 })),
-  decrement: () => set((state) => ({ count: state.count - 1 }))
+  increment: () => set(state => ({ count: state.count + 1 })),
+  decrement: () => set(state => ({ count: state.count - 1 })),
 }));
 ```
 
@@ -666,33 +707,28 @@ export const useStore = create<AppState>((set) => ({
 ```typescript
 export const apiClient = {
   async get<T>(endpoint: string): Promise<T> {
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}${endpoint}`
-    );
-    
+    const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`);
+
     if (!response.ok) {
       throw new Error(`API error: ${response.statusText}`);
     }
-    
+
     return response.json();
   },
-  
+
   async post<T>(endpoint: string, data: unknown): Promise<T> {
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}${endpoint}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      }
-    );
-    
+    const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
     if (!response.ok) {
       throw new Error(`API error: ${response.statusText}`);
     }
-    
+
     return response.json();
-  }
+  },
 };
 ```
 

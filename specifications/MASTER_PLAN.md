@@ -29,7 +29,7 @@ MAEPLE is a sophisticated neuro-affirming health intelligence platform that has 
 
 1. No URL-based routing (history navigation broken)
 2. No deep linking support
-3. Mobile menu state persists incorrectly sometimes
+3. ~~Mobile menu state persists incorrectly sometimes~~ (Fixed v0.97.7 - Sidebar removed)
 
 ---
 

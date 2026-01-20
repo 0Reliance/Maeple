@@ -263,15 +263,18 @@ export const useAppStore = create<AppStore>()(
               }
             }
 
-            // Check onboarding status
-            const onboardingComplete =
+            // Check onboarding status - show if EITHER:
+            // 1. localStorage flag is NOT set, OR
+            // 2. User has zero entries (new user or after data clear)
+            const onboardingCompleted =
               localStorage.getItem("maeple_onboarding_complete") === "true";
+            const shouldShowOnboarding = !onboardingCompleted && entries.length === 0;
 
             set(
               {
                 entries,
                 userSettings: settings,
-                showOnboarding: !onboardingComplete,
+                showOnboarding: shouldShowOnboarding,
                 isInitialized: true,
                 isLoading: false,
               },

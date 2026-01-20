@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ZaiAdapter } from '../../../../services/ai/adapters/zai';
-import { AITextRequest } from '../../../../services/ai/types';
+import { ZaiAdapter } from '../../../../src/services/ai/adapters/zai';
+import { AITextRequest } from '../../../../src/services/ai/types';
 
 // Mock fetch
 const mockFetch = vi.fn();

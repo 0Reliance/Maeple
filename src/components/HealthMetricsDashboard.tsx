@@ -23,7 +23,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis
+  YAxis,
 } from "recharts";
 import {
   calculateBurnoutTrajectory,
@@ -33,10 +33,7 @@ import {
   generateInsights,
 } from "../services/analytics";
 import { getUserSettings } from "../services/storageService";
-import {
-  HealthEntry,
-  WearableDataPoint
-} from "../types";
+import { HealthEntry, WearableDataPoint } from "../types";
 import { Badge } from "./ui/Badge";
 import { Button } from "./ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/Card";
@@ -50,6 +47,7 @@ interface ChartDataPoint {
   rawDate: string;
   date: string;
   energy: number | null;
+  mood: number | null;
   sensory: number | null;
   hrv: number | null;
   sleep: number | null;
@@ -69,10 +67,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
   const [showDetails, setShowDetails] = useState(false);
 
   // Generate Insights
-  const insights = useMemo(
-    () => generateInsights(entries, wearableData),
-    [entries, wearableData]
-  );
+  const insights = useMemo(() => generateInsights(entries, wearableData), [entries, wearableData]);
 
   // Generate Current Strategy & Cognitive Load
   const { strategies, cognitiveLoad } = useMemo(() => {
@@ -98,25 +93,29 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
   const sleepStats = useMemo(() => {
     if (!wearableData.length) return null;
     const recent = [...wearableData]
-      .filter((w) => w.metrics.sleep)
+      .filter(w => w.metrics.sleep)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 7);
 
     if (!recent.length) return null;
 
     const avgTotal =
-      recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.totalDurationSeconds || 0), 0) / recent.length;
+      recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.totalDurationSeconds || 0), 0) /
+      recent.length;
     const avgDeep =
-      recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.deepSleepSeconds || 0), 0) / recent.length;
+      recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.deepSleepSeconds || 0), 0) /
+      recent.length;
     const avgRem =
-      recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.remSleepSeconds || 0), 0) / recent.length;
+      recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.remSleepSeconds || 0), 0) /
+      recent.length;
 
     return {
       totalHours: (avgTotal / 3600).toFixed(1),
       deepPercent: avgTotal > 0 ? Math.round((avgDeep / avgTotal) * 100) : 0,
       remPercent: avgTotal > 0 ? Math.round((avgRem / avgTotal) * 100) : 0,
       efficiency: Math.round(
-        recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.efficiencyScore || 0), 0) / recent.length
+        recent.reduce((acc, curr) => acc + (curr.metrics.sleep?.efficiencyScore || 0), 0) /
+          recent.length
       ),
     };
   }, [wearableData]);
@@ -132,16 +131,21 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
             <circle cx="100" cy="100" r="60" fill="none" stroke="#2D7A6E" strokeWidth="1" />
             <circle cx="300" cy="250" r="40" fill="none" stroke="#2D7A6E" strokeWidth="1" />
             <circle cx="180" cy="320" r="50" fill="none" stroke="#2D7A6E" strokeWidth="1" />
-            <path d="M50 200 Q150 100 250 200 T350 150" stroke="#2D7A6E" strokeWidth="1" fill="none" />
+            <path
+              d="M50 200 Q150 100 250 200 T350 150"
+              stroke="#2D7A6E"
+              strokeWidth="1"
+              fill="none"
+            />
             <path d="M80 300 Q200 280 300 320" stroke="#2D7A6E" strokeWidth="1" fill="none" />
-            
+
             {/* Subtle leaf shapes */}
             <path d="M150 180 Q160 160 170 180 Q160 200 150 180" fill="#2D7A6E" opacity="0.3" />
             <path d="M280 200 Q300 180 320 200 Q300 220 280 200" fill="#2D7A6E" opacity="0.3" />
             <path d="M200 250 Q220 230 240 250 Q220 270 200 250" fill="#2D7A6E" opacity="0.3" />
           </svg>
         </div>
-        
+
         <div className="relative z-10 text-center max-w-md mx-auto">
           {/* Custom Garden Illustration */}
           <div className="mb-8 animate-float">
@@ -157,37 +161,47 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                   <stop offset="100%" stopColor="#2D7A6E" />
                 </linearGradient>
               </defs>
-              
+
               {/* Main stem */}
-              <path d="M50 90 Q50 70 50 50" stroke="url(#stemGradient)" strokeWidth="3" fill="none" />
-              
+              <path
+                d="M50 90 Q50 70 50 50"
+                stroke="url(#stemGradient)"
+                strokeWidth="3"
+                fill="none"
+              />
+
               {/* Left leaves */}
               <path d="M50 75 Q35 65 30 70 Q35 75 50 75" fill="url(#leafGradient)" opacity="0.8" />
               <path d="M50 60 Q30 50 25 55 Q30 62 50 60" fill="url(#leafGradient)" opacity="0.7" />
-              
+
               {/* Right leaves */}
               <path d="M50 65 Q65 55 70 60 Q65 67 50 65" fill="url(#leafGradient)" opacity="0.8" />
               <path d="M50 50 Q70 40 75 45 Q70 52 50 50" fill="url(#leafGradient)" opacity="0.7" />
-              
+
               {/* Top sprout */}
               <circle cx="50" cy="45" r="5" fill="#4A9CAC" opacity="0.6" />
               <circle cx="48" cy="42" r="3" fill="#4A9CAC" opacity="0.4" />
               <circle cx="53" cy="43" r="3" fill="#4A9CAC" opacity="0.4" />
             </svg>
           </div>
-          
+
           <h3 className="text-h1 font-display font-bold text-text-primary mb-4 animate-stagger">
             Your pattern garden is waiting
           </h3>
-          
+
           <p className="text-large text-text-secondary mb-8 leading-relaxed animate-stagger stagger-delay-1">
-            Every pattern you notice is a seed. Over time, you'll grow to understand what truly nourishes you.
+            Every pattern you notice is a seed. Over time, you'll grow to understand what truly
+            nourishes you.
           </p>
-          
-          <Button variant="primary" size="lg" className="min-w-[220px] animate-stagger stagger-delay-2">
+
+          <Button
+            variant="primary"
+            size="lg"
+            className="min-w-[220px] animate-stagger stagger-delay-2"
+          >
             Plant Your First Seed
           </Button>
-          
+
           <p className="mt-8 text-small text-text-tertiary animate-stagger stagger-delay-3">
             One entry, one pattern, one step toward clarity.
           </p>
@@ -200,27 +214,36 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
   const today = new Date();
   const dateMap = new Map<string, ChartDataPoint>();
 
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
-      const displayDate = d.toLocaleDateString(undefined, {
-        weekday: "short",
-        day: "numeric",
-      });
-      dateMap.set(dateStr, { rawDate: dateStr, date: displayDate, energy: null, sensory: null, hrv: null, sleep: null });
-    }
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+    const dateStr = d.toISOString().split("T")[0];
+    const displayDate = d.toLocaleDateString(undefined, {
+      weekday: "short",
+      day: "numeric",
+    });
+    dateMap.set(dateStr, {
+      rawDate: dateStr,
+      date: displayDate,
+      energy: null,
+      mood: null,
+      sensory: null,
+      hrv: null,
+      sleep: null,
+    });
+  }
 
-  entries.forEach((e) => {
+  entries.forEach(e => {
     const dateStr = new Date(e.timestamp).toISOString().split("T")[0];
     const curr = dateMap.get(dateStr);
     if (curr) {
       curr.energy = e.neuroMetrics?.spoonLevel || 5;
+      curr.mood = typeof e.mood === "number" ? e.mood : null;
       curr.sensory = e.neuroMetrics?.sensoryLoad || 0;
     }
   });
 
-  wearableData.forEach((w) => {
+  wearableData.forEach(w => {
     const curr = dateMap.get(w.date);
     if (curr) {
       curr.hrv = w.metrics.biometrics?.hrvMs ?? null;
@@ -233,20 +256,24 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
   const chartData = Array.from(dateMap.values());
 
   // Stats
-  const validEnergy = chartData.filter((d): d is ChartDataPoint & { energy: number } => d.energy !== null);
+  const validEnergy = chartData.filter(
+    (d): d is ChartDataPoint & { energy: number } => d.energy !== null
+  );
   const avgEnergy = validEnergy.length
     ? (validEnergy.reduce((acc, curr) => acc + curr.energy, 0) / validEnergy.length).toFixed(1)
     : "-";
 
-  const validMood = chartData.filter((d): d is ChartDataPoint & { energy: number } => d.energy !== null);
+  const validMood = chartData.filter(
+    (d): d is ChartDataPoint & { mood: number } => d.mood !== null
+  );
   const avgMood = validMood.length
-    ? (validMood.reduce((acc, curr) => acc + curr.energy, 0) / validMood.length).toFixed(1)
+    ? (validMood.reduce((acc, curr) => acc + curr.mood, 0) / validMood.length).toFixed(1)
     : "-";
 
   // Top Strength
   const strengthMap: Record<string, number> = {};
-  entries.forEach((e) =>
-    e.strengths?.forEach((s) => {
+  entries.forEach(e =>
+    e.strengths?.forEach(s => {
       strengthMap[s] = (strengthMap[s] || 0) + 1;
     })
   );
@@ -272,14 +299,17 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
       {/* Dashboard Header - Added Staggered Animation */}
       <div className="flex items-center justify-between animate-stagger">
         <div>
-          <h2 className="text-h1 font-display font-bold text-text-primary">
-            Pattern Dashboard
-          </h2>
+          <h2 className="text-h1 font-display font-bold text-text-primary">Pattern Dashboard</h2>
           <p className="text-base text-text-secondary">
             Tracking {entries.length} patterns • Last updated 2 hours ago
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setShowDetails(!showDetails)} className="btn-magnetic">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowDetails(!showDetails)}
+          className="btn-magnetic"
+        >
           {showDetails ? (
             <>
               <ChevronUp size={16} className="mr-2" />
@@ -313,14 +343,10 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
               <div
                 key={strat.id}
                 className="bg-white/10 border border-white/20 p-lg rounded-xl backdrop-blur-sm animate-stagger"
-                style={{ animationDelay: `${0.3 + (i * 0.1)}s` }}
+                style={{ animationDelay: `${0.3 + i * 0.1}s` }}
               >
-                <p className="text-small font-semibold text-white mb-2">
-                  {strat.title}
-                </p>
-                <p className="text-base text-white/90 leading-relaxed">
-                  {strat.action}
-                </p>
+                <p className="text-small font-semibold text-white mb-2">{strat.title}</p>
+                <p className="text-base text-white/90 leading-relaxed">{strat.action}</p>
               </div>
             ))}
           </div>
@@ -350,8 +376,8 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                     trend.direction === "up"
                       ? "text-accent-positive"
                       : trend.direction === "down"
-                      ? "text-accent-alert"
-                      : "text-text-secondary"
+                        ? "text-accent-alert"
+                        : "text-text-secondary"
                   }
                 >
                   {trend.direction === "stable" ? "Stable" : `${trend.percent}%`}
@@ -413,10 +439,10 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                       entries.length < 3
                         ? "bg-bg-secondary text-text-tertiary"
                         : forecast.riskLevel === "CRITICAL"
-                        ? "bg-accent-alert text-white"
-                        : forecast.riskLevel === "MODERATE"
-                        ? "bg-accent-attention text-white"
-                        : "bg-accent-positive text-white"
+                          ? "bg-accent-alert text-white"
+                          : forecast.riskLevel === "MODERATE"
+                            ? "bg-accent-attention text-white"
+                            : "bg-accent-positive text-white"
                     }`}
                   >
                     <Shield size={24} />
@@ -455,8 +481,8 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                 <div className="flex items-start gap-2 text-small text-accent-alert">
                   <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
                   <p className="leading-relaxed">
-                    Your energy levels have been low for a while. Consider taking a rest day
-                    or reaching out to someone you trust.
+                    Your energy levels have been low for a while. Consider taking a rest day or
+                    reaching out to someone you trust.
                   </p>
                 </div>
                 {userSettings.safetyContact && (
@@ -479,21 +505,25 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                         cognitiveLoad.state === "FRAGMENTED"
                           ? "bg-accent-alert text-white"
                           : cognitiveLoad.state === "MODERATE"
-                          ? "bg-accent-attention text-white"
-                          : "bg-accent-positive text-white"
+                            ? "bg-accent-attention text-white"
+                            : "bg-accent-positive text-white"
                       }`}
                     >
                       <Layers size={24} />
                     </div>
                     <div>
                       <CardTitle>Mental Clarity</CardTitle>
-                      <CardDescription>
-                        Based on your activity changes
-                      </CardDescription>
+                      <CardDescription>Based on your activity changes</CardDescription>
                     </div>
                   </div>
                   <Badge
-                    variant={cognitiveLoad.state === "FRAGMENTED" ? "alert" : cognitiveLoad.state === "MODERATE" ? "attention" : "positive"}
+                    variant={
+                      cognitiveLoad.state === "FRAGMENTED"
+                        ? "alert"
+                        : cognitiveLoad.state === "MODERATE"
+                          ? "attention"
+                          : "positive"
+                    }
                     size="md"
                   >
                     {cognitiveLoad.state}
@@ -510,8 +540,8 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                   />
                 </div>
                 <p className="text-small text-text-secondary">
-                  <strong>{cognitiveLoad.switches}</strong> activity changes today
-                  ({cognitiveLoad.efficiencyLoss}% efficiency impact)
+                  <strong>{cognitiveLoad.switches}</strong> activity changes today (
+                  {cognitiveLoad.efficiencyLoss}% efficiency impact)
                 </p>
               </div>
             </Card>
@@ -589,7 +619,10 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                   </p>
                   <p className="text-h3 font-display font-bold">{sleepStats.deepPercent}%</p>
                   <div className="w-full bg-dark-bg-primary h-2 rounded-full mt-3">
-                    <div className="bg-accent-positive h-2 rounded-full" style={{ width: `${sleepStats.deepPercent}%` }} />
+                    <div
+                      className="bg-accent-positive h-2 rounded-full"
+                      style={{ width: `${sleepStats.deepPercent}%` }}
+                    />
                   </div>
                 </div>
                 <div className="bg-dark-bg-secondary/50 p-lg rounded-xl border border-dark-bg-secondary">
@@ -598,7 +631,10 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                   </p>
                   <p className="text-h3 font-display font-bold">{sleepStats.remPercent}%</p>
                   <div className="w-full bg-dark-bg-primary h-2 rounded-full mt-3">
-                    <div className="bg-primary h-2 rounded-full" style={{ width: `${sleepStats.remPercent}%` }} />
+                    <div
+                      className="bg-primary h-2 rounded-full"
+                      style={{ width: `${sleepStats.remPercent}%` }}
+                    />
                   </div>
                 </div>
                 <div className="bg-dark-bg-secondary/50 p-lg rounded-xl border border-dark-bg-secondary">
@@ -628,7 +664,10 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
               </CardHeader>
               <div className="grid md:grid-cols-2 gap-lg">
                 {insights.map((insight, i) => (
-                  <div key={i} className="bg-primary-light/50 border border-primary-light/30 p-lg rounded-xl">
+                  <div
+                    key={i}
+                    className="bg-primary-light/50 border border-primary-light/30 p-lg rounded-xl"
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       {insight.type === "WARNING" ? (
                         <AlertCircle size={16} className="text-accent-attention" />
@@ -637,9 +676,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                       ) : (
                         <Star size={16} className="text-accent-positive" />
                       )}
-                      <span className="text-small font-semibold text-white">
-                        {insight.title}
-                      </span>
+                      <span className="text-small font-semibold text-white">{insight.title}</span>
                     </div>
                     <p className="text-base text-primary-light/90 leading-relaxed">
                       {insight.description}
@@ -654,9 +691,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
           <Card>
             <CardHeader>
               <CardTitle>14-Day Energy Pattern</CardTitle>
-              <CardDescription>
-                Comparing your energy with sensory intensity
-              </CardDescription>
+              <CardDescription>Comparing your energy with sensory intensity</CardDescription>
             </CardHeader>
             <div className="h-80">
               {entries.length === 0 ? (
@@ -666,14 +701,22 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <ComposedChart
+                    data={chartData}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  >
                     <defs>
                       <linearGradient id="energyGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3B8B7E" stopOpacity={0.2} />
                         <stop offset="95%" stopColor="#3B8B7E" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EDEAE6" opacity={0.5} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#EDEAE6"
+                      opacity={0.5}
+                    />
                     <XAxis
                       dataKey="date"
                       tickLine={false}

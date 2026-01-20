@@ -77,15 +77,19 @@
 @layer components {
   /* Base Card Component - Enhanced Hover */
   .card {
-    @apply bg-bg-card rounded-card shadow-card border border-bg-secondary;
+    @apply bg-bg-card rounded-card shadow-card border border-bg-secondary relative;
     padding: var(--space-lg);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
   }
   
   .card:hover {
     @apply shadow-card-hover;
-    transform: translateY(-4px) scale(1.01);
     border-color: rgba(45, 122, 110, 0.2);
+  }
+  
+  /* Cards that should scale on hover (no interactive elements) */
+  .card-hoverable:hover {
+    transform: translateY(-4px) scale(1.01);
   }
   
   /* Button Variants - Enhanced with Character */
@@ -99,7 +103,7 @@
   
   /* Primary Button - Offset Shadow Style */
   .btn-primary {
-    @apply inline-flex items-center justify-center font-semibold;
+    @apply inline-flex items-center justify-center font-semibold text-white;
     padding: 14px 28px;
     border-radius: 8px;
     background: linear-gradient(135deg, #1A4D5E 0%, #2D6B7D 100%);

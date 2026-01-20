@@ -26,9 +26,10 @@ const performSync = async (source: "background" | "foreground" | "timer") => {
     if (points.length > 0) {
       console.log(`[BackgroundSync] Synced ${points.length} data points`);
 
-      // Here we would typically save these points to our store or database
-      // For now, we just log them as the store integration might vary
-      // TODO: Integrate with a wearableStore if it exists, or use a generic data store
+      // Merge synced wearable data into the app store
+      // Using getState() to access store outside of React components
+      const { mergeWearableData } = useAppStore.getState();
+      mergeWearableData(points);
     }
 
     lastSyncTime = Date.now();

@@ -1,103 +1,95 @@
 # MAEPLE Product Roadmap
 
+**Last Updated**: January 4, 2026  
+**Current Version**: 0.97.5
+
 This document tracks the evolution of MAEPLE from a simple journal to a clinical-grade digital phenotype engine.
 
-## 🟢 Phase 1: Multi-Dimensional Capacity (COMPLETED)
+---
 
-- [x] Create `CapacityProfile` interface (Focus, Social, Sensory, etc).
-- [x] Replace single spoon slider with Capacity Grid UI.
-- [x] Update AI prompt to parse Activity Types (`#DeepWork`, `#Social`).
-- [x] Update Timeline Cards to show "Capacity Fingerprint".
+## ✅ Completed Phases
 
-## 🟢 Phase 2: Correlation Engine (COMPLETED)
+### Phase 0: Camera Stability (v2.2.1-v2.2.3) - January 2026
+- [x] v2.2.1: useCameraCapture hook with useRef pattern and stable deps
+- [x] v2.2.1: Conditional modal rendering (only mount when open)
+- [x] v2.2.2: Disabled React.StrictMode for camera stability
+- [x] v2.2.2: GPU optimizations (willChange, contain, isolation)
+- [x] v2.2.2: Removed backdrop-blur effects causing GPU thrashing
+- [x] v2.2.2: React.memo wrapping on camera components
+- [x] v2.2.3: StateCheckWizard !isCameraOpen guard for intro content
+- [x] v2.2.3: Portal mouse event isolation (stopPropagation)
 
-- [x] Build `services/analytics.ts`.
-- [x] Implement logic to correlate Capacity dimensions with Mood.
-- [x] Create "Pattern Insights" widget in Dashboard.
+### Phase 1: Multi-Dimensional Capacity
+- [x] Create `CapacityProfile` interface (Focus, Social, Sensory, etc)
+- [x] Replace single spoon slider with Capacity Grid UI
+- [x] Update AI prompt to parse Activity Types
+- [x] Update Timeline Cards to show "Capacity Fingerprint"
 
-## 🟢 Phase 3: Smart Recommendations (COMPLETED)
+### Phase 2: Correlation Engine
+- [x] Build `services/analytics.ts`
+- [x] Implement logic to correlate Capacity dimensions with Mood
+- [x] Create "Pattern Insights" widget in Dashboard
 
-- [x] Implement `generateDailyStrategy` logic.
-- [x] Create "Mae's Strategy Deck" UI.
-- [x] specific interventions for Sensory Overload and Social Burnout.
+### Phase 3: Smart Recommendations
+- [x] Implement `generateDailyStrategy` logic
+- [x] Create "Mae's Strategy Deck" UI
+- [x] Specific interventions for Sensory Overload and Social Burnout
 
-## 🟢 Phase 4: Burnout Trajectory (COMPLETED)
+### Phase 4-9: Core Intelligence
+- [x] Burnout Trajectory forecasting
+- [x] Cognitive Load tracking (Context Switch Costing)
+- [x] Wearable data integration (Sleep, HRV)
+- [x] Hormonal cycle phase tracking
+- [x] Masking detection and scoring
+- [x] Visual Therapy AI (Vision Board)
 
-- [x] Create `BurnoutForecast` data model.
-- [x] Implement logic to calculate Demand/Capacity ratio over 7 days.
-- [x] Build "Burnout Forecast" widget with predictive text.
+### Phase 10-15: Platform Maturity
+- [x] React Router DOM navigation
+- [x] Multi-provider AI architecture (Gemini, OpenAI, Anthropic, Z.ai, Perplexity)
+- [x] Circuit Breaker pattern for resilience
+- [x] Data validation and migration services
+- [x] Empty state handling for all dashboards
+- [x] Bio-Mirror FACS implementation
+- [x] PWA installation support
 
-## 🟢 Phase 5: Cognitive Load (COMPLETED)
+### Phase 16: Code Quality (January 2026)
+- [x] React 19 upgrade with concurrent features
+- [x] TypeScript strict mode compliance
+- [x] Comprehensive test suite (246 tests)
+- [x] Production-ready authentication (Supabase)
+- [x] Circuit breaker event subscriptions
+- [x] Type-safe Supabase client
 
-- [x] Implement `calculateCognitiveLoad` logic (Context Switch Costing).
-- [x] Visualizing "Efficiency Loss" due to fragmentation.
+---
 
-## 🟢 Phase 6: Passive Context (COMPLETED)
+## 🟡 In Progress
 
-- [x] Integrate `WearableData` into the Analytics Engine.
-- [x] Correlate Sleep Duration (Objective) with Focus Capacity (Subjective).
-- [x] Correlate HRV with Sensory Tolerance.
+### Phase 17: Wearable Ecosystem
+- [ ] Apple Health native integration via Capacitor
+- [ ] Garmin OAuth2 integration for real-time stress data
+- [ ] Fitbit/Whoop provider support
+- [ ] Real-time sync with background refresh
 
-## 🟢 Phase 7: Hormonal Sync 2.0 (COMPLETED)
+### Phase 18: Advanced AI Features
+- [ ] OpenAI Realtime voice sessions
+- [ ] Predictive capacity forecasting
+- [ ] Custom strategy learning from user feedback
 
-- [x] Implement `calculateCyclePhase` logic.
-- [x] Create `CyclePhaseContext` interface.
-- [x] Build "Hormonal Weather" widget (predicting Luteal phase risks).
+---
 
-## 🟢 Phase 8: Masking Detection (COMPLETED)
+## 🔮 Future Phases
 
-- [x] Update Gemini System Instruction to analyze Linguistic Tone.
-- [x] Create `maskingScore` metric (1-10).
-- [x] Visualize "Masking Burden" trends on Dashboard.
+### Phase 19: Healthcare Integration
+- [ ] Provider portal for therapists
+- [ ] EHR integration (Epic, Cerner)
+- [ ] Clinical report generation
+- [ ] Therapy session notes import
 
-## 🟢 Phase 9: Visual Therapy AI (COMPLETED)
-
-- [x] Connect Vision Board to Neuro-Metrics.
-- [x] Generate "Smart Prompts" based on current state (e.g., "Visualize Serenity" if Sensory Load > 8).
-
-## 🟢 Phase 11: Platform Hardening (COMPLETED)
-
-- [x] **Routing**: Migrated to `react-router-dom` for proper URL navigation.
-- [x] **AI Stability**: Implemented health checks and usage tracking for all providers.
-- [x] **Data Integrity**: Added schema migration service and robust sync conflict resolution.
-- [x] **Export**: Optimized JSON export to handle large datasets (image exclusion).
-- [x] **Live Coach**: Abstracted audio routing to support multi-provider real-time sessions.
-- [x] **AI Expansion**: Fully implemented Perplexity, OpenRouter, and Ollama adapters.
-
-## 🟢 Phase 14: Polish & Privacy (COMPLETED)
-
-- [x] **Dashboard Simplification**: Redesigned Capacity Check-in and Context Grid.
-- [x] **Navigation Refactor**: Implemented User Menu and streamlined Sidebar.
-- [x] **Privacy Clarity**: Added explicit "Local-First" terms and legal documentation.
-- [x] **Branding**: Added Poziverse branding and GitHub links.
-
-## � Phase 15: Pattern Literacy & UX Polish (COMPLETED)
-
-- [x] **Empty States**: Implemented "Cold Start" UI for all charts and widgets.
-- [x] **Educational Overlays**: Added "Waiting for Data" guidance to prevent confusion.
-- [x] **Bio-Mirror Guidance**: Added "Pro Tip" logic for masking detection context.
-- [x] **Chart Safety**: Prevented Recharts from rendering with null data.
-
-## � Phase 18: Bio-Mirror & PWA (COMPLETED)
-
-- [x] **Bio-Mirror FACS**: Implemented Facial Action Coding System for fatigue and tension detection.
-- [x] **PWA Install**: Added custom install prompt and button.
-- [x] **Deployment**: Fixed environment variable injection for Docker builds.
-- [x] **UI Cleanup**: Standardized card headers and removed duplicates.
-
-## �🟡 Phase 16: Wearable Ecosystem (NEXT)
-
-- [ ] **Apple Health**: Native integration via Capacitor.
-- [ ] **Garmin**: OAuth2 integration for real-time stress data.
-- [ ] **Fitbit/Whoop**: Add support for additional providers.
-
-## 🟡 Phase 17: Advanced AI Features
-
-- [ ] **OpenAI Realtime**: Implement `connectLive` for OpenAI.
-- [x] **Perplexity/OpenRouter**: Finalize adapters for research/broad model support.
-- [x] **Local AI**: Optimize Ollama adapter for privacy-first users.
-- [x] Generate Radar Chart for Baseline Capacity.
-- [x] Build Print-to-PDF layout for therapist sharing.
+### Phase 20: Community Features
+- [ ] Anonymous pattern sharing
+- [ ] Community strategies library
+- [ ] Peer support matching
+- [ ] Research contribution opt-in
 
 ## 🟢 Phase 11: Mobile Polish (COMPLETED)
 
@@ -177,6 +169,7 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 - [x] **Dark Mode**: Full system/manual theme support.
 - [x] **Visual Feedback**: Typing indicators and loading states for AI.
 - [x] **Accessibility**: ARIA labels and improved contrast.
+- [x] **Navigation Simplification (v0.97.7)**: Removed sidebar drawer entirely. Menu now links to Settings. Vision Board & Clinical Report moved to UserMenu.
 
 ---
 

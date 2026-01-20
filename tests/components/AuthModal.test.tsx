@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AuthModal from '../../components/AuthModal';
-import * as authService from '../../services/authService';
+import AuthModal from '../../src/components/AuthModal';
+import * as authService from '../../src/services/authService';
 
 // Mock auth service
-vi.mock('../../services/authService', () => ({
+vi.mock('../../src/services/authService', () => ({
   signInWithEmail: vi.fn(),
   signUpWithEmail: vi.fn(),
   signInWithMagicLink: vi.fn(),

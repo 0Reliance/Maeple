@@ -135,9 +135,41 @@ echo "ENCRYPTION_KEY=$ENCRYPTION_KEY"
 
 Add these to your `.env` file.
 
-### 5. Database Setup (Optional - for full stack)
+### 5. Database Setup
 
-If you want to run the backend API:
+#### Option A: Docker Stack (Recommended)
+
+The easiest way to run the full stack locally:
+
+```bash
+cd /opt/Maeple/deploy
+docker-compose up -d
+
+# Verify all services running
+docker ps
+
+# Access points:
+# - Frontend: http://localhost:80
+# - API: http://localhost:3001
+# - Database: localhost:5432
+```
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| PostgreSQL 16 | 5432 | Database |
+| Express API | 3001 | Backend |
+| Nginx | 80 | Frontend |
+
+**Database Credentials:**
+- Database: `maeple`
+- User: `maeple_user`
+- Password: `maeple_beta_2025`
+
+See [LOCAL_DB_STATUS.md](LOCAL_DB_STATUS.md) for complete details.
+
+#### Option B: Manual PostgreSQL Setup
+
+If you want to run PostgreSQL separately:
 
 ```bash
 # Install PostgreSQL

@@ -54,9 +54,18 @@ export default defineConfig({
       output: {
         // Manual chunk splitting for better code splitting
         manualChunks: (id) => {
-          // Split React into separate chunk
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+          // React and React DOM go together - core dependency
+          if (id.includes('node_modules/react') || 
+              id.includes('node_modules/react-dom') ||
+              id.includes('node_modules/scheduler')) {
             return 'react-vendor';
+          }
+          
+          // React-dependent charting libraries go with react to avoid initialization issues
+          if (id.includes('node_modules/recharts') || 
+              id.includes('node_modules/react-smooth') ||
+              id.includes('node_modules/react-transition-group')) {
+            return 'charts-vendor';
           }
           
           // Split UI libraries
@@ -74,12 +83,17 @@ export default defineConfig({
             return 'db-vendor';
           }
           
-          // Split other large vendor libraries
+          // D3 libraries (used by recharts but don't need React)
+          if (id.includes('node_modules/d3-')) {
+            return 'd3-vendor';
+          }
+          
+          // Split other vendor libraries
           if (id.includes('node_modules/')) {
             return 'vendor';
           }
           
-          // Keep app code separate
+          // Keep app code in main bundle
           return undefined;
         },
         // Add cache busting to asset filenames

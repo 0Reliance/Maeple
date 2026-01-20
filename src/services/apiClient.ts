@@ -95,26 +95,59 @@ async function apiRequest<T>(
           contentType,
           response: responseText.substring(0, 200)
         });
-      return { 
-        error: 'Server returned non-JSON response',
-        details: `Expected JSON but received ${contentType}`,
-        contentType: contentType || undefined,
-        endpoint
-      };
+        return { 
+          error: 'Server returned non-JSON response',
+          details: `Expected JSON but received ${contentType}`,
+          contentType: contentType || undefined,
+          endpoint
+        };
       }
 
-      // Check if response looks like HTML before parsing
-      if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+      // Comprehensive HTML/non-JSON detection
+      const trimmedResponse = responseText.trim();
+      const isLikelyHTML = 
+        trimmedResponse.startsWith('<!DOCTYPE') ||
+        trimmedResponse.startsWith('<html') ||
+        trimmedResponse.startsWith('<HTML') ||
+        trimmedResponse.startsWith('<!doctype') ||
+        trimmedResponse.startsWith('<head') ||
+        trimmedResponse.startsWith('<body') ||
+        // Nginx/Apache error pages
+        trimmedResponse.includes('<html>') ||
+        trimmedResponse.includes('nginx') && trimmedResponse.includes('<center>');
+
+      if (isLikelyHTML) {
         console.error(`[API] HTML response received for ${endpoint}:`, responseText.substring(0, 200));
         return { 
           error: 'Server returned HTML instead of JSON',
-          details: 'The API endpoint may not exist or returned an error page',
+          details: 'The API endpoint may not exist or returned an error page. Check the API server is running.',
+          endpoint
+        };
+      }
+
+      // Check for empty response
+      if (!trimmedResponse) {
+        console.warn(`[API] Empty response for ${endpoint}`);
+        return { data: {} as T };
+      }
+
+      // Validate response starts with valid JSON characters
+      const firstChar = trimmedResponse[0];
+      if (firstChar !== '{' && firstChar !== '[' && firstChar !== '"' && firstChar !== 'n' && firstChar !== 't' && firstChar !== 'f') {
+        // Not starting with { [ " null true false
+        console.error(`[API] Response doesn't look like JSON for ${endpoint}:`, {
+          firstChars: trimmedResponse.substring(0, 50),
+          response: responseText.substring(0, 200)
+        });
+        return {
+          error: 'Server returned malformed response',
+          details: `Response doesn't appear to be valid JSON (starts with: ${trimmedResponse.substring(0, 20)}...)`,
           endpoint
         };
       }
 
       // Safe JSON parsing with better error messages
-      data = responseText ? JSON.parse(responseText) : {};
+      data = JSON.parse(responseText);
     } catch (parseError) {
       const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown parse error';
       console.error(`[API] JSON parse error for ${endpoint}:`, {

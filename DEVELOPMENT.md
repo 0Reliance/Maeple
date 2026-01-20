@@ -1,62 +1,236 @@
-# Local Development Guide
+# MAEPLE Development Guide
 
-This guide explains how to run the full Maeple stack locally, including the PostgreSQL database, API server, and Frontend.
+**App Version**: 0.97.7  
+**Last Updated**: January 20, 2026
+
+This guide explains how to set up and run the MAEPLE development environment, including the local Docker stack with PostgreSQL database.
 
 ## Prerequisites
 
-- Node.js (v22+)
-- PostgreSQL (v16+)
-- Git
+| Requirement | Version | Purpose                           |
+| ----------- | ------- | --------------------------------- |
+| Node.js     | 22+     | JavaScript runtime                |
+| npm         | 10+     | Package manager                   |
+| Git         | 2.0+    | Version control                   |
+| PostgreSQL  | 14+     | Database (optional for local dev) |
 
 ## Quick Start
 
-1.  **Install Dependencies**
+### 1. Install Dependencies
 
-    ```bash
-    npm install
-    ```
+```bash
+npm install
+```
 
-2.  **Setup Database**
+### 2. Environment Setup
 
-    We have a script to automate the PostgreSQL setup (user, database, and schema creation).
+```bash
+# Copy environment template
+cp .env.example .env
 
-    ```bash
-    bash setup_db.sh
-    ```
+# Add your own API keys in .env
+# See docs/QUICK_REFERENCE.md for details
+```
 
-    _Note: This script assumes you have `sudo` access to start the postgres service and `psql` access._
+### 3. Start Development Server
 
-3.  **Start the API Server**
+```bash
+npm run dev
+```
 
-    The API server runs on port 3001 and handles authentication and data persistence.
+The app will be available at `http://localhost:5173`.
 
-    ```bash
-    node api/index.cjs
-    ```
+## Local Docker Stack (Recommended)
 
-    _You can verify it's running by visiting `http://localhost:3001/api/health`_
+The complete local development environment runs in Docker:
 
-4.  **Start the Frontend**
+```bash
+# Start the full stack
+cd /opt/Maeple/deploy
+docker-compose up -d
 
-    In a new terminal, start the Vite development server.
+# Check status
+docker ps
 
-    ```bash
-    npm run dev
-    ```
+# View logs
+docker logs deploy-api-1 --tail 50
+```
 
-    The app will be available at `http://localhost:5173`.
+### Services
+| Container | Port | Purpose |
+|-----------|------|---------|
+| deploy-db-1 | 5432 | PostgreSQL 16 database |
+| deploy-api-1 | 3001 | Express API server |
+| deploy-web-1 | 80 | Production frontend |
 
-## Architecture
+### Database
+- **Database**: `maeple`
+- **User**: `maeple_user`
+- **Password**: `maeple_beta_2025`
+- **Schema**: Initialized from `local_schema.sql`
 
-- **Frontend**: React + Vite (Port 5173)
-  - Proxies `/api` requests to `http://localhost:3001`
-- **Backend**: Node.js + Express (Port 3001)
-  - Located in `api/index.cjs`
-- **Database**: PostgreSQL
-  - Schema defined in `local_schema.sql`
+### Access Points
+- **Frontend**: http://localhost:80
+- **API**: http://localhost:3001/api
+- **Health Check**: http://localhost:3001/api/health
+
+### 4. Verify Installation
+
+```bash
+# Run health check
+npm run health
+
+# Check API health
+curl http://localhost:3001/api/health
+
+# Run type checking
+npm run typecheck
+
+# Run tests
+npm run test:run
+```
+
+## Available Scripts
+
+| Script              | Description                  |
+| ------------------- | ---------------------------- |
+| `npm run dev`       | Start development server     |
+| `npm run build`     | Build for production         |
+| `npm run preview`   | Preview production build     |
+| `npm run typecheck` | TypeScript type checking     |
+| `npm run test`      | Run tests (watch mode)       |
+| `npm run test:run`  | Run tests once               |
+| `npm run lint`      | Run ESLint                   |
+| `npm run lint:fix`  | Fix ESLint errors            |
+| `npm run format`    | Format code with Prettier    |
+| `npm run check-all` | Run lint + typecheck + tests |
+
+## Architecture Overview
+
+```
+src/
+├── components/        # React UI components
+├── services/         # Business logic
+│   ├── ai/          # AI router and adapters
+│   ├── wearables/   # Wearable integrations
+│   └── ...
+├── stores/          # Zustand state management
+├── adapters/        # Service adapters (DI)
+├── patterns/        # Design patterns (Circuit Breaker)
+├── contexts/        # React contexts (DI)
+└── types.ts         # TypeScript interfaces
+
+tests/
+├── components/      # Component tests
+├── services/        # Service tests
+├── patterns/        # Pattern tests
+└── setup.ts        # Test configuration
+```
+
+## Key Patterns
+
+### Circuit Breaker
+
+Services use the Circuit Breaker pattern for resilience:
+
+- `src/patterns/CircuitBreaker.ts` - Core implementation
+- `src/adapters/serviceAdapters.ts` - Service adapters with circuit breakers
+
+### Dependency Injection
+
+Components receive services via React context:
+
+- `src/contexts/DependencyContext.tsx` - Service interfaces and providers
+
+## Recent Updates
+
+### Onboarding System Improvements
+
+#### Changes Made:
+
+1. **OnboardingWizard.tsx** - Complete messaging and UX overhaul
+   - Added "Skip" button on every step for graceful exit
+   - Reframed all 5 steps from feature-focused to user-need-focused messaging
+   - Improved visual hierarchy and layout
+
+2. **appStore.ts** - Dual first-entry detection
+   - Now checks BOTH localStorage flag AND entries.length
+   - Survives browser cache clearing
+   - Works across device switches
+
+3. **Settings.tsx** - Replay functionality
+   - New "Help & Resources" section
+   - "Replay Onboarding Tutorial" button
+   - Users can re-watch onboarding anytime
+
+#### Testing Onboarding:
+
+```bash
+# Clear onboarding flag to test first-time flow
+# In browser console:
+localStorage.removeItem('maeple_onboarding_complete');
+location.reload();
+
+# Test skip flow:
+# On any onboarding step, click "Skip" button
+# Verify modal closes and user sees dashboard
+# Refresh page - onboarding should reappear (no entries created yet)
+
+# Test replay:
+# Go to Settings → Help & Resources
+# Click "Replay Onboarding Tutorial"
+# Verify modal opens with all 5 steps
+```
+
+## Database Setup (Optional)
+
+For local development with PostgreSQL:
+
+```bash
+# Run database setup script
+bash setup_db.sh
+
+# Start API server
+node api/index.cjs
+```
+
+## Cloud Development
+
+MAEPLE uses Supabase for production authentication and data:
+
+1. Configure Supabase credentials in `.env`
+2. See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for setup guide
 
 ## Troubleshooting
 
-- **API Connection Failed**: Ensure the API server is running on port 3001. Check the console logs for any database connection errors.
-- **Database Errors**: If you see "role does not exist" or "database does not exist", rerun `bash setup_db.sh`.
-- **Auth Errors**: The auth service uses the local API exclusively. Ensure the API server is running on port 3001.
+### TypeScript Errors
+
+```bash
+npm run typecheck
+```
+
+### Test Failures
+
+```bash
+npm run test:run
+```
+
+### Build Failures
+
+```bash
+npm run build:production
+```
+
+### Onboarding Issues
+
+- Onboarding not appearing? Check `localStorage.getItem('maeple_onboarding_complete')` and `getEntries().length`
+- Both must be falsy for onboarding to show on startup
+- Use browser DevTools to clear localStorage and test
+
+## Code Quality Standards
+
+- TypeScript strict mode enabled
+- ESLint with React hooks rules
+- Prettier for consistent formatting
+- Test coverage for core functionality (run `npm run test:run`)
+- Onboarding follows accessibility standards (keyboard navigation, ARIA labels)

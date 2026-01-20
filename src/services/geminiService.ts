@@ -1,21 +1,22 @@
 import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { CapacityProfile, ParsedResponse } from "../types";
 import { aiRouter } from "./ai";
-import { rateLimitedCall } from "./rateLimiter";
+import { cacheService } from "./cacheService";
 import { createCircuitBreaker } from "./circuitBreaker";
 import { errorLogger } from "./errorLogger";
-import { cacheService } from "./cacheService";
+import { rateLimitedCall } from "./rateLimiter";
 
 // Validate and retrieve API Key - returns null if not available
 const getApiKey = (): string | null => {
-  const envKey = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GEMINI_API_KEY)
-    || process.env.VITE_GEMINI_API_KEY
-    || process.env.API_KEY;
+  const envKey =
+    (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_GEMINI_API_KEY) ||
+    process.env.VITE_GEMINI_API_KEY ||
+    process.env.API_KEY;
 
   if (!envKey) {
     console.warn(
       "Gemini API Key not found. AI features will be limited. " +
-      "Add VITE_GEMINI_API_KEY to your .env file or configure in Settings."
+        "Add VITE_GEMINI_API_KEY to your .env file or configure in Settings."
     );
     return null;
   }
@@ -33,38 +34,44 @@ const getAI = (): GoogleGenAI | null => {
 };
 
 // Circuit breaker for journal parsing
-const journalCircuitBreaker = createCircuitBreaker(async () => {
-  const ai = getAI();
-  if (!ai) {
-    throw new Error('AI client not initialized');
+const journalCircuitBreaker = createCircuitBreaker(
+  async () => {
+    const ai = getAI();
+    if (!ai) {
+      throw new Error("AI client not initialized");
+    }
+    return ai;
+  },
+  {
+    failureThreshold: 3,
+    successThreshold: 2,
+    timeout: 60000, // 60 seconds for journal parsing
+    monitoringPeriod: 120000, // 2 minutes
+    onStateChange: state => {
+      errorLogger.info(`Journal circuit breaker state changed: ${state}`);
+    },
   }
-  return ai;
-}, {
-  failureThreshold: 3,
-  successThreshold: 2,
-  timeout: 60000, // 60 seconds for journal parsing
-  monitoringPeriod: 120000, // 2 minutes
-  onStateChange: (state) => {
-    errorLogger.info(`Journal circuit breaker state changed: ${state}`);
-  }
-});
+);
 
 // Circuit breaker for search
-const searchCircuitBreaker = createCircuitBreaker(async () => {
-  const ai = getAI();
-  if (!ai) {
-    throw new Error('AI client not initialized');
+const searchCircuitBreaker = createCircuitBreaker(
+  async () => {
+    const ai = getAI();
+    if (!ai) {
+      throw new Error("AI client not initialized");
+    }
+    return ai;
+  },
+  {
+    failureThreshold: 3,
+    successThreshold: 2,
+    timeout: 30000, // 30 seconds for search
+    monitoringPeriod: 120000, // 2 minutes
+    onStateChange: state => {
+      errorLogger.info(`Search circuit breaker state changed: ${state}`);
+    },
   }
-  return ai;
-}, {
-  failureThreshold: 3,
-  successThreshold: 2,
-  timeout: 30000, // 30 seconds for search
-  monitoringPeriod: 120000, // 2 minutes
-  onStateChange: (state) => {
-    errorLogger.info(`Search circuit breaker state changed: ${state}`);
-  }
-});
+);
 
 // Check if AI is available
 export const isAIConfigured = (): boolean => !!getApiKey();
@@ -82,9 +89,9 @@ const healthEntrySchema: Schema = {
         properties: {
           name: { type: Type.STRING },
           amount: { type: Type.STRING },
-          unit: { type: Type.STRING }
-        }
-      }
+          unit: { type: Type.STRING },
+        },
+      },
     },
     symptoms: {
       type: Type.ARRAY,
@@ -92,57 +99,92 @@ const healthEntrySchema: Schema = {
         type: Type.OBJECT,
         properties: {
           name: { type: Type.STRING },
-          severity: { type: Type.NUMBER, description: "1-10 scale" }
-        }
-      }
+          severity: { type: Type.NUMBER, description: "1-10 scale" },
+        },
+      },
     },
     neuroMetrics: {
       type: Type.OBJECT,
       properties: {
         environmentalMentions: {
           type: Type.ARRAY,
-          items: { 
+          items: {
             type: Type.STRING,
-            enum: ["lights", "noise", "sounds", "temperature", "crowds", "textures", "overwhelmed", "buzzing", "harsh", "bright", "dark"]
+            enum: [
+              "lights",
+              "noise",
+              "sounds",
+              "temperature",
+              "crowds",
+              "textures",
+              "overwhelmed",
+              "buzzing",
+              "harsh",
+              "bright",
+              "dark",
+            ],
           },
-          description: "Environmental factors user explicitly mentioned (extracted, not scored)"
+          description: "Environmental factors user explicitly mentioned (extracted, not scored)",
         },
         socialMentions: {
           type: Type.ARRAY,
           items: { type: Type.STRING },
-          description: "Social/emotional phrases user mentioned verbatim (e.g., 'professional face', 'acting normal'). Extract as stated, do not label as 'masking'"
+          description:
+            "Social/emotional phrases user mentioned verbatim (e.g., 'professional face', 'acting normal'). Extract as stated, do not label as 'masking'",
         },
         executiveMentions: {
           type: Type.ARRAY,
-          items: { 
+          items: {
             type: Type.STRING,
-            enum: ["difficulty starting", "procrastination", "doom scrolling", "forgot", "scattered", "overwhelmed", "stuck"]
+            enum: [
+              "difficulty starting",
+              "procrastination",
+              "doom scrolling",
+              "forgot",
+              "scattered",
+              "overwhelmed",
+              "stuck",
+            ],
           },
-          description: "Executive challenges user mentioned (e.g., 'couldn't start', 'doom scrolling'). Do not use clinical terms like 'executive dysfunction'"
+          description:
+            "Executive challenges user mentioned (e.g., 'couldn't start', 'doom scrolling'). Do not use clinical terms like 'executive dysfunction'",
         },
         physicalMentions: {
           type: Type.ARRAY,
           items: { type: Type.STRING },
-          description: "Physical sensations user mentioned (e.g., 'droopy eyes', 'headache', 'exhaustion')"
-        }
+          description:
+            "Physical sensations user mentioned (e.g., 'droopy eyes', 'headache', 'exhaustion')",
+        },
       },
-      required: ["environmentalMentions", "socialMentions", "executiveMentions", "physicalMentions"]
+      required: [
+        "environmentalMentions",
+        "socialMentions",
+        "executiveMentions",
+        "physicalMentions",
+      ],
     },
     activityTypes: {
-        type: Type.ARRAY,
-        items: { type: Type.STRING },
-        description: "Tags for activity types detected: #DeepWork, #Meeting, #Social, #Chore, #Rest, #Travel, #Admin, #Masking"
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description:
+        "Tags for activity types detected: #DeepWork, #Meeting, #Social, #Chore, #Rest, #Travel, #Admin, #Masking",
     },
     strengths: {
       type: Type.ARRAY,
       items: { type: Type.STRING },
-      description: "List of character strengths displayed (e.g., Curiosity, Zest, Flow, Persistence, Empathy)"
+      description:
+        "List of character strengths displayed (e.g., Curiosity, Zest, Flow, Persistence, Empathy)",
     },
     summary: { type: Type.STRING, description: "Brief neutral summary of the entry" },
-    analysisReasoning: { type: Type.STRING, description: "Brief explanation of why you assigned the masking/sensory scores based on linguistic markers." },
+    analysisReasoning: {
+      type: Type.STRING,
+      description:
+        "Brief explanation of why you assigned the masking/sensory scores based on linguistic markers.",
+    },
     strategies: {
       type: Type.ARRAY,
-      description: "3 actionable, neuro-affirming strategies tailored to the user's current capacity state.",
+      description:
+        "3 actionable, neuro-affirming strategies tailored to the user's current capacity state.",
       items: {
         type: Type.OBJECT,
         properties: {
@@ -150,56 +192,65 @@ const healthEntrySchema: Schema = {
           title: { type: Type.STRING },
           action: { type: Type.STRING, description: "Specific, bite-sized instruction." },
           type: { type: Type.STRING, enum: ["REST", "FOCUS", "SOCIAL", "SENSORY", "EXECUTIVE"] },
-          relevanceScore: { type: Type.NUMBER }
-        }
-      }
+          relevanceScore: { type: Type.NUMBER },
+        },
+      },
     },
-    
+
     // ✅ ADD: Objective observations extracted from text
     objectiveObservations: {
       type: Type.ARRAY,
       items: {
         type: Type.OBJECT,
         properties: {
-          category: { 
-            type: Type.STRING, 
-            enum: ["lighting", "noise", "tension", "fatigue", "speech-pace", "tone"]
+          category: {
+            type: Type.STRING,
+            enum: ["lighting", "noise", "tension", "fatigue", "speech-pace", "tone"],
           },
           value: { type: Type.STRING },
           severity: { type: Type.STRING, enum: ["low", "moderate", "high"] },
-          evidence: { type: Type.STRING }
+          evidence: { type: Type.STRING },
         },
-        required: ["category", "value", "severity", "evidence"]
+        required: ["category", "value", "severity", "evidence"],
       },
-      description: "Objective data extracted from text (only what user explicitly mentions)"
+      description: "Objective data extracted from text (only what user explicitly mentions)",
     },
-    
+
     // ✅ ADD: Gentle inquiry generated by AI
     gentleInquiry: {
       type: Type.OBJECT,
       properties: {
         id: { type: Type.STRING },
-        basedOn: { 
+        basedOn: {
           type: Type.ARRAY,
           items: { type: Type.STRING },
-          description: "What observations or text the question is based on"
+          description: "What observations or text the question is based on",
         },
         question: { type: Type.STRING },
-        tone: { 
-          type: Type.STRING, 
-          enum: ["curious", "supportive", "informational"]
+        tone: {
+          type: Type.STRING,
+          enum: ["curious", "supportive", "informational"],
         },
         skipAllowed: { type: Type.BOOLEAN },
-        priority: { 
-          type: Type.STRING, 
-          enum: ["low", "medium", "high"]
-        }
+        priority: {
+          type: Type.STRING,
+          enum: ["low", "medium", "high"],
+        },
       },
       required: ["id", "basedOn", "question", "tone", "skipAllowed", "priority"],
-      description: "Optional gentle question to ask user (only if high-severity observations)"
-    }
+      description: "Optional gentle question to ask user (only if high-severity observations)",
+    },
   },
-  required: ["moodScore", "moodLabel", "neuroMetrics", "activityTypes", "strengths", "summary", "strategies", "analysisReasoning"]
+  required: [
+    "moodScore",
+    "moodLabel",
+    "neuroMetrics",
+    "activityTypes",
+    "strengths",
+    "summary",
+    "strategies",
+    "analysisReasoning",
+  ],
 };
 
 // Helper to ensure response structure is valid
@@ -211,11 +262,11 @@ const validateParsedResponse = (parsed: any): ParsedResponse => {
     activityTypes: Array.isArray(parsed.activityTypes) ? parsed.activityTypes : [],
     strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
     strategies: Array.isArray(parsed.strategies) ? parsed.strategies : [],
-    neuroMetrics: parsed.neuroMetrics || { 
-      environmentalMentions: [], 
-      socialMentions: [], 
-      executiveMentions: [], 
-      physicalMentions: [] 
+    neuroMetrics: parsed.neuroMetrics || {
+      environmentalMentions: [],
+      socialMentions: [],
+      executiveMentions: [],
+      physicalMentions: [],
     },
   };
 };
@@ -231,7 +282,7 @@ export const parseJournalEntry = async (
 ): Promise<ParsedResponse> => {
   const { useCache = true } = options;
   const cacheKey = `journal:${text.substring(0, 50)}:${JSON.stringify(capacityProfile)}`;
-  
+
   try {
     // Try cache first
     if (useCache) {
@@ -380,7 +431,7 @@ Gentle inquiry format:
       Analyze the entry using the Decision Matrix.
       1. Determine the user's "Zone" (Green/Red/Discrepancy).
       2. Did the user exceed their reported capacity? 
-      3. Are they masking? Look at the tone.
+      3. Extract only what the user explicitly mentions (no inference).
       4. Extract specific activities.
       5. Generate 3 specific neuro-affirming strategies for the next 2 hours based on their Zone.
     `;
@@ -388,10 +439,10 @@ Gentle inquiry format:
     // Prefer router (multi-provider); fallback to direct Gemini client
     const routerResult = await aiRouter.chat({
       messages: [
-        { role: 'system', content: systemInstruction },
-        { role: 'user', content: prompt },
+        { role: "system", content: systemInstruction },
+        { role: "user", content: prompt },
       ],
-      responseFormat: 'json',
+      responseFormat: "json",
       temperature: 0.7,
     });
 
@@ -400,7 +451,7 @@ Gentle inquiry format:
         const parsed = JSON.parse(routerResult.content);
         return validateParsedResponse(parsed);
       } catch (parseErr) {
-        console.warn('Router JSON parse failed, falling back to Gemini SDK', parseErr);
+        console.warn("Router JSON parse failed, falling back to Gemini SDK", parseErr);
       }
     }
 
@@ -409,32 +460,35 @@ Gentle inquiry format:
       return getDefaultParsedResponse(text);
     }
 
-    const response = await rateLimitedCall(async () => {
-      const ai = await journalCircuitBreaker.execute();
-      
-      return await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: healthEntrySchema,
-          systemInstruction: systemInstruction,
-          temperature: 0.7, 
-        },
-      });
-    }, { priority: 5 }); // Journal parsing is high priority
+    const response = await rateLimitedCall(
+      async () => {
+        const ai = await journalCircuitBreaker.execute();
+
+        return await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: healthEntrySchema,
+            systemInstruction: systemInstruction,
+            temperature: 0.7,
+          },
+        });
+      },
+      { priority: 5 }
+    ); // Journal parsing is high priority
 
     const textResponse = response.text;
     if (!textResponse) throw new Error("No response from AI");
-    
+
     const parsed = JSON.parse(textResponse);
     const validated = validateParsedResponse(parsed);
-    
+
     // Cache successful results
     if (useCache) {
       await cacheService.set(cacheKey, validated, { ttl: 86400000 }); // 24 hours
     }
-    
+
     return validated;
   } catch (error) {
     console.error("Parsing error:", error);
@@ -458,15 +512,18 @@ const getDefaultParsedResponse = (text: string): ParsedResponse => ({
   },
   activityTypes: [],
   strengths: [],
-  summary: text.slice(0, 200) + (text.length > 200 ? '...' : ''),
-  analysisReasoning: "AI analysis not configured. Go to Settings → AI Providers to enable intelligent analysis.",
-  strategies: [{
-    id: "setup-ai",
-    title: "Enable AI Analysis",
-    action: "Configure an AI provider in Settings to get personalized insights.",
-    type: "EXECUTIVE",
-    relevanceScore: 1,
-  }],
+  summary: text.slice(0, 200) + (text.length > 200 ? "..." : ""),
+  analysisReasoning:
+    "AI analysis not configured. Go to Settings → AI Providers to enable intelligent analysis.",
+  strategies: [
+    {
+      id: "setup-ai",
+      title: "Enable AI Analysis",
+      action: "Configure an AI provider in Settings to get personalized insights.",
+      type: "EXECUTIVE",
+      relevanceScore: 1,
+    },
+  ],
 });
 
 /**
@@ -490,14 +547,15 @@ export const searchHealthInfo = async (query: string) => {
       return null;
     }
 
-    const response = await rateLimitedCall(() =>
-      ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: query,
-        config: {
-          tools: [{ googleSearch: {} }],
-        },
-      }),
+    const response = await rateLimitedCall(
+      () =>
+        ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: query,
+          config: {
+            tools: [{ googleSearch: {} }],
+          },
+        }),
       { priority: 3 } // Search is medium priority
     );
 

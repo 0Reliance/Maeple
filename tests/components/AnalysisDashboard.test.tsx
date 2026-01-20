@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import AnalysisDashboard from '../../components/AnalysisDashboard';
+import AnalysisDashboard from "../../src/components/AnalysisDashboard";
 import { HealthEntry } from '../../types';
 
 // Mock Recharts
@@ -29,7 +29,7 @@ describe('AnalysisDashboard Component', () => {
       tags: [],
       activityTypes: [],
       strengths: [],
-      neuroMetrics: { spoonLevel: 5, sensoryLoad: 3, contextSwitches: 2, maskingScore: 1, capacity: {} as any },
+      neuroMetrics: { spoonLevel: 5, sensoryLoad: 3, contextSwitches: 2, capacity: {} as any },
       notes: 'Feeling good',
       rawText: 'Feeling good'
     },
@@ -43,7 +43,7 @@ describe('AnalysisDashboard Component', () => {
       tags: [],
       activityTypes: [],
       strengths: [],
-      neuroMetrics: { spoonLevel: 2, sensoryLoad: 8, contextSwitches: 5, maskingScore: 4, capacity: {} as any },
+      neuroMetrics: { spoonLevel: 2, sensoryLoad: 8, contextSwitches: 5, capacity: {} as any },
       notes: 'Feeling bad',
       rawText: 'Feeling bad'
     }

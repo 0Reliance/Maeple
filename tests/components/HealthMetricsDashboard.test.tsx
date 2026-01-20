@@ -1,9 +1,9 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '../test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import HealthMetricsDashboard from '../../components/HealthMetricsDashboard';
-import * as storageService from '../../services/storageService';
-import * as analyticsService from '../../services/analytics';
+import HealthMetricsDashboard from '../../src/components/HealthMetricsDashboard';
+import * as storageService from '../../src/services/storageService';
+import * as analyticsService from '../../src/services/analytics';
 
 // Mock Recharts
 vi.mock('recharts', () => ({
@@ -20,17 +20,12 @@ vi.mock('recharts', () => ({
   ReferenceArea: () => <div />,
 }));
 
-// Mock StateTrendChart
-vi.mock('../../components/StateTrendChart', () => ({
-  default: () => <div data-testid="state-trend-chart">StateTrendChart</div>,
-}));
-
 // Mock services
-vi.mock('../../services/storageService', () => ({
+vi.mock('../../src/services/storageService', () => ({
   getUserSettings: vi.fn(),
 }));
 
-vi.mock('../../services/analytics', () => ({
+vi.mock('../../src/services/analytics', () => ({
   generateInsights: vi.fn(),
   generateDailyStrategy: vi.fn(),
   calculateBurnoutTrajectory: vi.fn(),
@@ -50,7 +45,7 @@ describe('HealthMetricsDashboard Component', () => {
       tags: [],
       activityTypes: [],
       strengths: [],
-      neuroMetrics: { spoonLevel: 5, sensoryLoad: 3, contextSwitches: 2, maskingScore: 1, capacity: {} as any },
+      neuroMetrics: { spoonLevel: 5, sensoryLoad: 3, contextSwitches: 2, capacity: {} as any },
       notes: 'Feeling good',
       rawText: 'Feeling good'
     },
@@ -64,7 +59,7 @@ describe('HealthMetricsDashboard Component', () => {
       tags: [],
       activityTypes: [],
       strengths: [],
-      neuroMetrics: { spoonLevel: 4, sensoryLoad: 4, contextSwitches: 3, maskingScore: 2, capacity: {} as any },
+      neuroMetrics: { spoonLevel: 4, sensoryLoad: 4, contextSwitches: 3, capacity: {} as any },
       notes: 'Feeling okay',
       rawText: 'Feeling okay'
     }
@@ -82,52 +77,65 @@ describe('HealthMetricsDashboard Component', () => {
     (analyticsService.generateInsights as any).mockReturnValue([
       { type: 'WARNING', title: 'Test Insight', description: 'Test Description' }
     ]);
-    (analyticsService.generateDailyStrategy as any).mockReturnValue([]);
-    (analyticsService.calculateBurnoutTrajectory as any).mockReturnValue({ riskLevel: 'low', trend: 'stable' });
-    (analyticsService.calculateCognitiveLoad as any).mockReturnValue({ load: 50, status: 'moderate' });
+    (analyticsService.generateDailyStrategy as any).mockReturnValue([
+      { id: '1', title: 'Test Strategy', action: 'Do this' }
+    ]);
+    (analyticsService.calculateBurnoutTrajectory as any).mockReturnValue({ riskLevel: 'low', trend: 'stable', description: 'Stable' });
+    (analyticsService.calculateCognitiveLoad as any).mockReturnValue({ load: 50, state: 'MODERATE', efficiencyLoss: 10, switches: 5 });
     (analyticsService.calculateCyclePhase as any).mockReturnValue({ 
-      phase: 'follicular', 
+      phase: 'FOLLICULAR', 
       day: 5, 
       length: 28,
       energyPrediction: 'High',
-      cognitiveImpact: 'Low',
       advice: 'Go for it'
     });
   });
 
   it('renders no data state when entries are empty', () => {
     render(<HealthMetricsDashboard entries={[]} />);
-    expect(screen.getByText('No Data Available')).toBeInTheDocument();
-    expect(screen.getByText(/Start logging to track/)).toBeInTheDocument();
+    expect(screen.getByText('Your pattern garden is waiting')).toBeInTheDocument();
+    expect(screen.getByText(/Every pattern you notice is a seed/)).toBeInTheDocument();
   });
 
-  it('renders dashboard with data', () => {
+  it('renders dashboard with data', async () => {
     render(<HealthMetricsDashboard entries={mockEntries} />);
     
-    // Check for charts
-    expect(screen.getByTestId('composed-chart')).toBeInTheDocument();
-    expect(screen.getByTestId('state-trend-chart')).toBeInTheDocument();
+    expect(screen.getByText('Pattern Dashboard')).toBeInTheDocument();
+    
+    // Expand details to see the chart
+    const showDetailsBtn = screen.getByText('Show Details');
+    showDetailsBtn.click();
+    
+    await screen.findByTestId('composed-chart');
   });
 
-  it('displays hormonal forecast', () => {
+  it('displays cycle context', async () => {
     render(<HealthMetricsDashboard entries={mockEntries} />);
-    expect(screen.getByText('Hormonal Forecast')).toBeInTheDocument();
-    expect(screen.getByText('follicular Phase')).toBeInTheDocument();
-    expect(screen.getByText('Energy Prediction')).toBeInTheDocument();
+    // Need to expand details to see cycle context
+    const showDetailsBtn = screen.getByText('Show Details');
+    showDetailsBtn.click();
+    
+    await screen.findByText('Cycle Context');
+    expect(screen.getByText('Day 5/28')).toBeInTheDocument();
     expect(screen.getByText('High')).toBeInTheDocument();
   });
 
-  it('displays insights', () => {
+  it('displays insights', async () => {
     render(<HealthMetricsDashboard entries={mockEntries} />);
-    expect(screen.getByText('AI Pattern Discovery')).toBeInTheDocument();
+    // Need to expand details to see insights
+    const showDetailsBtn = screen.getByText('Show Details');
+    showDetailsBtn.click();
+
+    await screen.findByText('Pattern Discoveries');
     expect(screen.getByText('Test Insight')).toBeInTheDocument();
     expect(screen.getByText('Test Description')).toBeInTheDocument();
   });
 
-  it('displays masking trend', () => {
+  it('displays energy metrics', () => {
     render(<HealthMetricsDashboard entries={mockEntries} />);
-    expect(screen.getByText('Current Effort:')).toBeInTheDocument();
-    // 1/10
-    expect(screen.getByText('1/10')).toBeInTheDocument();
+    expect(screen.getByText("Today's Energy")).toBeInTheDocument();
+    // 4.5 out of 10 (avg of 5 and 4)
+    const scores = screen.getAllByText('4.5');
+    expect(scores.length).toBeGreaterThan(0);
   });
 });

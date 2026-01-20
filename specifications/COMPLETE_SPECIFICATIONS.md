@@ -1,8 +1,11 @@
 # MAEPLE Complete Specifications Documentation
 
-**Version**: 1.0.0  
-**Last Updated**: December 26, 2025  
-**Status**: Production Ready
+**Version**: 0.97.7  
+**Last Updated**: January 20, 2026  
+**Status**: Production Ready  
+**Local Database**: ✅ Fully Operational (PostgreSQL 16 in Docker)
+
+> **v0.97.7 Update**: Local database integration complete with Docker stack (PostgreSQL 16, Express API, Nginx frontend). All CRUD operations verified.
 
 ---
 
@@ -146,6 +149,7 @@ MAEPLE respects user privacy and autonomy by:
 ### Technology Stack
 
 #### Frontend
+
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite
 - **State Management**: Zustand
@@ -155,6 +159,7 @@ MAEPLE respects user privacy and autonomy by:
 - **Mobile**: Capacitor for native iOS/Android apps
 
 #### Backend
+
 - **Runtime**: Node.js
 - **Framework**: Express
 - **Database**: PostgreSQL
@@ -162,12 +167,14 @@ MAEPLE respects user privacy and autonomy by:
 - **Rate Limiting**: Express Rate Limiter
 
 #### AI Services
+
 - **Primary**: Google Gemini (multimodal)
 - **Secondary**: OpenAI, Anthropic, Perplexity
 - **Routing**: Custom AIRouter with capability-based selection
 - **Fallback**: Automatic provider switching on failure
 
 #### Development
+
 - **Language**: TypeScript 5.2+
 - **Linting**: ESLint with TypeScript rules
 - **Formatting**: Prettier
@@ -181,9 +188,11 @@ MAEPLE respects user privacy and autonomy by:
 ### 1. Health Entry System
 
 #### Purpose
+
 The central data structure that captures a user's mental and emotional state at a specific point in time.
 
 #### Functionality
+
 - **Journal Input**: Text or voice-based journaling
 - **Capacity Assessment**: 7-point grid with sliders (0-10 scale for each domain)
 - **Mood Rating**: 1-5 scale for overall mood
@@ -192,6 +201,7 @@ The central data structure that captures a user's mental and emotional state at 
 - **AI Analysis**: Automatic pattern recognition and insight generation
 
 #### Data Model
+
 ```typescript
 interface HealthEntry {
   id: string;
@@ -211,17 +221,18 @@ interface HealthEntry {
 }
 
 interface CapacityProfile {
-  focus: number;      // 0-10
-  social: number;     // 0-10
-  sensory: number;    // 0-10
-  emotional: number;  // 0-10
-  physical: number;    // 0-10
-  structure: number;  // 0-10
-  executive: number;  // 0-10
+  focus: number; // 0-10
+  social: number; // 0-10
+  sensory: number; // 0-10
+  emotional: number; // 0-10
+  physical: number; // 0-10
+  structure: number; // 0-10
+  executive: number; // 0-10
 }
 ```
 
 #### Key Metrics Calculated
+
 - **Bandwidth**: Average capacity across all domains (0-10)
 - **Load**: Weighted sum of negative capacity scores
 - **Interference**: Cross-domain impact calculations
@@ -232,18 +243,92 @@ interface CapacityProfile {
 ### 2. Bio-Mirror Technology
 
 #### Purpose
+
 Provides objective physiological analysis to validate or contrast with subjective self-reports, helping users identify masking or dissociation.
 
+#### Recent Updates
+
+**v0.97.6 (January 2026) - Enhanced FACS Integration**
+
+- **Structured AU Detection**: Proper FACS Action Unit codes with intensity ratings (A-E)
+- **Expert AI Persona**: Gemini configured as certified FACS expert
+- **Duchenne Smile Detection**: AU6+AU12 = genuine vs AU12 alone = social/masking
+- **FACS-Aware Comparison**: Uses AU combinations for accurate discrepancy scoring
+- **Enhanced UI**: Displays detected AUs with intensity badges, smile type indicators
+
+**v2.2.0**
+
+- **Camera Stability**: Custom `useCameraCapture` hook eliminates flickering
+- **Progress Tracking**: Real progress callbacks (not simulated)
+- **Timeout**: Extended from 30s to 45s for Gemini 2.0 Flash
+- **Offline Fallback**: Basic analysis when AI unavailable
+- **Observation Flow**: Results automatically stored in ObservationContext
+
+#### Scientific Foundation
+
+**Facial Action Coding System (FACS)**
+
+- Developed by Paul Ekman and Wallace Friesen (1978)
+- Gold standard for measuring facial movements
+- Based on anatomical muscle actions, not subjective emotions
+- 30+ core Action Units (AUs) describe all facial expressions
+
+**Research References:**
+
+- Ekman, P., & Friesen, W. (1978). _Facial Action Coding System: A Technique for Measurement of Facial Movement_
+- Cohn, J. F., et al. (2019). _The Data Face: Facial Expression Recognition, Social Media, and Privacy_
+- iMotions. (2024). [_Facial Action Coding System Guide_](https://imotions.com/blog/facial-action-coding-system/)
+- Google AI. (2024). [_Gemini Vision API Documentation_](https://ai.google.dev/gemini-api/docs/image-understanding)
+
+#### Technical Implementation
+
+**AI Model Configuration:**
+
+```typescript
+Model: "gemini-2.5-flash" // Gemini 2.5 with enhanced vision + segmentation
+System Instruction: "Certified FACS expert trained in Ekman-Friesen methodology"
+Response Format: Structured JSON with actionUnits[] array
+```
+
+**Prompt Engineering:**
+
+- Requests specific AU codes (AU1, AU4, AU6, AU12, AU24, etc.)
+- Requires intensity ratings on A-E scale
+- Asks for AU combinations analysis (e.g., AU6+AU12 = Duchenne smile)
+- Avoids emotion labeling (reports muscle movements only)
+
+**Detection Logic:**
+
+1. **Tension Calculation** (from AUs):
+
+   ```typescript
+   tension = AU4_intensity * 0.4 + AU24_intensity * 0.4 + AU14_intensity * 0.2;
+   ```
+
+2. **Fatigue Calculation** (from AUs):
+
+   ```typescript
+   fatigue = AU43_intensity * 0.5 + AU7_intensity * 0.3 + low_overall_intensity * 0.2;
+   ```
+
+3. **Masking Detection** (from AU combinations):
+   - AU12 without AU6 = Social smile (potential masking)
+   - AU6 + AU12 = Duchenne smile (genuine)
+   - High AU4/AU24 + positive mood report = Discrepancy
+
 #### Functionality
-- **Camera Capture**: Real-time facial video analysis
-- **FACS Analysis**: Facial Action Coding System for emotion detection
-- **Fatigue Detection**: Ptosis (drooping eyelids), Glazed Gaze
-- **Tension Detection**: Lip Pressor, Masseter (jaw) tension
-- **Masking Detection**: Discrepancy between social vs. authentic smiles
+
+- **Camera Capture**: Real-time facial video analysis via stable hook architecture
+- **FACS Analysis**: Structured Action Unit detection with intensity scoring
+- **Fatigue Detection**: AU43 (Eyes Closed), ptosis, reduced expression intensity
+- **Tension Detection**: AU4 (Brow Lowerer), AU24 (Lip Pressor), AU14 (Dimpler)
+- **Masking Detection**: Duchenne vs social smile analysis, AU suppression patterns
 - **Baseline Calibration**: Individual "resting" state adjustment
-- **Discrepancy Scoring**: 0-100 scale comparing subjective vs. objective
+- **Discrepancy Scoring**: 0-100 scale comparing subjective vs objective
+- **FACS Insights**: Detailed AU breakdown with anatomical names
 
 #### Data Model
+
 ```typescript
 interface FacialAnalysis {
   id: string;
@@ -251,7 +336,7 @@ interface FacialAnalysis {
   timestamp: Date;
   imageReference: string; // Encrypted image path
   confidence: number; // 0-1
-  
+
   // Fatigue indicators
   ptosis: {
     left: number; // 0-1 severity
@@ -259,17 +344,17 @@ interface FacialAnalysis {
     overall: number;
   };
   glazedGaze: number; // 0-1
-  
+
   // Tension indicators
   lipPressor: number; // 0-1
   masseterTension: number; // 0-1
   overallTension: number; // 0-1
-  
+
   // Masking detection
   socialSmile: number; // 0-1
   authenticSmile: number; // 0-1
   maskingDiscrepancy: number; // 0-1
-  
+
   // Correlation
   discrepancyScore: number; // 0-100 vs subjective mood
   interpretation: string; // AI-generated explanation
@@ -286,12 +371,14 @@ interface FacialBaseline {
 ```
 
 #### Technical Implementation
+
 - **Video Processing**: Client-side using MediaPipe or similar
 - **FACS Mapping**: Maps facial landmarks to FACS action units
 - **Privacy**: Images encrypted before storage, deleted after analysis
 - **Performance**: 10-second capture window, optimized for mobile
 
 #### Why This Matters
+
 - **Objective Reality Check**: Validates or challenges user's self-perception
 - **Masking Awareness**: Helps neurodivergent users identify when they're masking
 - **Dissociation Detection**: Identifies when internal state doesn't match external presentation
@@ -302,15 +389,18 @@ interface FacialBaseline {
 ### 3. Comparison Engine
 
 #### Purpose
+
 Correlates subjective journal entries with objective facial analysis to identify patterns of masking, dissociation, or self-awareness accuracy.
 
 #### Functionality
+
 - **Discrepancy Calculation**: Compares subjective mood (1-5) with facial indicators
 - **Pattern Recognition**: Identifies when discrepancies occur (e.g., after social events)
 - **Trend Analysis**: Tracks self-awareness improvement over time
 - **Masking Scenarios**: Flags situations where masking is likely occurring
 
 #### Algorithm
+
 ```typescript
 function calculateDiscrepancy(
   subjectiveMood: number, // 1-5
@@ -319,26 +409,27 @@ function calculateDiscrepancy(
 ): number {
   // Normalize subjective mood to 0-1
   const normalizedMood = subjectiveMood / 5;
-  
+
   // Calculate facial mood from indicators
-  const facialMood = 1 - (
-    facialAnalysis.ptosis.overall * 0.3 +
-    facialAnalysis.glazedGaze * 0.2 +
-    facialAnalysis.overallTension * 0.2 +
-    facialAnalysis.maskingDiscrepancy * 0.3
-  );
-  
+  const facialMood =
+    1 -
+    (facialAnalysis.ptosis.overall * 0.3 +
+      facialAnalysis.glazedGaze * 0.2 +
+      facialAnalysis.overallTension * 0.2 +
+      facialAnalysis.maskingDiscrepancy * 0.3);
+
   // Apply baseline adjustment
   const adjustedFacialMood = facialMood + (1 - baseline.restTension);
-  
+
   // Calculate discrepancy (0-100)
   const discrepancy = Math.abs(normalizedMood - adjustedFacialMood) * 100;
-  
+
   return Math.min(100, discrepancy);
 }
 ```
 
 #### Interpretation Guidelines
+
 - **0-20**: High self-awareness, minimal masking
 - **21-40**: Mild masking or dissociation
 - **41-60**: Moderate masking, may not be aware of true state
@@ -350,12 +441,15 @@ function calculateDiscrepancy(
 ### 4. AI Services Layer
 
 #### Purpose
+
 Provides intelligent analysis, pattern recognition, and personalized insights using multiple AI providers with automatic fallback.
 
 #### Components
 
 ##### AIRouter
+
 **Functionality**:
+
 - **Capability-Based Routing**: Routes requests to best provider based on task type
 - **Provider Health Monitoring**: Tracks provider availability and response times
 - **Automatic Fallback**: Switches to backup provider on failure
@@ -363,6 +457,7 @@ Provides intelligent analysis, pattern recognition, and personalized insights us
 - **Usage Tracking**: Monitors token usage and costs per provider
 
 **Provider Capabilities**:
+
 ```typescript
 interface AICapabilities {
   textGeneration: boolean;
@@ -384,6 +479,7 @@ interface AIProvider {
 ```
 
 **Routing Logic**:
+
 1. **Text Analysis**: Use OpenAI GPT-4 (best for nuanced text)
 2. **Vision Analysis**: Use Gemini Pro Vision (excellent at facial analysis)
 3. **Voice Processing**: Use Whisper (OpenAI) or Gemini (multimodal)
@@ -391,9 +487,11 @@ interface AIProvider {
 5. **Fallback Chain**: Gemini → OpenAI → Anthropic → Z.ai
 
 ##### Live Coach
+
 **Purpose**: Real-time voice interaction for verbal processing and emotional support.
 
 **Functionality**:
+
 - **Voice Input**: Speech-to-text with real-time transcription
 - **AI Response**: Context-aware responses based on current state
 - **Voice Output**: Text-to-speech with natural voice
@@ -401,6 +499,7 @@ interface AIProvider {
 - **History Integration**: Accesses recent entries for context
 
 **Technical Implementation**:
+
 ```typescript
 interface LiveCoachSession {
   id: string;
@@ -414,7 +513,7 @@ interface LiveCoachSession {
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   timestamp: Date;
   emotion?: string;
@@ -430,23 +529,25 @@ interface Message {
 **Purpose**: Manages local data persistence using browser APIs optimized for different data types.
 
 **Implementation**:
+
 ```typescript
 class StorageService {
   // Settings and non-sensitive data
   private settingsStore: LocalStorage;
-  
+
   // Health entries and journal data
   private entriesStore: IndexedDB;
-  
+
   // Encrypted biometric data
   private secureStore: IndexedDB;
-  
+
   // Offline queue
   private queueStore: IndexedDB;
 }
 ```
 
 **Data Storage Strategy**:
+
 - **User Settings**: localStorage (fast access, small data)
 - **Health Entries**: IndexedDB (structured, queryable, larger data)
 - **Encrypted Images**: IndexedDB (encrypted blobs, accessed via encryption service)
@@ -457,6 +558,7 @@ class StorageService {
 **Purpose**: Synchronizes local data with cloud database while supporting offline operation.
 
 **Key Features**:
+
 - **Last-Write-Wins Conflict Resolution**: Most recent timestamp wins
 - **Incremental Sync**: Only transmits changed data
 - **Background Sync**: Automatic sync when connectivity returns
@@ -464,28 +566,26 @@ class StorageService {
 - **Conflict Detection**: Identifies and resolves data conflicts
 
 **Sync Algorithm**:
+
 ```typescript
 async function syncHealthEntries(
   localEntries: HealthEntry[],
   remoteEntries: HealthEntry[]
 ): Promise<HealthEntry[]> {
   const conflictResolutions: HealthEntry[] = [];
-  
+
   // Find conflicts (same ID, different updatedAt)
   const conflicts = localEntries.filter(local =>
-    remoteEntries.some(remote =>
-      remote.id === local.id &&
-      remote.updatedAt !== local.updatedAt
-    )
+    remoteEntries.some(remote => remote.id === local.id && remote.updatedAt !== local.updatedAt)
   );
-  
+
   // Resolve conflicts (last-write-wins)
   conflicts.forEach(local => {
     const remote = remoteEntries.find(r => r.id === local.id);
     const winner = local.updatedAt > remote.updatedAt ? local : remote;
     conflictResolutions.push(winner);
   });
-  
+
   return conflictResolutions;
 }
 ```
@@ -495,15 +595,18 @@ async function syncHealthEntries(
 ### 6. Encryption Service
 
 #### Purpose
+
 Protects sensitive biometric data using military-grade encryption.
 
 **Implementation**:
+
 - **Algorithm**: AES-GCM 256-bit
 - **Key Derivation**: PBKDF2 with 100,000 iterations
 - **Salt**: Unique per-user, stored securely
 - **IV**: Unique per-encryption, stored with encrypted data
 
 **Key Methods**:
+
 ```typescript
 class EncryptionService {
   async encrypt(
@@ -513,29 +616,17 @@ class EncryptionService {
     const salt = await this.getSalt(userKey);
     const key = await this.deriveKey(userKey, salt);
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    
-    const encrypted = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      data
-    );
-    
+
+    const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
+
     return { encrypted, iv };
   }
-  
-  async decrypt(
-    encrypted: ArrayBuffer,
-    iv: Uint8Array,
-    userKey: string
-  ): Promise<ArrayBuffer> {
+
+  async decrypt(encrypted: ArrayBuffer, iv: Uint8Array, userKey: string): Promise<ArrayBuffer> {
     const salt = await this.getSalt(userKey);
     const key = await this.deriveKey(userKey, salt);
-    
-    return crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      encrypted
-    );
+
+    return crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, encrypted);
   }
 }
 ```
@@ -545,9 +636,11 @@ class EncryptionService {
 ### 7. Wearables Integration
 
 #### Purpose
+
 Correlates objective health metrics with subjective self-reports for comprehensive pattern analysis.
 
 #### Supported Platforms
+
 - **Oura Ring**: Sleep quality, HRV, heart rate, temperature
 - **Apple Health**: Activity, heart rate, sleep, respiratory rate
 - **Garmin**: Activity, stress score, body battery
@@ -555,26 +648,28 @@ Correlates objective health metrics with subjective self-reports for comprehensi
 - **Whoop**: Recovery, strain, sleep performance
 
 #### Data Model
+
 ```typescript
 interface WearablesData {
   id: string;
   healthEntryId: string;
-  source: 'oura' | 'apple' | 'garmin' | 'fitbit' | 'whoop';
+  source: "oura" | "apple" | "garmin" | "fitbit" | "whoop";
   timestamp: Date;
-  
+
   // Common metrics
   heartRate?: number; // bpm
   hrv?: number; // ms
   sleepQuality?: number; // 0-100
   steps?: number;
   activityLevel?: number; // 0-100
-  
+
   // Platform-specific
   platformSpecific?: Record<string, unknown>;
 }
 ```
 
 #### Integration Flow
+
 1. **OAuth2 Authentication**: User grants access to wearables platform
 2. **Data Fetching**: Scheduled fetches (every 1-4 hours depending on platform)
 3. **Normalization**: Convert platform-specific metrics to standard format
@@ -586,47 +681,55 @@ interface WearablesData {
 ### 8. Capacity Metrics System
 
 #### Purpose
+
 Standardizes capacity tracking across 7 dimensions with meaningful metrics and visualizations.
 
 #### Dimension Definitions
 
 **Focus (Cognitive Bandwidth)**
+
 - 0-2: Cannot concentrate, brain fog
 - 3-5: Limited focus, easily distracted
 - 6-8: Good focus, can concentrate on tasks
 - 9-10: Hyperfocus state, high productivity
 
 **Social (Interaction Capacity)**
+
 - 0-2: Cannot interact, need isolation
 - 3-5: Limited social battery, prefer 1-on-1
 - 6-8: Normal social capacity, can handle groups
 - 9-10: High social energy, enjoy interaction
 
 **Sensory (Stimuli Tolerance)**
+
 - 0-2: Overwhelmed, sensory overload
 - 3-5: Sensitive, need quiet environment
 - 6-8: Normal tolerance, manageable environment
 - 9-10: High tolerance, can handle loud/busy
 
 **Emotional (Resilience)**
+
 - 0-2: Fragile, easily overwhelmed
 - 3-5: Moderate resilience, small setbacks manageable
 - 6-8: Good resilience, can handle stress
 - 9-10: High resilience, emotionally stable
 
 **Physical (Body Energy)**
+
 - 0-2: Exhausted, need rest
 - 3-5: Low energy, slow movement
 - 6-8: Normal energy, can do daily tasks
 - 9-10: High energy, can exercise or be active
 
 **Structure (Routine Needs)**
+
 - 0-2: High need for structure, changes difficult
 - 3-5: Moderate need for routine, prefer predictability
 - 6-8: Flexible, can handle some changes
 - 9-10: Very flexible, adapt easily to change
 
 **Executive (Planning Ability)**
+
 - 0-2: Cannot plan, need guidance
 - 3-5: Limited planning, need supports
 - 6-8: Good planning, can organize tasks
@@ -635,16 +738,19 @@ Standardizes capacity tracking across 7 dimensions with meaningful metrics and v
 #### Calculated Metrics
 
 **Bandwidth**
+
 ```
 Bandwidth = Average of all 7 dimensions (0-10)
 ```
 
 **Load**
+
 ```
 Load = Sum of (10 - dimension) for dimensions below 5
 ```
 
 **Interference**
+
 ```
 Interference = Sum of cross-domain negative correlations
 Example: Sensory overload (0-2) causing Emotional dysregulation (0-2) = 2
@@ -652,6 +758,7 @@ Example: Sensory overload (0-2) causing Emotional dysregulation (0-2) = 2
 
 **Noise Generators**
 Hidden costs that reduce effective capacity:
+
 - **Masking**: Pretending to be okay when not
 - **Perfectionism**: Excessive self-criticism
 - **People Pleasing**: Prioritizing others over self
@@ -662,19 +769,24 @@ Hidden costs that reduce effective capacity:
 ### 9. Analytics and Visualization
 
 #### Purpose
+
 Transforms raw data into actionable insights through visualizations and pattern analysis.
 
 #### Components
 
 ##### StateTrendChart
+
 **Functionality**: Shows bandwidth trends over time with overlay of events
+
 - **Time Range**: 1 day, 1 week, 1 month, 3 months, 1 year
 - **Granularity**: Hourly, daily, weekly, monthly
 - **Overlays**: Tags, events, wearables metrics
 - **Comparison**: Compare current period to previous period
 
 ##### AnalysisDashboard
+
 **Functionality**: Provides comprehensive insights from multiple data streams
+
 - **Pattern Summary**: Recurring situations and states
 - **Trigger Analysis**: What typically precedes certain states
 - **Strategy Effectiveness**: Which interventions work best
@@ -682,7 +794,9 @@ Transforms raw data into actionable insights through visualizations and pattern 
 - **Wearables Correlation**: Health metrics vs. capacity scores
 
 ##### ClinicalReport
+
 **Purpose**: Generates professional summary for healthcare providers
+
 - **PDF Export**: Professional format with MAEPLE branding
 - **Key Insights**: Top patterns and findings
 - **Data Summaries**: Statistical summaries of each dimension
@@ -694,11 +808,13 @@ Transforms raw data into actionable insights through visualizations and pattern 
 ### 10. Authentication and Security
 
 #### Purpose
+
 Secures user data while maintaining accessibility and usability.
 
 #### Implementation
 
 ##### AuthService
+
 - **Registration**: Email/password with validation
 - **Login**: JWT token-based authentication
 - **Password Reset**: Secure token-based reset flow
@@ -706,6 +822,7 @@ Secures user data while maintaining accessibility and usability.
 - **Biometric Auth**: Device biometrics for mobile apps
 
 ##### Security Measures
+
 - **Password Hashing**: bcrypt with salt rounds
 - **JWT Tokens**: Short-lived access + refresh tokens
 - **Rate Limiting**: Prevents brute force attacks
@@ -899,7 +1016,7 @@ interface GetTrendsRequest {
   startDate: Date;
   endDate: Date;
   dimensions?: CapacityDimension[];
-  granularity: 'hourly' | 'daily' | 'weekly' | 'monthly';
+  granularity: "hourly" | "daily" | "weekly" | "monthly";
 }
 
 interface GetTrendsResponse {
@@ -921,7 +1038,7 @@ interface GetInsightsResponse {
 interface GetReportRequest {
   startDate: Date;
   endDate: Date;
-  format: 'pdf' | 'json';
+  format: "pdf" | "json";
 }
 ```
 
@@ -965,6 +1082,7 @@ interface LogoutResponse {
 ### Database Schema
 
 #### Users Table
+
 ```sql
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -980,6 +1098,7 @@ CREATE TABLE users (
 ```
 
 #### Health Entries Table
+
 ```sql
 CREATE TABLE health_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1006,6 +1125,7 @@ CREATE TABLE health_entries (
 ```
 
 #### Facial Analysis Table
+
 ```sql
 CREATE TABLE facial_analysis (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1031,6 +1151,7 @@ CREATE TABLE facial_analysis (
 ```
 
 #### Wearables Data Table
+
 ```sql
 CREATE TABLE wearables_data (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1056,17 +1177,20 @@ CREATE TABLE wearables_data (
 ### Data Protection Measures
 
 #### Encryption
+
 - **At Rest**: AES-GCM 256-bit for biometric data
 - **In Transit**: TLS 1.3 for all API calls
 - **Key Management**: User-derived encryption keys, never stored server-side
 
 #### Privacy Controls
+
 - **Data Ownership**: User owns all data
 - **Right to Deletion**: Complete data deletion on request
 - **Export Capability**: Full data export in standard format
 - **Granular Permissions**: Users control what data is synced
 
 #### Compliance
+
 - **GDPR Ready**: Data portability and deletion rights
 - **HIPAA Considerations**: Designed with healthcare data standards in mind
 - **COPPA Compliant**: No data collection from users under 13
@@ -1074,17 +1198,20 @@ CREATE TABLE wearables_data (
 ### Security Best Practices
 
 #### Input Validation
+
 - **Server-Side**: All inputs validated and sanitized
 - **Type Checking**: TypeScript prevents type confusion attacks
 - **SQL Injection**: Parameterized queries only
 - **XSS Prevention**: Content-Security-Policy headers
 
 #### Rate Limiting
+
 - **Per-User**: 55 requests/minute, 1400/day
 - **Per-IP**: 100 requests/minute
 - **Per-Endpoint**: Different limits for different endpoints
 
 #### Authentication
+
 - **JWT Tokens**: Short-lived (15 minutes) access tokens
 - **Refresh Tokens**: Long-lived (30 days) refresh tokens
 - **Secure Storage**: Tokens stored in httpOnly cookies or secure storage
@@ -1097,12 +1224,14 @@ CREATE TABLE wearables_data (
 ### Performance Targets
 
 #### Frontend
+
 - **First Contentful Paint**: < 1.5s
 - **Time to Interactive**: < 3s
 - **Lighthouse Score**: > 90 across all categories
 - **Bundle Size**: < 500KB (gzipped)
 
 #### Backend
+
 - **API Response Time**: < 200ms (p95)
 - **Database Queries**: < 50ms (p95)
 - **Concurrent Users**: 10,000+ active users
@@ -1111,6 +1240,7 @@ CREATE TABLE wearables_data (
 ### Optimization Strategies
 
 #### Frontend
+
 - **Code Splitting**: Route-based and component-based splitting
 - **Lazy Loading**: Components loaded on demand
 - **Image Optimization**: WebP format with responsive sizes
@@ -1118,6 +1248,7 @@ CREATE TABLE wearables_data (
 - **Memoization**: React.memo for expensive components
 
 #### Backend
+
 - **Database Indexing**: Strategic indexes on frequently queried columns
 - **Connection Pooling**: PgBouncer for PostgreSQL
 - **Caching**: Redis for frequently accessed data
@@ -1131,22 +1262,26 @@ CREATE TABLE wearables_data (
 ### Testing Strategy
 
 #### Unit Tests
+
 - **Coverage Target**: 80%+ code coverage
 - **Critical Path**: 100% coverage for core services
 - **Framework**: Vitest with React Testing Library
 - **Automation**: Runs on every commit
 
 #### Integration Tests
+
 - **API Testing**: End-to-end API request/response validation
 - **Database Testing**: Transaction and query validation
 - **Service Integration**: Tests service interactions
 
 #### End-to-End Tests
+
 - **User Flows**: Critical user journey testing
 - **Cross-Browser**: Chrome, Firefox, Safari, Edge
 - **Mobile Testing**: iOS and iOS Safari, Android Chrome
 
 #### Performance Tests
+
 - **Load Testing**: K6 for API load testing
 - **Bundle Analysis**: Regular bundle size monitoring
 - **Lighthouse CI**: Automated performance testing
@@ -1154,6 +1289,7 @@ CREATE TABLE wearables_data (
 ### Continuous Integration
 
 #### GitHub Actions Workflow
+
 ```yaml
 name: CI/CD Pipeline
 
@@ -1170,13 +1306,13 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '22'
+          node-version: "22"
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test:coverage
       - run: npm run build
-  
+
   deploy:
     needs: test
     if: github.ref == 'refs/heads/main'
@@ -1194,18 +1330,21 @@ jobs:
 ### Infrastructure Stack
 
 #### Frontend
+
 - **Hosting**: Vercel (automated deployments)
 - **CDN**: Vercel Edge Network
 - **SSL**: Automatic HTTPS with Let's Encrypt
 - **Domain**: Custom domain with DNS configuration
 
 #### Backend
+
 - **Hosting**: DigitalOcean or AWS EC2
 - **Container**: Docker for consistent deployment
 - **Orchestration**: Docker Compose or Kubernetes
 - **Monitoring**: Datadog or New Relic
 
 #### Database
+
 - **Primary**: PostgreSQL 14+ on managed service (e.g., AWS RDS)
 - **Backups**: Daily automated backups with 30-day retention
 - **Replication**: Read replicas for scaling
@@ -1214,6 +1353,7 @@ jobs:
 ### Deployment Process
 
 #### Frontend Deployment
+
 ```bash
 # 1. Build application
 npm run build
@@ -1229,6 +1369,7 @@ npm run smoke-tests
 ```
 
 #### Backend Deployment
+
 ```bash
 # 1. Build Docker image
 docker build -t maeple-api:latest .
@@ -1251,6 +1392,7 @@ npm run health-check
 ## Future Roadmap
 
 ### Phase 1: Foundation (Complete ✓)
+
 - [x] Core health entry system
 - [x] Capacity grid implementation
 - [x] Basic AI analysis
@@ -1258,6 +1400,7 @@ npm run health-check
 - [x] Local storage with sync
 
 ### Phase 2: Enhanced Intelligence (In Progress)
+
 - [ ] Advanced Bio-Mirror with emotion recognition
 - [ ] Wearables integration for all major platforms
 - [ ] Predictive capacity forecasting
@@ -1265,6 +1408,7 @@ npm run health-check
 - [ ] Social sharing (with privacy controls)
 
 ### Phase 3: Community and Collaboration
+
 - [ ] Anonymous pattern sharing
 - [ ] Community strategies library
 - [ ] Healthcare provider portal
@@ -1272,6 +1416,7 @@ npm run health-check
 - [ ] Research contribution opt-in
 
 ### Phase 4: Advanced Features
+
 - [ ] Voice journal with sentiment analysis
 - [ ] Environmental context detection
 - [ ] Medication tracking and correlation
@@ -1279,6 +1424,7 @@ npm run health-check
 - [ ] Crisis detection and safety protocols
 
 ### Phase 5: Ecosystem Integration
+
 - [ ] EHR integration (Epic, Cerner)
 - [ ] Telehealth platform integration
 - [ ] Research partnerships

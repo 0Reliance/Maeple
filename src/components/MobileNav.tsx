@@ -13,14 +13,10 @@ import { View } from "../types";
 
 interface Props {
   currentView: View;
-  onToggleMenu: () => void;
-  isMenuOpen: boolean;
 }
 
 const MobileNav: React.FC<Props> = ({
   currentView,
-  onToggleMenu,
-  isMenuOpen,
 }) => {
   const NavItem = ({
     view,
@@ -28,13 +24,11 @@ const MobileNav: React.FC<Props> = ({
     label,
     isAction = false,
   }: {
-    view?: View;
+    view: View;
     icon: LucideIcon;
     label: string;
     isAction?: boolean;
   }) => {
-    const isMenuTrigger = !view;
-
     const renderContent = (isActive: boolean) => (
       <>
         {isAction ? (
@@ -62,21 +56,9 @@ const MobileNav: React.FC<Props> = ({
       </>
     );
 
-    if (isMenuTrigger) {
-      const activeColor = isMenuOpen ? "text-primary dark:text-primary-light" : "text-text-tertiary";
-      return (
-        <button
-          onClick={onToggleMenu}
-          className={`flex flex-col items-center justify-center w-full py-2 transition-colors relative ${activeColor}`}
-        >
-          {renderContent(isMenuOpen)}
-        </button>
-      );
-    }
-
     return (
       <NavLink
-        to={viewToPath[view!]}
+        to={viewToPath[view]}
         className={({ isActive }) =>
           `flex flex-col items-center justify-center w-full py-2 transition-colors relative ${
             isActive
@@ -112,7 +94,7 @@ const MobileNav: React.FC<Props> = ({
         />
 
         <NavItem view={View.LIVE_COACH} icon={MessagesSquare} label="Guide" />
-        <NavItem icon={Menu} label="Menu" />
+        <NavItem view={View.SETTINGS} icon={Menu} label="Menu" />
       </div>
     </div>
   );

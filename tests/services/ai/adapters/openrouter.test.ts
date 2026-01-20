@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { OpenRouterAdapter } from '../../../../services/ai/adapters/openrouter';
-import { AITextRequest, AIVisionRequest } from '../../../../services/ai/types';
+import { OpenRouterAdapter } from '../../../../src/services/ai/adapters/openrouter';
+import { AITextRequest, AIVisionRequest } from '../../../../src/services/ai/types';
 
 // Mock fetch
 const mockFetch = vi.fn();

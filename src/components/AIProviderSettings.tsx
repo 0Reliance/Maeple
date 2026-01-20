@@ -192,6 +192,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder={`Enter your ${providerInfo.name} API key`}
+                  autoComplete="off"
                   className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900/50 focus:outline-none font-mono text-sm text-slate-800 dark:text-slate-200"
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -228,6 +229,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
                 placeholder="http://localhost:11434"
+                autoComplete="url"
                 className="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900/50 focus:outline-none font-mono text-sm text-slate-800 dark:text-slate-200"
                 onClick={(e) => e.stopPropagation()}
               />

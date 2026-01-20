@@ -22,7 +22,6 @@ const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry, variant = 'list' }
   // Safety check for older entries
   const spoons = entry.neuroMetrics?.spoonLevel ?? 5;
   const sensory = entry.neuroMetrics?.sensoryLoad ?? 0;
-  const masking = entry.neuroMetrics?.maskingScore ?? 0;
   const strengths = entry.strengths || [];
   const activityTypes = entry.activityTypes || [];
   const capacity = entry.neuroMetrics?.capacity;
@@ -148,14 +147,6 @@ const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry, variant = 'list' }
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-orange-50 text-orange-700 rounded-md text-xs font-medium border border-orange-100" title="High Sensory Load">
                     <Volume2 size={12} />
                     <span>Sensory Load: {sensory}/10</span>
-                </div>
-            )}
-            
-            {/* Masking Alert */}
-            {masking > 5 && (
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium border border-slate-200" title="High Masking Effort">
-                    <EyeOff size={12} />
-                    <span>Masking: {masking}/10</span>
                 </div>
             )}
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { OllamaAdapter } from '../../../../services/ai/adapters/ollama';
-import { AITextRequest, AIVisionRequest } from '../../../../services/ai/types';
+import { OllamaAdapter } from '../../../../src/services/ai/adapters/ollama';
+import { AITextRequest, AIVisionRequest } from '../../../../src/services/ai/types';
 
 // Mock fetch
 const mockFetch = vi.fn();

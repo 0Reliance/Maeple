@@ -1,47 +1,54 @@
 import {
-  VisionService,
   AIService,
-  AuthService,
+  AnalyticsService,
   AudioService,
-  StorageService,
+  AuthService,
   CacheService,
   ErrorLoggerService,
-  AnalyticsService
-} from '../contexts/DependencyContext';
+  StorageService,
+  VisionService,
+} from "../contexts/DependencyContext";
 
-import { signInWithEmail, signOut } from '../services/authService';
-import { cacheService } from '../services/cacheService';
-import { errorLogger } from '../services/errorLogger';
-import { createCircuitBreaker, CircuitState } from '../patterns/CircuitBreaker';
+import { CircuitState, createCircuitBreaker } from "../patterns/CircuitBreaker";
+import { signInWithEmail, signOut } from "../services/authService";
+import { cacheService } from "../services/cacheService";
+import { errorLogger } from "../services/errorLogger";
 
 /**
  * Service Adapters
- * 
+ *
  * Wraps existing services to match DI interfaces
  * Enables gradual migration to proper DI
  */
 
 // Vision Service Adapter with Circuit Breaker
 export class VisionServiceAdapter implements VisionService {
+  private stateChangeListeners: Set<(state: CircuitState) => void> = new Set();
+
   private circuitBreaker = createCircuitBreaker({
     failureThreshold: 5,
     successThreshold: 2,
     resetTimeout: 60000,
-    onStateChange: (state) => {
-      console.debug('[VisionService] Circuit state:', state);
-    }
+    onStateChange: state => {
+      console.debug("[VisionService] Circuit state:", state);
+      // Notify all subscribers
+      this.stateChangeListeners.forEach(listener => listener(state));
+    },
   });
 
-  async analyzeFromImage(imageData: string): Promise<any> {
+  async analyzeFromImage(
+    imageData: string,
+    options?: { onProgress?: (stage: string, progress: number) => void; signal?: AbortSignal }
+  ): Promise<any> {
     return this.circuitBreaker.execute(async () => {
-      const geminiVisionService = await import('../services/geminiVisionService');
-      return geminiVisionService.analyzeStateFromImage(imageData);
+      const geminiVisionService = await import("../services/geminiVisionService");
+      return geminiVisionService.analyzeStateFromImage(imageData, options);
     });
   }
 
   async generateImage(prompt: string, base64Image?: string): Promise<any> {
     return this.circuitBreaker.execute(async () => {
-      const geminiVisionService = await import('../services/geminiVisionService');
+      const geminiVisionService = await import("../services/geminiVisionService");
       return geminiVisionService.generateOrEditImage(prompt, base64Image);
     });
   }
@@ -51,52 +58,59 @@ export class VisionServiceAdapter implements VisionService {
   }
 
   onStateChange(callback: (state: CircuitState) => void): () => void {
-    // Simple subscription mechanism
-    return () => {}; // Implementation would need proper event system
+    this.stateChangeListeners.add(callback);
+    // Return unsubscribe function
+    return () => {
+      this.stateChangeListeners.delete(callback);
+    };
   }
 }
 
 // AI Service Adapter with Circuit Breaker
 export class AIServiceAdapter implements AIService {
+  private stateChangeListeners: Set<(state: CircuitState) => void> = new Set();
+
   private circuitBreaker = createCircuitBreaker({
     failureThreshold: 5,
     successThreshold: 2,
     resetTimeout: 60000,
-    onStateChange: (state) => {
-      console.debug('[AIService] Circuit state:', state);
-    }
+    onStateChange: state => {
+      console.debug("[AIService] Circuit state:", state);
+      // Notify all subscribers
+      this.stateChangeListeners.forEach(listener => listener(state));
+    },
   });
 
   async analyze(prompt: string, options?: any): Promise<any> {
     return this.circuitBreaker.execute(async () => {
-      const { aiRouter } = await import('../services/ai/router');
+      const { aiRouter } = await import("../services/ai/router");
       // AI Router uses 'chat' method for text analysis
       return aiRouter.chat({
-        messages: [{ role: 'user', content: prompt }],
-        ...options
+        messages: [{ role: "user", content: prompt }],
+        ...options,
       });
     });
   }
 
   async generateResponse(prompt: string, options?: any): Promise<any> {
     return this.circuitBreaker.execute(async () => {
-      const { aiRouter } = await import('../services/ai/router');
+      const { aiRouter } = await import("../services/ai/router");
       // Use chat method for generating responses
       return aiRouter.chat({
-        messages: [{ role: 'user', content: prompt }],
-        ...options
+        messages: [{ role: "user", content: prompt }],
+        ...options,
       });
     });
   }
 
   async analyzeAudio(audioData: string, mimeType: string, prompt?: string): Promise<any> {
     return this.circuitBreaker.execute(async () => {
-      const { aiRouter } = await import('../services/ai/router');
+      const { aiRouter } = await import("../services/ai/router");
       // Route to audio analysis via aiRouter
       return aiRouter.analyzeAudio({
         audioData,
         mimeType,
-        prompt: prompt || 'Analyze this audio journal entry'
+        prompt: prompt || "Analyze this audio journal entry",
       });
     });
   }
@@ -106,7 +120,11 @@ export class AIServiceAdapter implements AIService {
   }
 
   onStateChange(callback: (state: CircuitState) => void): () => void {
-    return () => {}; // Implementation would need proper event system
+    this.stateChangeListeners.add(callback);
+    // Return unsubscribe function
+    return () => {
+      this.stateChangeListeners.delete(callback);
+    };
   }
 }
 
@@ -117,7 +135,7 @@ export class AudioServiceAdapter implements AudioService {
 
   private async getService() {
     if (!this.audioServicePromise) {
-      this.audioServicePromise = import('../services/audioAnalysisService');
+      this.audioServicePromise = import("../services/audioAnalysisService");
     }
     return (await this.audioServicePromise).analyzeAudio;
   }
@@ -139,7 +157,7 @@ export class AuthServiceAdapter implements AuthService {
   async login(email: string, password: string): Promise<any> {
     return signInWithEmail(email, password);
   }
-  
+
   async logout(): Promise<void> {
     const result = await signOut();
     if (result.error) {
@@ -159,11 +177,11 @@ export class StorageServiceAdapter implements StorageService {
       return null;
     }
   }
-  
+
   async set<T>(key: string, value: T): Promise<void> {
     localStorage.setItem(key, JSON.stringify(value));
   }
-  
+
   async delete(key: string): Promise<void> {
     localStorage.removeItem(key);
   }
@@ -174,18 +192,18 @@ export class CacheServiceAdapter implements CacheService {
   async get<T>(key: string): Promise<T | null> {
     return cacheService.get<T>(key);
   }
-  
+
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
     if (ttl !== undefined) {
       return cacheService.set(key, value, { ttl });
     }
     return cacheService.set(key, value);
   }
-  
+
   async delete(key: string): Promise<void> {
     return cacheService.delete(key);
   }
-  
+
   async clear(): Promise<void> {
     return cacheService.clear();
   }
@@ -196,15 +214,15 @@ export class ErrorLoggerAdapter implements ErrorLoggerService {
   error(message: string, details?: any): void {
     errorLogger.error(message, details);
   }
-  
+
   warning(message: string, details?: any): void {
     errorLogger.warning(message, details);
   }
-  
+
   info(message: string, details?: any): void {
     errorLogger.info(message, details);
   }
-  
+
   getStats(): any {
     return errorLogger.getStats();
   }
@@ -214,17 +232,17 @@ export class ErrorLoggerAdapter implements ErrorLoggerService {
 export class AnalyticsServiceAdapter implements AnalyticsService {
   trackEvent(name: string, properties?: any): void {
     // Stub - analytics tracking not implemented
-    console.debug('[Analytics] Event:', name, properties);
+    console.debug("[Analytics] Event:", name, properties);
   }
-  
+
   trackPageView(page: string): void {
     // Stub - page view tracking not implemented
-    console.debug('[Analytics] Page view:', page);
+    console.debug("[Analytics] Page view:", page);
   }
-  
+
   trackError(error: Error, context?: any): void {
     // Stub - error tracking not implemented
-    console.debug('[Analytics] Error:', error, context);
+    console.debug("[Analytics] Error:", error, context);
   }
 }
 

@@ -36,7 +36,6 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
   // 2. Risk Metrics
   const burnoutStats = useMemo(() => calculateBurnoutTrajectory(entries), [entries]);
   const avgSensory = entries.length ? (entries.reduce((a,b) => a + b.neuroMetrics.sensoryLoad, 0) / entries.length).toFixed(1) : '0.0';
-  const avgMasking = entries.length ? (entries.reduce((a,b) => a + (b.neuroMetrics.maskingScore || 0), 0) / entries.length).toFixed(1) : '0.0';
 
   // 3. Pattern Insights
   const insights = useMemo(() => generateInsights(entries, wearableData), [entries, wearableData]);
@@ -138,14 +137,6 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
                         </div>
                         <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
                             <div className="bg-orange-400 h-1.5 rounded-full" style={{width: `${parseFloat(avgSensory)*10}%`}}></div>
-                        </div>
-
-                        <div className="flex justify-between text-sm mt-3">
-                            <span className="text-slate-500 dark:text-slate-400">Avg Masking Effort</span>
-                            <span className="font-bold text-slate-700 dark:text-slate-200">{avgMasking}/10</span>
-                        </div>
-                        <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
-                            <div className="bg-purple-400 h-1.5 rounded-full" style={{width: `${parseFloat(avgMasking)*10}%`}}></div>
                         </div>
                     </div>
                 </div>

@@ -46,7 +46,6 @@ const StateTrendChart: React.FC = () => {
 
   const chartData = data.map(d => ({
     date: new Date(d.timestamp).toLocaleDateString(undefined, { weekday: 'short' }),
-    masking: ((d.analysis.maskingScore || 0) * 10).toFixed(1),
     tension: (Math.max(d.analysis.jawTension || 0, d.analysis.eyeFatigue || 0) * 10).toFixed(1),
     label: d.analysis.primaryEmotion
   }));
@@ -59,9 +58,6 @@ const StateTrendChart: React.FC = () => {
            <p className="text-sm text-slate-500 dark:text-slate-400">Tracking the hidden cost of performance.</p>
         </div>
         <div className="flex gap-3 text-xs font-bold">
-            <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400">
-                <VenetianMask size={14} /> Masking
-            </div>
             <div className="flex items-center gap-1 text-orange-500 dark:text-orange-400">
                 <Activity size={14} /> Physical Tension
             </div>
@@ -92,21 +88,12 @@ const StateTrendChart: React.FC = () => {
                 radius={[4, 4, 0, 0]} 
                 barSize={20}
               />
-              
-              <Line 
-                type="monotone" 
-                dataKey="masking" 
-                name="Masking Score" 
-                stroke="#9333ea" 
-                strokeWidth={3} 
-                dot={{r: 4, strokeWidth: 2}}
-              />
            </ComposedChart>
         </ResponsiveContainer>
       </div>
       
       <div className="mt-4 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-lg text-xs text-slate-500 dark:text-slate-400 text-center">
-          <strong>Pattern Watch:</strong> Does your physical tension (Orange) spike after days of high masking (Purple)?
+          <strong>Pattern Watch:</strong> Monitor your physical tension (Orange) over time.
       </div>
     </div>
   );

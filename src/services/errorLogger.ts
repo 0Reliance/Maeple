@@ -6,21 +6,24 @@
 export interface ErrorLog {
   message: string;
   level: 'error' | 'warning' | 'info';
-  timestamp: string;
+  timestamp: number;
   context?: string;
   details?: Record<string, unknown>;
   userId?: string;
   sessionId?: string;
 }
 
-class ErrorLogger {
+export class ErrorLogger {
   private logs: ErrorLog[] = [];
   private maxLogs = 100;
   private sessionId: string;
 
-  constructor() {
+  constructor(config?: { consoleEnabled?: boolean; maxLogs?: number; bufferSize?: number }) {
     this.sessionId = this.generateSessionId();
     this.setupGlobalErrorHandlers();
+    if (config) {
+      this.updateConfig(config);
+    }
   }
 
   /**
@@ -62,7 +65,7 @@ class ErrorLogger {
     this.log({
       message,
       level: 'error',
-      timestamp: new Date().toISOString(),
+      timestamp: Date.now(),
       details,
     });
 
@@ -79,13 +82,66 @@ class ErrorLogger {
     this.log({
       message,
       level: 'warning',
-      timestamp: new Date().toISOString(),
+      timestamp: Date.now(),
       details,
     });
 
     if (import.meta.env.DEV) {
       console.warn(`[ErrorLogger] ${message}`, details);
     }
+  }
+
+  // Alias for warning
+  warn(message: string, details?: Record<string, unknown>): void {
+    this.warning(message, details);
+  }
+
+  /**
+   * Log an Error object
+   */
+  logError(error: Error, details?: Record<string, unknown>): void {
+    this.error(error.message, {
+      ...details,
+      name: error.name,
+      stack: error.stack,
+    });
+  }
+
+  /**
+   * Log a React Error Boundary error
+   */
+  logBoundaryError(error: Error, componentStack: string): void {
+    this.error(`React Boundary Error: ${error.message}`, {
+      stack: error.stack,
+      componentStack,
+    });
+  }
+
+  /**
+   * Get recent errors
+   */
+  getRecentErrors(count: number = 10): ErrorLog[] {
+    return this.logs.slice(-count);
+  }
+
+  /**
+   * Clear buffer
+   */
+  clearBuffer(): void {
+    this.clearLogs();
+  }
+
+  /**
+   * Update configuration
+   */
+  updateConfig(config: { enabled?: boolean; maxLogs?: number; bufferSize?: number; consoleEnabled?: boolean }): void {
+    if (config.maxLogs) {
+      this.maxLogs = config.maxLogs;
+    }
+    if (config.bufferSize) {
+      this.maxLogs = config.bufferSize;
+    }
+    // Other config options can be added here
   }
 
   /**
@@ -95,7 +151,7 @@ class ErrorLogger {
     this.log({
       message,
       level: 'info',
-      timestamp: new Date().toISOString(),
+      timestamp: Date.now(),
       details,
     });
 
@@ -197,25 +253,25 @@ class ErrorLogger {
    * Get error statistics
    */
   getStats(): {
-    total: number;
-    errors: number;
-    warnings: number;
-    info: number;
+    totalLogs: number;
+    totalErrors: number;
+    totalWarnings: number;
+    totalInfo: number;
     byContext: Record<string, number>;
   } {
     const stats = {
-      total: this.logs.length,
-      errors: 0,
-      warnings: 0,
-      info: 0,
+      totalLogs: this.logs.length,
+      totalErrors: 0,
+      totalWarnings: 0,
+      totalInfo: 0,
       byContext: {} as Record<string, number>,
     };
 
     this.logs.forEach((log) => {
       // Count by level
-      if (log.level === 'error') stats.errors++;
-      else if (log.level === 'warning') stats.warnings++;
-      else stats.info++;
+      if (log.level === 'error') stats.totalErrors++;
+      else if (log.level === 'warning') stats.totalWarnings++;
+      else stats.totalInfo++;
 
       // Count by context
       const context = log.context || 'Unknown';
@@ -226,8 +282,30 @@ class ErrorLogger {
   }
 }
 
-// Singleton instance
-export const errorLogger = new ErrorLogger();
+// Singleton pattern - only initialize on first actual method call via Proxy
+let loggerInstance: ErrorLogger | null = null;
 
-// Load persisted logs on initialization
-errorLogger.loadPersistedLogs();
+export function getErrorLogger(): ErrorLogger {
+  if (!loggerInstance) {
+    loggerInstance = new ErrorLogger();
+    loggerInstance.loadPersistedLogs();
+  }
+  return loggerInstance;
+}
+
+// Backward compatible export - defers initialization
+export const errorLogger: ErrorLogger = new Proxy({} as ErrorLogger, {
+  get(target, prop) {
+    if (!loggerInstance) {
+      loggerInstance = new ErrorLogger();
+      loggerInstance.loadPersistedLogs();
+    }
+    return loggerInstance[prop as keyof ErrorLogger];
+  }
+});
+
+// Convenience functions for direct usage
+export const logError = (message: string, details?: Record<string, unknown>) => errorLogger.error(message, details);
+export const logWarn = (message: string, details?: Record<string, unknown>) => errorLogger.warn(message, details);
+export const logInfo = (message: string, details?: Record<string, unknown>) => errorLogger.info(message, details);
+export const getErrorLogs = () => errorLogger.getRecentErrors();

@@ -211,11 +211,11 @@ describe('validationService', () => {
         primaryEmotion: 'happy',
         confidence: 0.85,
         eyeFatigue: 0.3,
-        signs: ['smiling'],
+        signs: [{ description: 'smiling', confidence: 0.9 }],
       });
       expect(result.primaryEmotion).toBe('happy');
       expect(result.confidence).toBe(0.85);
-      expect(result.signs).toContain('smiling');
+      expect(result.signs).toEqual([{ description: 'smiling', confidence: 0.9 }]);
     });
   });
 

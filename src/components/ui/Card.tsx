@@ -11,13 +11,13 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card: React.FC<CardProps> = ({
   children,
   className,
-  hoverable = true,
+  hoverable = false,
   clickable = false,
   onClick,
   ...props
 }) => {
   const baseStyles = 'card';
-  const hoverStyles = hoverable ? 'hover:shadow-card-hover hover:-translate-y-[2px]' : '';
+  const hoverStyles = hoverable ? 'card-hoverable' : '';
   const cursorStyles = clickable ? 'cursor-pointer' : '';
   
   return (

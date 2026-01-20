@@ -2,7 +2,7 @@
  * Unit Tests for Cache Service
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { cacheService } from '../../src/services/cacheService';
 
 // Mock IndexedDB
@@ -32,7 +32,12 @@ vi.mock('idb', () => ({
 }));
 
 describe('cacheService', () => {
-  beforeEach(() => {
+  beforeAll(async () => {
+    // Wait for async constructor to finish initialization
+    await new Promise(resolve => setTimeout(resolve, 100));
+  });
+
+  beforeEach(async () => {
     vi.clearAllMocks();
     // Reset mockDB
     mockDB.get.mockReset();
@@ -41,6 +46,9 @@ describe('cacheService', () => {
     mockDB.clear.mockReset();
     mockDB.count.mockReset();
     mockDB.getAllKeys.mockReset();
+    
+    // Clear cache state
+    await cacheService.clear();
   });
 
   afterEach(() => {

@@ -5,7 +5,8 @@
  * L3: Network (fallback)
  */
 
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { DBSchema, IDBPDatabase, openDB } from "idb";
+import { logError, logInfo } from "./errorLogger";
 
 interface CacheDB extends DBSchema {
   cache: {
@@ -19,8 +20,8 @@ interface CacheDB extends DBSchema {
 }
 
 export interface CacheOptions {
-  ttl?: number;              // Time to live in milliseconds
-  memoryOnly?: boolean;       // Only use memory cache
+  ttl?: number; // Time to live in milliseconds
+  memoryOnly?: boolean; // Only use memory cache
   refreshInBackground?: boolean; // Refresh in background when expired
 }
 
@@ -45,16 +46,16 @@ class CacheService {
    */
   private async initDB(): Promise<void> {
     try {
-      this.db = await openDB<CacheDB>('maeple-cache', 1, {
+      this.db = await openDB<CacheDB>("maeple-cache", 1, {
         upgrade(db) {
-          if (!db.objectStoreNames.contains('cache')) {
-            db.createObjectStore('cache');
+          if (!db.objectStoreNames.contains("cache")) {
+            db.createObjectStore("cache");
           }
         },
       });
-      console.log('[CacheService] IndexedDB initialized');
+      logInfo("[CacheService] IndexedDB initialized");
     } catch (error) {
-      console.error('[CacheService] Failed to initialize IndexedDB:', error);
+      logError("[CacheService] Failed to initialize IndexedDB:", { error });
     }
   }
 
@@ -65,32 +66,26 @@ class CacheService {
     // Try memory cache first (L1)
     const memoryEntry = this.memoryCache.get(key);
     if (memoryEntry && !this.isExpired(memoryEntry)) {
-      if (import.meta.env.DEV) {
-        console.log(`[CacheService] L1 hit: ${key}`);
-      }
+      logInfo(`[CacheService] L1 hit: ${key}`);
       return memoryEntry.data as T;
     }
 
     // Try IndexedDB (L2)
     if (!options.memoryOnly && this.db) {
       try {
-        const dbEntry = await this.db.get('cache', key);
+        const dbEntry = await this.db.get("cache", key);
         if (dbEntry && !this.isExpired(dbEntry)) {
           // Promote to memory cache
           this.memoryCache.set(key, dbEntry as CacheEntry<unknown>);
-          if (import.meta.env.DEV) {
-            console.log(`[CacheService] L2 hit: ${key}`);
-          }
+          logInfo(`[CacheService] L2 hit: ${key}`);
           return dbEntry.data as T;
         }
       } catch (error) {
-        console.error('[CacheService] Failed to read from IndexedDB:', error);
+        logError("[CacheService] Failed to read from IndexedDB:", { error });
       }
     }
 
-    if (import.meta.env.DEV) {
-      console.log(`[CacheService] Miss: ${key}`);
-    }
+    logInfo(`[CacheService] Miss: ${key}`);
     return null;
   }
 
@@ -98,7 +93,14 @@ class CacheService {
    * Set cached value
    */
   async set<T>(key: string, value: T, options: CacheOptions = {}): Promise<void> {
-    const ttl = options.ttl || this.DEFAULT_TTL;
+    // Use explicit check so ttl: 0 means "don't cache" instead of falling back to default
+    const ttl = typeof options.ttl === "number" ? options.ttl : this.DEFAULT_TTL;
+
+    // If ttl is 0, skip caching entirely
+    if (ttl === 0) {
+      logInfo(`[CacheService] Skip cache (ttl=0): ${key}`);
+      return;
+    }
     const entry: CacheEntry<T> = {
       data: value,
       timestamp: Date.now(),
@@ -111,12 +113,10 @@ class CacheService {
     // Store in IndexedDB (L2)
     if (!options.memoryOnly && this.db) {
       try {
-        await this.db.put('cache', entry, key);
-        if (import.meta.env.DEV) {
-          console.log(`[CacheService] Cached: ${key} (TTL: ${ttl}ms)`);
-        }
+        await this.db.put("cache", entry, key);
+        logInfo(`[CacheService] Cached: ${key} (TTL: ${ttl}ms)`);
       } catch (error) {
-        console.error('[CacheService] Failed to write to IndexedDB:', error);
+        logError("[CacheService] Failed to write to IndexedDB:", { error });
       }
     }
   }
@@ -154,9 +154,9 @@ class CacheService {
     // Remove from IndexedDB
     if (this.db) {
       try {
-        await this.db.delete('cache', key);
+        await this.db.delete("cache", key);
       } catch (error) {
-        console.error('[CacheService] Failed to delete from IndexedDB:', error);
+        logError("[CacheService] Failed to delete from IndexedDB:", { error });
       }
     }
   }
@@ -171,10 +171,10 @@ class CacheService {
     // Clear IndexedDB
     if (this.db) {
       try {
-        await this.db.clear('cache');
-        console.log('[CacheService] Cache cleared');
+        await this.db.clear("cache");
+        logInfo("[CacheService] Cache cleared");
       } catch (error) {
-        console.error('[CacheService] Failed to clear IndexedDB:', error);
+        logError("[CacheService] Failed to clear IndexedDB:", { error });
       }
     }
   }
@@ -193,16 +193,16 @@ class CacheService {
     // Clear expired from IndexedDB
     if (this.db) {
       try {
-        const allKeys = await this.db.getAllKeys('cache');
+        const allKeys = await this.db.getAllKeys("cache");
         for (const key of allKeys) {
-          const entry = await this.db.get('cache', key);
+          const entry = await this.db.get("cache", key);
           if (entry && this.isExpired(entry)) {
-            await this.db.delete('cache', key);
+            await this.db.delete("cache", key);
           }
         }
-        console.log('[CacheService] Expired entries cleared');
+        logInfo("[CacheService] Expired entries cleared");
       } catch (error) {
-        console.error('[CacheService] Failed to clear expired entries:', error);
+        logError("[CacheService] Failed to clear expired entries:", { error });
       }
     }
   }
@@ -221,9 +221,9 @@ class CacheService {
     let dbSize = 0;
     if (this.db) {
       try {
-        dbSize = await this.db.count('cache');
+        dbSize = await this.db.count("cache");
       } catch (error) {
-        console.error('[CacheService] Failed to get DB size:', error);
+        logError("[CacheService] Failed to get DB size:", { error });
       }
     }
 
@@ -266,23 +266,42 @@ class CacheService {
     // Clear from IndexedDB
     if (this.db) {
       try {
-        const allKeys = await this.db.getAllKeys('cache');
+        const allKeys = await this.db.getAllKeys("cache");
         for (const key of allKeys) {
           if (key.startsWith(prefix)) {
-            await this.db.delete('cache', key);
+            await this.db.delete("cache", key);
           }
         }
       } catch (error) {
-        console.error('[CacheService] Failed to invalidate by prefix:', error);
+        logError("[CacheService] Failed to invalidate by prefix:", { error });
       }
     }
   }
 }
 
-// Singleton instance
-export const cacheService = new CacheService();
+// Singleton pattern - only initialize on first actual method call via Proxy
+let cacheInstance: CacheService | null = null;
 
-// Auto-clear expired entries every 5 minutes
-setInterval(() => {
-  cacheService.clearExpired();
-}, 300000);
+export function getCacheService(): CacheService {
+  if (!cacheInstance) {
+    cacheInstance = new CacheService();
+    // Auto-clear expired entries every 5 minutes
+    setInterval(() => {
+      cacheInstance?.clearExpired();
+    }, 300000);
+  }
+  return cacheInstance;
+}
+
+// Backward compatible export - defers initialization
+export const cacheService: CacheService = new Proxy({} as CacheService, {
+  get(target, prop) {
+    if (!cacheInstance) {
+      cacheInstance = new CacheService();
+      setInterval(() => {
+        cacheInstance?.clearExpired();
+      }, 300000);
+    }
+    return cacheInstance[prop as keyof CacheService];
+  },
+});

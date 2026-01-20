@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PerplexityAdapter } from '../../../../services/ai/adapters/perplexity';
-import { AITextRequest, AISearchRequest } from '../../../../services/ai/types';
+import { PerplexityAdapter } from '../../../../src/services/ai/adapters/perplexity';
+import { AITextRequest, AISearchRequest } from '../../../../src/services/ai/types';
 
 // Mock fetch
 const mockFetch = vi.fn();

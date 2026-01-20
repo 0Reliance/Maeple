@@ -1,12 +1,12 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import Settings from '../../components/Settings';
-import { wearableManager } from '../../services/wearables/manager';
-import * as storageService from '../../services/storageService';
+import Settings from '../../src/components/Settings';
+import { wearableManager } from '../../src/services/wearables/manager';
+import * as storageService from '../../src/services/storageService';
 
 // Mock dependencies
-vi.mock('../../services/wearables/manager', () => ({
+vi.mock('../../src/services/wearables/manager', () => ({
   wearableManager: {
     getAllConfigs: vi.fn(),
     connectProvider: vi.fn(),
@@ -15,12 +15,12 @@ vi.mock('../../services/wearables/manager', () => ({
   }
 }));
 
-vi.mock('../../services/storageService', () => ({
+vi.mock('../../src/services/storageService', () => ({
   getUserSettings: vi.fn(),
   saveUserSettings: vi.fn(),
 }));
 
-vi.mock('../../services/exportService', () => ({
+vi.mock('../../src/services/exportService', () => ({
   exportAllData: vi.fn(),
   downloadExport: vi.fn(),
   clearAllData: vi.fn(),
@@ -29,10 +29,10 @@ vi.mock('../../services/exportService', () => ({
 }));
 
 // Mock child components
-vi.mock('../../components/BioCalibration', () => ({ default: () => <div data-testid="bio-calibration">Bio Calibration</div> }));
-vi.mock('../../components/AIProviderSettings', () => ({ default: () => <div data-testid="ai-settings">AI Settings</div> }));
-vi.mock('../../components/NotificationSettings', () => ({ default: () => <div data-testid="notification-settings">Notification Settings</div> }));
-vi.mock('../../components/CloudSyncSettings', () => ({ default: () => <div data-testid="cloud-sync-settings">Cloud Sync Settings</div> }));
+vi.mock('../../src/components/BioCalibration', () => ({ default: () => <div data-testid="bio-calibration">Bio Calibration</div> }));
+vi.mock('../../src/components/AIProviderSettings', () => ({ default: () => <div data-testid="ai-settings">AI Settings</div> }));
+vi.mock('../../src/components/NotificationSettings', () => ({ default: () => <div data-testid="notification-settings">Notification Settings</div> }));
+vi.mock('../../src/components/CloudSyncSettings', () => ({ default: () => <div data-testid="cloud-sync-settings">Cloud Sync Settings</div> }));
 
 describe('Settings Component', () => {
   const mockOnDataSynced = vi.fn();
