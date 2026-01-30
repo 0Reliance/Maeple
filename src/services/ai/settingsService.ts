@@ -26,24 +26,84 @@ class AISettingsService {
   private initialized = false;
 
   async initialize(): Promise<void> {
-    if (this.initialized) return;
+    console.log("[AISettings] ===== INITIALIZE START =====");
+    if (this.initialized) {
+      console.log("[AISettings] Already initialized, skipping");
+      return;
+    }
 
     try {
+      console.log("[AISettings] Loading settings...");
       await this.loadSettings();
+      console.log("[AISettings] Settings loaded successfully");
+      console.log("[AISettings] Configuration:", {
+        providerCount: this.settings?.providers.length || 0,
+        providers: this.settings?.providers.map(p => ({
+          id: p.providerId,
+          enabled: p.enabled,
+          hasKey: !!p.apiKey
+        })) || []
+      });
     } catch (error) {
-      console.error('Failed to initialize AI settings:', error);
+      console.error('[AISettings] Failed to initialize AI settings:', error);
       this.settings = { ...DEFAULT_SETTINGS };
     }
     this.initialized = true;
+    console.log("[AISettings] ===== INITIALIZE END =====");
   }
 
   private async loadSettings(): Promise<void> {
+    console.log("[AISettings] ===== LOAD SETTINGS START =====");
     try {
       const stored = localStorage.getItem(SETTINGS_KEY);
-      if (!stored) {
-        // Check for legacy environment variable API key
-        const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-        if (envKey) {
+      console.log("[AISettings] localStorage check:", {
+        hasStoredSettings: !!stored,
+        storageKey: SETTINGS_KEY
+      });
+
+      // CRITICAL FIX: Always check environment variable FIRST
+      const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+      console.log("[AISettings] Environment variable check:", {
+        hasImportMeta: typeof import.meta !== "undefined",
+        hasViteEnv: !!envKey,
+        envKeyLength: envKey ? envKey.length : 0,
+        envKeyFormat: envKey ? (envKey.startsWith("AIza") ? "Valid Gemini format" : "Unknown format") : "Not found"
+      });
+
+      // PRIORITY 1: Use environment variable if available and better than stored
+      if (envKey) {
+        let useEnvKey = false;
+        
+        if (!stored) {
+          // No stored settings - use env key
+          console.log("[AISettings] No stored settings, using environment API key");
+          useEnvKey = true;
+        } else {
+          // Have stored settings - check if env key is different/better
+          try {
+            const parsed = JSON.parse(stored) as AISettings;
+            const geminiProvider = parsed.providers.find(p => p.providerId === 'gemini');
+            
+            if (!geminiProvider || !geminiProvider.apiKey) {
+              // No Gemini provider or no key in storage - use env key
+              console.log("[AISettings] Stored settings missing Gemini API key, using environment");
+              useEnvKey = true;
+            } else if (envKey !== geminiProvider.apiKey) {
+              // Environment key differs from stored - use env key (more recent)
+              console.log("[AISettings] Environment API key differs from stored, updating");
+              useEnvKey = true;
+            } else {
+              console.log("[AISettings] Using stored settings (API key matches environment)");
+            }
+          } catch (e) {
+            console.error("[AISettings] Error parsing stored settings:", e);
+            useEnvKey = true;
+          }
+        }
+
+        if (useEnvKey) {
+          console.log("[AISettings] Found API key in environment, creating/updating Gemini provider");
+          console.log("[AISettings] API key length:", envKey.length, "(showing first 4 chars:", envKey.substring(0, 4) + "...)");
           this.settings = {
             ...DEFAULT_SETTINGS,
             providers: [{
@@ -52,24 +112,37 @@ class AISettingsService {
               apiKey: envKey,
             }],
           };
+          console.log("[AISettings] Created settings object:", {
+            providerCount: this.settings.providers.length,
+            geminiEnabled: this.settings.providers[0].enabled,
+            geminiHasKey: !!this.settings.providers[0].apiKey
+          });
+          
           await this.saveSettings();
-        } else {
-          this.settings = { ...DEFAULT_SETTINGS };
+          console.log("[AISettings] Settings saved successfully with", this.settings.providers.length, "provider(s)");
+          console.log("[AISettings] ===== LOAD SETTINGS END =====");
+          return;
         }
-        return;
+      } else {
+        console.error("[AISettings] CRITICAL: No VITE_GEMINI_API_KEY found in environment!");
+        console.error("[AISettings] Available env keys:", Object.keys(import.meta.env));
       }
 
-      const parsed = JSON.parse(stored) as AISettings;
+      // PRIORITY 2: Use stored settings if no env key or stored is valid
+      if (stored) {
+        console.log("[AISettings] Loading settings from localStorage");
+        const parsed = JSON.parse(stored) as AISettings;
       
-      // Decrypt API keys
-      for (const provider of parsed.providers) {
-        if (provider.apiKey === '__encrypted__') {
-          const decrypted = await this.decryptApiKey(provider.providerId);
-          provider.apiKey = decrypted || undefined;
+        // Decrypt API keys
+        for (const provider of parsed.providers) {
+          if (provider.apiKey === '__encrypted__') {
+            const decrypted = await this.decryptApiKey(provider.providerId);
+            provider.apiKey = decrypted || undefined;
+          }
         }
-      }
 
-      this.settings = parsed;
+        this.settings = parsed;
+      }
     } catch (error) {
       console.error('Error loading AI settings:', error);
       this.settings = { ...DEFAULT_SETTINGS };

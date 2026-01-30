@@ -36,17 +36,37 @@ import { ZaiAdapter } from './adapters/zai';
 class AIRouter {
   private settings: AISettings | null = null;
   private initialized = false;
+  private ready = false;  // NEW flag to track when initialization is complete
   private adapters: Map<AIProviderType, BaseAIAdapter> = new Map();
 
   initialize(settings: AISettings): void {
+    console.log("[AIRouter] ===== INITIALIZE START =====");
+    console.log("[AIRouter] Input settings:", {
+      providerCount: settings.providers.length,
+      offlineMode: settings.offlineMode
+    });
+
     this.settings = settings;
     this.adapters.clear();
 
+    console.log("[AIRouter] Settings assigned, providers:", settings.providers.map(p => ({
+      id: p.providerId,
+      enabled: p.enabled,
+      hasKey: !!p.apiKey,
+      keyLength: p.apiKey ? p.apiKey.length : 0,
+      keyPrefix: p.apiKey ? p.apiKey.substring(0, 4) + '...' : 'none'
+    })));
+
     // Instantiate adapters for enabled providers with API keys
+    let adaptersCreated = 0;
     for (const provider of settings.providers) {
-      if (!provider.enabled || !provider.apiKey) continue;
+      if (!provider.enabled || !provider.apiKey) {
+        console.warn(`[AIRouter] Skipping ${provider.providerId}: enabled=${provider.enabled}, hasKey=${!!provider.apiKey}`);
+        continue;
+      }
 
       try {
+        console.log(`[AIRouter] Initializing adapter for ${provider.providerId}`);
         switch (provider.providerId) {
           case 'gemini':
             this.adapters.set(
@@ -91,14 +111,25 @@ class AIRouter {
             );
             break;
           default:
-            console.warn(`Provider ${provider.providerId} not yet implemented.`);
+            console.warn(`[AIRouter] Provider ${provider.providerId} not yet implemented.`);
             break;
         }
+        console.log(`[AIRouter]  Successfully initialized ${provider.providerId} adapter`);
+        adaptersCreated++;
       } catch (error) {
-        console.error(`Failed to initialize provider ${provider.providerId}:`, error);
+        console.error(`[AIRouter]  Failed to initialize provider ${provider.providerId}:`, error);
       }
     }
+
+    console.log(`[AIRouter] Initialization complete: ${this.adapters.size}/${adaptersCreated} adapters ready`);
+    console.log(`[AIRouter] Available providers:`, Array.from(this.adapters.keys()));
     this.initialized = true;
+    this.ready = true;  // Set ready flag at end of initialization
+    
+    // Log availability immediately after initialization
+    const available = this.isAIAvailable();
+    console.log(`[AIRouter] isAIAvailable() immediately after init:`, available);
+    console.log(`[AIRouter] ===== INITIALIZE END =====`);
   }
 
   get isInitialized(): boolean {
@@ -148,7 +179,26 @@ class AIRouter {
   }
 
   isAIAvailable(): boolean {
-    return this.initialized && (this.settings?.providers.some(p => p.enabled && p.apiKey) ?? false);
+    const hasSettings = !!this.settings;
+    const isInit = this.initialized;
+    const isReady = this.ready;  // Check ready flag
+    const hasProviders = this.settings?.providers.length ?? 0 > 0;
+    const hasEnabled = this.settings?.providers.some(p => p.enabled) ?? false;
+    const hasKeys = this.settings?.providers.some(p => p.enabled && p.apiKey) ?? false;
+    const result = isInit && isReady && hasKeys;  // Include ready in check
+
+    console.log("[AIRouter] isAIAvailable() check:", {
+      hasSettings,
+      initialized: isInit,
+      ready: isReady,  // Log ready state
+      providerCount: this.settings?.providers.length ?? 0,
+      hasProviders,
+      hasEnabledProviders: hasEnabled,
+      hasProvidersWithKeys: hasKeys,
+      result
+    });
+
+    return result;
   }
 
   updateSettings(settings: AISettings): void {

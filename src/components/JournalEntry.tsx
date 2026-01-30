@@ -868,18 +868,16 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         </div>
 
         {/* Action Bar */}
-        {text && (
-          <div className="mt-4 flex justify-end animate-fadeIn gap-3">
-            <Button
-              onClick={handleSubmit}
-              disabled={isProcessing || circuitState === CircuitState.OPEN}
-              size="md"
-              rightIcon={<Send size={16} />}
-            >
-              Save Entry
-            </Button>
-          </div>
-        )}
+        <div className="mt-4 flex justify-end animate-fadeIn gap-3">
+          <Button
+            onClick={handleSubmit}
+            disabled={isProcessing || circuitState === CircuitState.OPEN}
+            size="md"
+            rightIcon={<Send size={16} />}
+          >
+            Save Entry
+          </Button>
+        </div>
       </Card>
     </div>
   );

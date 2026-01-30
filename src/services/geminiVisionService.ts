@@ -10,16 +10,25 @@ import { rateLimitedCall } from "./rateLimiter";
 
 // Validate and retrieve API Key - returns null if not available
 const getApiKey = (): string | null => {
-  const envKey =
-    (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_GEMINI_API_KEY) ||
-    process.env.VITE_GEMINI_API_KEY ||
-    process.env.API_KEY;
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+  
+  // DEBUG: Log what we're getting
+  console.log("[GeminiVision] ===== DEBUG: getApiKey() called =====");
+  console.log("[GeminiVision] DEBUG: envKey exists:", !!envKey);
+  console.log("[GeminiVision] DEBUG: envKey length:", envKey?.length || 0);
+  if (envKey) {
+    console.log("[GeminiVision] DEBUG: envKey prefix:", envKey.substring(0, 20));
+    console.log("[GeminiVision] DEBUG: envKey suffix:", envKey.substring(envKey.length - 8));
+  }
+  console.log("[GeminiVision] DEBUG: All VITE_ env keys:", Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
+  console.log("[GeminiVision] ============================================");
 
   if (!envKey) {
     console.warn(
-      "Gemini API Key not found. Vision features will be limited. " +
+      "[GeminiVision] API Key not found. Vision features will be limited. " +
         "Add VITE_GEMINI_API_KEY to your .env file or configure in Settings."
     );
+    console.warn("[GeminiVision] Available env keys:", Object.keys(import.meta.env));
     return null;
   }
   return envKey;
@@ -160,7 +169,15 @@ const facialAnalysisSchema: Schema = {
     // Legacy observation fields (backward compatible)
     observations: {
       type: Type.ARRAY,
-      items: { type: Type.OBJECT },
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          category: { type: Type.STRING },
+          value: { type: Type.STRING },
+          severity: { type: Type.STRING, enum: ["low", "moderate", "high"] },
+          evidence: { type: Type.STRING },
+        },
+      },
       description: "List of objective visual observations",
     },
     lighting: {
@@ -190,6 +207,115 @@ const facialAnalysisSchema: Schema = {
     "lightingSeverity",
     "environmentalClues",
   ],
+};
+
+/**
+ * Makes a direct API call to Gemini SDK, bypassing the router
+ * Used as a fallback when router is unavailable
+ */
+const makeDirectGeminiCall = async (
+  base64Image: string,
+  prompt: string,
+  onProgress?: (stage: string, progress: number) => void,
+  timeout: number = 45000,
+  signal?: AbortSignal
+): Promise<FacialAnalysis> => {
+  console.log("[DirectGemini] Making direct API call to Gemini SDK");
+  
+  const ai = getAI();
+  if (!ai) {
+    throw new Error("Gemini AI client not initialized - no API key available");
+  }
+
+  onProgress?.("Connecting directly to Gemini API", 20);
+
+  // Create timeout promise
+  let timeoutId: NodeJS.Timeout | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`Direct API timeout after ${timeout / 1000} seconds`));
+    }, timeout);
+
+    signal?.addEventListener("abort", () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      reject(new DOMException("Direct API call cancelled by user", "AbortError"));
+    });
+  });
+
+  try {
+    onProgress?.("Sending image directly to API", 25);
+    
+    const response = await Promise.race([
+      rateLimitedCall(
+        async () => {
+          const result = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: {
+              parts: [
+                { inlineData: { mimeType: "image/png", data: base64Image } },
+                { text: prompt },
+              ],
+            },
+            config: {
+              responseMimeType: "application/json",
+              responseSchema: facialAnalysisSchema,
+              systemInstruction: `You are a certified FACS (Facial Action Coding System) expert trained in the methodology developed by Paul Ekman and Wallace Friesen.
+
+Your role: Analyze facial images with scientific precision to detect specific Action Units (AUs) - individual muscle movements that compose facial expressions.
+
+Critical Rules:
+1. NEVER label emotions directly (no "happy", "sad", "angry")
+2. ALWAYS report specific AU codes with intensity ratings (A-E scale)
+3. Identify AU combinations that reveal authenticity vs. masking:
+   - AU6+AU12 = Duchenne (genuine) smile
+   - AU12 alone = Social/posed smile (potential masking)
+   - AU4+AU24 = Tension/stress cluster
+4. Note physical indicators: ptosis (eyelid droop), asymmetry, muscle tension
+5. Report lighting and environmental factors that affect confidence
+
+Your analysis helps neurodivergent users recognize when they are masking and identify fatigue/stress they may not consciously notice. Be precise, evidence-based, and compassionate in your scientific objectivity.`,
+            },
+          });
+          return result;
+        },
+        { priority: 4 }
+      ),
+      timeoutPromise,
+    ]);
+
+    // Clear timeout on success
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+
+    onProgress?.("Parsing direct API response", 85);
+
+    const textResponse = response.text;
+    if (!textResponse) {
+      throw new Error("No analysis content received from direct API call");
+    }
+
+    onProgress?.("Validating direct API data", 90);
+
+    const result = JSON.parse(textResponse) as FacialAnalysis;
+    console.log("[DirectGemini] Direct API call successful:", result);
+    
+    onProgress?.("Direct API analysis complete", 100);
+    return result;
+  } catch (error) {
+    // Clear timeout on error
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+
+    console.error("[DirectGemini] Direct API call failed:", error);
+    throw error;
+  }
 };
 
 /**
@@ -226,22 +352,16 @@ export const analyzeStateFromImage = async (
     useCache?: boolean;
   } = {}
 ): Promise<FacialAnalysis> => {
+  console.log("[GeminiVision] analyzeStateFromImage called");
+  console.log("[GeminiVision] Options:", options);
+  
   const { timeout = 30000, onProgress, signal, useCache = true } = options;
 
   // Create cache key from image hash (using first 100 chars for simplicity)
   const cacheKey = `vision:${base64Image.substring(0, 100)}`;
 
-  try {
-    // Try to get from cache first
-    if (useCache) {
-      const cached = await cacheService.get<FacialAnalysis>(cacheKey);
-      if (cached) {
-        onProgress?.("Retrieved cached analysis", 100);
-        return cached;
-      }
-    }
-
-    const promptText = `You are a certified expert in the Facial Action Coding System (FACS) developed by Ekman and Friesen.
+  // Define prompt text here so it's available for all code paths
+  const promptText = `You are a certified expert in Facial Action Coding System (FACS) developed by Ekman and Friesen.
 
 Analyze this facial image with scientific precision. Your task is to identify specific muscle movements, NOT emotions.
 
@@ -259,7 +379,7 @@ Key AUs to detect:
 - AU4: Brow Lowerer (corrugator supercilii) - concentration, anger, distress
 - AU6: Cheek Raiser (orbicularis oculi, pars orbitalis) - genuine smile marker
 - AU7: Lid Tightener - concentration, squinting
-- AU12: Lip Corner Puller (zygomatic major) - smile
+- AU12: Lip Corner Puller (zygomaticus major) - smile
 - AU14: Dimpler - suppression, contempt
 - AU15: Lip Corner Depressor - sadness
 - AU17: Chin Raiser - doubt, sadness
@@ -281,7 +401,52 @@ Key AUs to detect:
 - Calculate jawTension (0-1) from AU4, AU24 intensity
 - Calculate eyeFatigue (0-1) from ptosis, AU43 detection
 
-Return structured JSON matching the schema. Be precise and evidence-based.`;
+Return structured JSON matching schema. Be precise and evidence-based.`;
+
+  try {
+    // Check if AI is available before proceeding
+    console.log("[GeminiVision] Checking AI router availability...");
+    const isAvailable = aiRouter.isAIAvailable();
+    console.log("[GeminiVision] AI router available:", isAvailable);
+    
+    if (!isAvailable) {
+      console.warn("[FACS] AI router not available, attempting direct SDK fallback");
+      
+      // Try direct SDK before giving up
+      const ai = getAI();
+      if (ai) {
+        console.log("[FACS] Direct SDK available, making API call directly");
+        onProgress?.("Using direct API connection", 10);
+        
+        try {
+          const result = await makeDirectGeminiCall(base64Image, promptText, onProgress, timeout, signal);
+          console.log("[FACS] Direct SDK call successful:", result);
+          return result;
+        } catch (directError) {
+          console.error("[FACS] Direct SDK call failed:", directError);
+          console.warn("[FACS] Both router and direct SDK failed, using offline fallback");
+        }
+      } else {
+        console.error("[FACS] No API key configured, checking environment");
+        console.log("[FACS] Router state:", aiRouter);
+      }
+      
+      onProgress?.("AI not configured, using offline fallback", 5);
+      const offlineResult = getOfflineAnalysis(base64Image);
+      console.log("[FACS] Returning offline result:", offlineResult);
+      return offlineResult;
+    }
+
+    onProgress?.("AI provider available", 8);
+
+    // Try to get from cache first
+    if (useCache) {
+      const cached = await cacheService.get<FacialAnalysis>(cacheKey);
+      if (cached) {
+        onProgress?.("Retrieved cached analysis", 100);
+        return cached;
+      }
+    }
 
     // Check if router has vision capability
     onProgress?.("Checking AI availability", 5);

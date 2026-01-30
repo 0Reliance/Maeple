@@ -39,9 +39,12 @@ export default defineConfig({
     react(),
     copyServiceWorker()
   ],
+  worker: {
+    format: 'es',
+    plugins: () => [react()],
+  },
+  assetsInclude: ['**/*.worker.ts'],
   define: {
-    // Expose process.env for compatibility with existing code
-    "process.env.API_KEY": JSON.stringify(process.env.VITE_GEMINI_API_KEY),
     // Expose cache version for service worker
     "__BUILD_VERSION__": JSON.stringify(CACHE_VERSION),
   },

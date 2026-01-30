@@ -8,16 +8,14 @@ import { rateLimitedCall } from "./rateLimiter";
 
 // Validate and retrieve API Key - returns null if not available
 const getApiKey = (): string | null => {
-  const envKey =
-    (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_GEMINI_API_KEY) ||
-    process.env.VITE_GEMINI_API_KEY ||
-    process.env.API_KEY;
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!envKey) {
     console.warn(
-      "Gemini API Key not found. AI features will be limited. " +
+      "[GeminiService] API Key not found. AI features will be limited. " +
         "Add VITE_GEMINI_API_KEY to your .env file or configure in Settings."
     );
+    console.warn("[GeminiService] Available env keys:", Object.keys(import.meta.env));
     return null;
   }
   return envKey;

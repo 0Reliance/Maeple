@@ -68,14 +68,14 @@ describe("App Navigation", () => {
     render(<App />);
     await waitFor(() => {
       // Check for the Journal View content or Nav item
-      expect(screen.getByText(/Thoughtful Journal/i)).toBeInTheDocument();
+      expect(screen.getByText(/Energy Check-in/i)).toBeInTheDocument();
     });
   });
 
   it("navigates to Dashboard", async () => {
     render(<App />);
     
-    const dashboardBtn = screen.getAllByText("Pattern Dashboard")[0];
+    const dashboardBtn = screen.getAllByText("Patterns")[0];
     fireEvent.click(dashboardBtn);
 
     await waitFor(() => {
@@ -103,7 +103,7 @@ describe("App Navigation", () => {
   it("navigates to Bio-Mirror", async () => {
     render(<App />);
 
-    const bioBtn = screen.getAllByText("Self-Reflection")[0];
+    const bioBtn = screen.getAllByText("Reflect")[0];
     fireEvent.click(bioBtn);
 
     await waitFor(() => {

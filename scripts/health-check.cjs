@@ -124,7 +124,7 @@ const criticalFiles = [
   'package.json',
   'vite.config.ts',
   'index.html',
-  'App.tsx'
+  'src/App.tsx'
 ];
 
 criticalFiles.forEach(file => {

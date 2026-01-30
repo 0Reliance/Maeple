@@ -40,9 +40,21 @@ export class VisionServiceAdapter implements VisionService {
     imageData: string,
     options?: { onProgress?: (stage: string, progress: number) => void; signal?: AbortSignal }
   ): Promise<any> {
+    console.log("[VisionServiceAdapter] analyzeFromImage called");
+    console.log("[VisionServiceAdapter] Image data length:", imageData.length);
+    console.log("[VisionServiceAdapter] Options:", options);
+    
     return this.circuitBreaker.execute(async () => {
+      console.log("[VisionServiceAdapter] Circuit breaker passed, importing vision service");
       const geminiVisionService = await import("../services/geminiVisionService");
-      return geminiVisionService.analyzeStateFromImage(imageData, options);
+      console.log("[VisionServiceAdapter] Vision service imported, calling analyzeStateFromImage");
+      
+      const result = await geminiVisionService.analyzeStateFromImage(imageData, options);
+      console.log("[VisionServiceAdapter] Analysis result:", result);
+      console.log("[VisionServiceAdapter] Result confidence:", result?.confidence);
+      console.log("[VisionServiceAdapter] Action Units count:", result?.actionUnits?.length);
+      
+      return result;
     });
   }
 

@@ -485,7 +485,7 @@ return { data: {} as T };
 ## System Architecture Confirmed
 
 ### Data Flow
-1. **User Input** → JournalEntry component with validated Zod schema
+1. **User Input** → JournalEntry component with always-visible submit button and validated Zod schema
 2. **Biometric Analysis** → AudioAnalysisService (local Web Audio API)
 3. **Pattern Detection** → CorrelationService (in-memory analysis)
 4. **State Management** → Zustand store (appStore, authStore)
@@ -509,7 +509,22 @@ return { data: {} as T };
 ---
 
 ## Summary of Changes
+---
 
+### UI/UX Improvement: Always-Visible Submit Button
+
+**Date**: January 21, 2026
+
+**Change**: The submit ("Save Entry") button on the Energy Check-in screen is now always visible, regardless of whether the user has entered text or a voice note. Users can now submit their check-in without providing any input.
+
+**Reason**: Improves accessibility and supports workflows where users may want to log a check-in without additional notes.
+
+**Verification**:
+- ✅ Button is always visible on the Energy Check-in screen
+- ✅ Submission works with or without text/voice input
+- ✅ No regression in existing journal entry logic
+
+---
 ### Files Modified: 5
 1. **src/components/JournalEntry.tsx** - Fixed mood score schema validation
 2. **src/services/backgroundSync.ts** - Integrated wearable data with store

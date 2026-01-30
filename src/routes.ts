@@ -12,6 +12,7 @@ export const viewToPath: Record<View, string> = {
   [View.TERMS]: '/terms',
   [View.ROADMAP]: '/roadmap',
   [View.CLINICAL]: '/clinical',
+  [View.BETA_DASHBOARD]: '/beta-dashboard',
 };
 
 export const pathToView: Record<string, View> = Object.entries(viewToPath).reduce((acc, [view, path]) => {

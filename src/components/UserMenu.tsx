@@ -7,7 +7,8 @@ import {
   Search,
   Settings,
   Shield,
-  User
+  User,
+  Terminal
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
@@ -89,6 +90,7 @@ const UserMenu: React.FC = () => {
             <MenuItem to={viewToPath[View.SEARCH]} icon={Search} label="Resources" />
             <MenuItem to={viewToPath[View.GUIDE]} icon={BookOpen} label="Guide & Vision" />
             <MenuItem to={viewToPath[View.TERMS]} icon={Shield} label="Terms & Legal" />
+            <MenuItem to={viewToPath[View.BETA_DASHBOARD]} icon={Terminal} label="Beta Dashboard" />
           </div>
 
           <div className="border-t border-bg-secondary dark:border-dark-bg-secondary mt-1 pt-1">

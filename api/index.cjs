@@ -12,6 +12,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 const rateLimit = require("express-rate-limit");
+const fs = require("fs");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
@@ -745,6 +747,48 @@ app.put("/api/settings", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Update settings error:", error);
     res.status(500).json({ error: "Failed to update settings" });
+  }
+});
+
+// ============================================
+// SETTINGS ENDPOINTS
+// ============================================
+
+// ... existing code ...
+
+// ============================================
+// CLIENT LOGS ENDPOINT
+// ============================================
+
+app.post("/api/logs", async (req, res) => {
+  const { logs } = req.body;
+
+  if (!logs || !Array.isArray(logs)) {
+    return res.status(400).json({ error: "Logs array required" });
+  }
+
+  try {
+    const logDir = path.join(__dirname, "logs");
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir);
+    }
+
+    const timestamp = new Date().toISOString().replace(/:/g, "-");
+    const filename = `client-logs-${timestamp}-${uuidv4().substring(0, 8)}.json`;
+    const filepath = path.join(logDir, filename);
+
+    fs.writeFileSync(filepath, JSON.stringify({
+      serverReceived: new Date().toISOString(),
+      clientIp: req.ip,
+      userAgent: req.headers["user-agent"],
+      logs
+    }, null, 2));
+
+    console.log(`[Logs] Received ${logs.length} logs from client and saved to ${filename}`);
+    res.json({ success: true, filename });
+  } catch (error) {
+    console.error("Save logs error:", error);
+    res.status(500).json({ error: "Failed to save logs" });
   }
 });
 

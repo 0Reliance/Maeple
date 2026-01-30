@@ -15,7 +15,6 @@ import Guide from "./components/Guide";
 import JournalView from "./components/JournalView";
 import LandingPage from "./components/LandingPage";
 import MobileNav from "./components/MobileNav";
-import OnboardingWizard from "./components/OnboardingWizard";
 import Roadmap from "./components/Roadmap";
 import SearchResources from "./components/SearchResources";
 import SyncIndicator from "./components/SyncIndicator";
@@ -36,10 +35,12 @@ const VisionBoard = React.lazy(() => import("./components/VisionBoard"));
 const StateCheckWizard = React.lazy(() => import("./components/StateCheckWizard"));
 const Settings = React.lazy(() => import("./components/Settings"));
 const ClinicalReport = React.lazy(() => import("./components/ClinicalReport"));
+const BetaDashboard = React.lazy(() => import("./components/BetaDashboard"));
 
 import { pathToView, viewToPath } from "./routes";
 import { initBackgroundSync } from "./services/backgroundSync";
 import { initNotificationService } from "./services/notificationService";
+import { initializeAI } from "./services/ai";
 import { HealthEntry, View, WearableDataPoint } from "./types";
 
 // Zustand stores
@@ -53,11 +54,9 @@ function AppContent() {
   const {
     entries,
     wearableData,
-    showOnboarding,
     setView,
     addEntry,
     mergeWearableData,
-    completeOnboarding,
     initializeApp,
   } = useAppStore();
 
@@ -71,10 +70,44 @@ function AppContent() {
 
   // Initialize app on startup
   useEffect(() => {
-    initializeApp();
-    initializeAuth();
-    initNotificationService();
-    initBackgroundSync();
+    const init = async () => {
+      console.log("[App] ===== APP INITIALIZATION START =====");
+      
+      // Initialize AI services first
+      console.log("[App] Initializing AI services...");
+      await initializeAI();
+      
+      // Verify AI health after initialization
+      try {
+        console.log("[App] Running AI health check...");
+        // Import aiRouter dynamically to avoid circular dependencies
+        const { aiRouter } = await import('./services/ai/router');
+        const healthResults = await aiRouter.checkHealth();
+        console.log("[App] AI Health check results:", healthResults);
+        
+        const healthyProviders = Object.entries(healthResults).filter(([_, healthy]) => healthy);
+        console.log(`[App] Healthy providers: ${healthyProviders.length}/${Object.keys(healthResults).length}`);
+        
+        if (healthyProviders.length === 0) {
+          console.error("[App] � WARNING: No AI providers are healthy!");
+          console.error("[App] FACS analysis will use offline fallback");
+        } else {
+          console.log("[App]  AI services are operational");
+        }
+      } catch (healthError) {
+        console.error("[App] AI health check failed:", healthError);
+      }
+      
+      // Initialize other services
+      console.log("[App] Initializing app services...");
+      initializeApp();
+      initializeAuth();
+      initNotificationService();
+      initBackgroundSync();
+      
+      console.log("[App] ===== APP INITIALIZATION COMPLETE =====");
+    };
+    init();
   }, [initializeApp, initializeAuth]);
 
   // Sync store view with URL
@@ -230,6 +263,18 @@ function AppContent() {
                   </Suspense>
                 }
               />
+              <Route
+                path="/beta-dashboard"
+                element={
+                  <Suspense
+                    fallback={
+                      <div className="animate-pulse bg-bg-secondary h-64 rounded-card"></div>
+                    }
+                  >
+                    <BetaDashboard />
+                  </Suspense>
+                }
+              />
               <Route path="*" element={<Navigate to="/journal" replace />} />
             </Routes>
           </div>
@@ -240,11 +285,6 @@ function AppContent() {
       <MobileNav
         currentView={view}
       />
-
-      {/* Onboarding Wizard */}
-      {showOnboarding && (
-        <OnboardingWizard onComplete={completeOnboarding} onSkip={() => setView(view)} />
-      )}
     </div>
   );
 }

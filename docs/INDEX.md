@@ -2,11 +2,21 @@
 
 **App Version**: 0.97.7  
 **Last Updated**: January 20, 2026  
-**Local Database**: ✅ Fully Operational (PostgreSQL 16 in Docker)
+**Local Database**: ✅ Fully Operational (PostgreSQL 16 in Docker)  
+**Production**: ✅ Operational (Vercel)  
+**Local Dev**: ✅ Running (Docker Compose)
 
 ---
 
 ## 🆕 What's New (Jan 2026)
+
+**Vercel Deployment Fix (January 20, 2026)**
+
+- Resolved critical production error: "Cannot access 'e' before initialization"
+- Fixed AI Router Proxy pattern causing circular dependency issues
+- Changed to direct initialization for Vite minification compatibility
+- Production now operational at https://maeple.vercel.app
+- See [VERCEL_DEPLOYMENT_FIX_2026-01-20.md](../VERCEL_DEPLOYMENT_FIX_2026-01-20.md) for details
 
 **Card Interaction Fix (v0.97.7)**
 
@@ -20,6 +30,7 @@
 - Full Docker stack with PostgreSQL 16, Express API, and Nginx frontend
 - All CRUD operations verified (entries, settings, auth)
 - JWT-based authentication for local development
+- API response time: 14ms average, 0 errors
 - See [LOCAL_DB_STATUS.md](../LOCAL_DB_STATUS.md) for complete status
 
 **Onboarding System Overhaul**
@@ -58,7 +69,9 @@
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | [AI_INTEGRATION_GUIDE.md](AI_INTEGRATION_GUIDE.md)           | Multi-provider AI architecture                                                                          |
 | [FACS_IMPLEMENTATION_GUIDE.md](FACS_IMPLEMENTATION_GUIDE.md) | **FACS (Facial Action Coding System)** - Complete implementation guide with research references |
+| [PROJECT_REVIEW_2026-01-20.md](../PROJECT_REVIEW_2026-01-20.md) | **Comprehensive project review** - Production and local dev status, technology stack, features, security, performance |
 | [PROJECT_REVIEW_2026-01-06.md](PROJECT_REVIEW_2026-01-06.md) | Repo-wide capture/storage/validation/analysis audit with prioritized risks and research-backed options  |
+| [VERCEL_DEPLOYMENT_FIX_2026-01-20.md](../VERCEL_DEPLOYMENT_FIX_2026-01-20.md) | **Vercel deployment fix** - Resolved production build error with detailed root cause analysis |
 | [BIOMIRROR_TROUBLESHOOTING.md](BIOMIRROR_TROUBLESHOOTING.md) | Bio-Mirror camera and analysis issues                                                                   |
 | [DEVELOPMENT_TOOLING.md](DEVELOPMENT_TOOLING.md)             | IDE setup, MCP configuration                                                                            |
 | [TESTING_GUIDE.md](TESTING_GUIDE.md)                         | Comprehensive testing procedures                                                                        |

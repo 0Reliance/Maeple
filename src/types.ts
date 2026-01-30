@@ -12,6 +12,7 @@ export enum View {
   TERMS = "TERMS",
   ROADMAP = "ROADMAP",
   CLINICAL = "CLINICAL",
+  BETA_DASHBOARD = "BETA_DASHBOARD",
 }
 
 export interface UserSettings {

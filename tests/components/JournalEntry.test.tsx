@@ -48,10 +48,7 @@ describe("JournalEntry Component", () => {
   it("handles text input and submission", async () => {
     renderWithDependencies(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
 
-    // 1. Select Text Mode
-    fireEvent.click(screen.getByRole("button", { name: /Use Text Type input/i }));
-
-    // 2. Enter text
+    // 1. Enter text
     const input = screen.getByPlaceholderText(/How are you feeling right now/i);
     fireEvent.change(input, { target: { value: "Feeling great today!" } });
 
@@ -78,9 +75,6 @@ describe("JournalEntry Component", () => {
 
   it("handles submission error", async () => {
     renderWithDependencies(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
-
-    // 1. Select Text Mode
-    fireEvent.click(screen.getByRole("button", { name: /Use Text Type input/i }));
 
     const input = screen.getByPlaceholderText(/How are you feeling right now/i);
     fireEvent.change(input, { target: { value: "Test entry" } });

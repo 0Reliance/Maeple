@@ -6,6 +6,7 @@ import { getBaseline } from "../services/stateCheckService";
 import { getEntries as getJournalEntries } from "../services/storageService";
 import { FacialAnalysis, FacialBaseline, HealthEntry } from "../types";
 import BiofeedbackCameraModal from "./BiofeedbackCameraModal";
+import StateCheckAnalyzing from "./StateCheckAnalyzing";
 import StateCheckResults from "./StateCheckResults";
 
 const StateCheckWizard: React.FC = () => {
@@ -77,70 +78,18 @@ const StateCheckWizard: React.FC = () => {
   }, []);
 
   const handleCapture = async (src: string) => {
+    // CRITICAL FIX: Close camera modal IMMEDIATELY after capture
+    setIsCameraOpen(false);
+    
     setImageSrc(src);
     setStep("ANALYZING");
     setProgress(0);
     setCurrentStage("Initializing analysis...");
-    setEstimatedTime(45); // 45 seconds is our new timeout
+    setEstimatedTime(45); // 45 seconds timeout
     setError("");
 
-    const base64 = src.split(",")[1];
-
-    // Create abort controller for this analysis
-    abortControllerRef.current = new AbortController();
-
-    try {
-      // Real progress tracking from vision service
-      const progressCallback = (stage: string, progressPercent: number) => {
-        setProgress(progressPercent);
-        setCurrentStage(stage);
-        // Estimate remaining time based on progress
-        const elapsedPercent = progressPercent;
-        const remainingPercent = 100 - elapsedPercent;
-        const estimatedRemainingSeconds = Math.max(0, Math.round((remainingPercent / 100) * 45));
-        setEstimatedTime(estimatedRemainingSeconds);
-      };
-
-      // Use DI with Circuit Breaker protection and real progress callbacks
-      const result = await visionService.analyzeFromImage(base64, {
-        onProgress: progressCallback,
-        signal: abortControllerRef.current?.signal,
-      });
-
-      setAnalysis(result);
-      setProgress(100);
-      setCurrentStage("Analysis complete");
-
-      // Brief pause to show completion state before transitioning
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setStep("RESULTS");
-    } catch (e) {
-      console.error("Analysis failed:", e);
-
-      // Check if this was a cancellation by user
-      if (abortControllerRef.current?.signal.aborted) {
-        setError("Analysis was cancelled.");
-      } else if (
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        (e as Error).message.includes("Circuit breaker is OPEN")
-      ) {
-        setError("AI service temporarily unavailable. Please try again later.");
-      } else if (
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        (e as Error).message.includes("timeout")
-      ) {
-        setError("Analysis took too long. Please try again or check your internet connection.");
-      } else {
-        setError("Analysis failed. Please try again.");
-      }
-      setStep("ERROR");
-    } finally {
-      abortControllerRef.current = null;
-    }
+    // Note: The actual AI analysis is now handled by the StateCheckAnalyzing component
+    // which provides real-time visual feedback to the user
   };
 
   const handleRetry = () => {
@@ -228,48 +177,24 @@ const StateCheckWizard: React.FC = () => {
     );
   }
 
-  if (step === "ANALYZING") {
+  if (step === "ANALYZING" && imageSrc) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 space-y-6">
-        <div className="relative">
-          <div className="w-24 h-24 rounded-full border-4 border-indigo-100 dark:border-indigo-900 animate-pulse"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className="animate-spin text-indigo-600 dark:text-indigo-400" size={40} />
-          </div>
-        </div>
-
-        {/* Progress Stages */}
-        <div className="text-center space-y-3 max-w-md">
-          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            Analyzing Bio-Signals...
-          </h3>
-
-          {/* Progress Bar */}
-          <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
-            <div
-              className="h-full bg-indigo-600 dark:bg-indigo-400 transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {/* Current Stage */}
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{currentStage}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Estimated time: {estimatedTime}s remaining
-            </p>
-          </div>
-        </div>
-
-        {/* Cancel Button */}
-        <button
-          onClick={cancelAnalysis}
-          className="mt-4 px-6 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
-        >
-          <X size={16} />
-          Cancel
-        </button>
-      </div>
+      <StateCheckAnalyzing
+        imageSrc={imageSrc}
+        onProgress={(stage, progressPercent) => {
+          setProgress(progressPercent);
+          setCurrentStage(stage);
+          const remainingPercent = 100 - progressPercent;
+          const estimatedRemainingSeconds = Math.max(0, Math.round((remainingPercent / 100) * 45));
+          setEstimatedTime(estimatedRemainingSeconds);
+        }}
+        onComplete={(analysis) => {
+          setAnalysis(analysis);
+          setStep("RESULTS");
+        }}
+        onCancel={cancelAnalysis}
+        estimatedTime={estimatedTime}
+      />
     );
   }
 

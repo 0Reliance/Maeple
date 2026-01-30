@@ -13,7 +13,6 @@ export {
   selectUserSettings,
   selectIsLoading,
   selectError,
-  selectShowOnboarding,
   selectRecentEntries,
   selectEntryCount,
 } from "./appStore";

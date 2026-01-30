@@ -58,7 +58,7 @@ interface Props {
 }
 
 const Settings: React.FC<Props> = ({ onDataSynced }) => {
-  const { userSettings, updateSettings, setShowOnboarding } = useAppStore();
+  const { userSettings, updateSettings } = useAppStore();
   const [configs, setConfigs] = useState(wearableManager.getAllConfigs());
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -672,30 +672,6 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               {settingsSaved ? "Saved" : "Save Context"}
             </button>
           </div>
-        </div>
-      </section>
-
-      {/* Help & Resources Section */}
-      <section className="space-y-4">
-        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-          <HelpCircle className="text-indigo-500" size={20} />
-          Help & Resources
-        </h3>
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-4">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Need a refresher on how MAEPLE works? Replay the onboarding tutorial anytime.
-          </p>
-          <button
-            onClick={() => {
-              // Reset the onboarding complete flag so it shows again
-              localStorage.removeItem('maeple_onboarding_complete');
-              setShowOnboarding(true);
-            }}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
-          >
-            <RefreshCw size={18} />
-            Replay Onboarding Tutorial
-          </button>
         </div>
       </section>
 

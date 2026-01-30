@@ -26,7 +26,6 @@ interface AppState {
   // View state
   currentView: View;
   mobileMenuOpen: boolean;
-  showOnboarding: boolean;
 
   // Data state
   entries: HealthEntry[];
@@ -46,8 +45,6 @@ interface AppActions {
   toggleMobileMenu: () => void;
   setMobileMenuOpen: (open: boolean) => void;
   closeMobileMenu: () => void;
-  setShowOnboarding: (show: boolean) => void;
-  completeOnboarding: () => void;
 
   // Entry actions
   addEntry: (entry: HealthEntry) => void;
@@ -85,7 +82,6 @@ type AppStore = AppState & AppActions;
 const initialState: AppState = {
   currentView: View.JOURNAL,
   mobileMenuOpen: false,
-  showOnboarding: false,
   entries: [],
   wearableData: [],
   userSettings: { avgCycleLength: 28 },
@@ -124,15 +120,6 @@ export const useAppStore = create<AppStore>()(
 
         closeMobileMenu: () => {
           set({ mobileMenuOpen: false }, false, "closeMobileMenu");
-        },
-
-        setShowOnboarding: (show) => {
-          set({ showOnboarding: show }, false, "setShowOnboarding");
-        },
-
-        completeOnboarding: () => {
-          localStorage.setItem("maeple_onboarding_complete", "true");
-          set({ showOnboarding: false }, false, "completeOnboarding");
         },
 
         // Entry actions
@@ -263,18 +250,10 @@ export const useAppStore = create<AppStore>()(
               }
             }
 
-            // Check onboarding status - show if EITHER:
-            // 1. localStorage flag is NOT set, OR
-            // 2. User has zero entries (new user or after data clear)
-            const onboardingCompleted =
-              localStorage.getItem("maeple_onboarding_complete") === "true";
-            const shouldShowOnboarding = !onboardingCompleted && entries.length === 0;
-
             set(
               {
                 entries,
                 userSettings: settings,
-                showOnboarding: shouldShowOnboarding,
                 isInitialized: true,
                 isLoading: false,
               },
@@ -346,7 +325,6 @@ export const selectWearableData = (state: AppStore) => state.wearableData;
 export const selectUserSettings = (state: AppStore) => state.userSettings;
 export const selectIsLoading = (state: AppStore) => state.isLoading;
 export const selectError = (state: AppStore) => state.error;
-export const selectShowOnboarding = (state: AppStore) => state.showOnboarding;
 
 // Derived selectors
 export const selectRecentEntries = (limit: number) => (state: AppStore) =>

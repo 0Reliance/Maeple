@@ -5,8 +5,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Get Supabase URL and Anon Key from environment variables
-const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
-const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+// Note: Vite exposes environment variables via import.meta.env directly
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
