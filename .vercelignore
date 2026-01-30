@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+out
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage
+.nyc_output
+
+# IDE
+.vscode
+.idea
+
+# Misc
+*.log
+*.swp
+.DS_Store
+
+# Documentation (keep docs in repo)
+# docs/
+
+# Test files
+test-*.js
+test-*.cjs
+test-*.md
