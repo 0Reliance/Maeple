@@ -25,12 +25,12 @@ MAEPLE integrates multiple AI and web service providers to provide comprehensive
 
 | Provider | Type | Key Features | Primary Use Case |
 |-----------|-------|---------------|-------------------|
-| **Gemini** | Multimodal AI | Vision, Text, Audio | Bio-Mirror, Live Coach |
+| **Gemini (Pro Plan)** | Multimodal AI | Vision, Text, Audio, Unlimited Quota | Bio-Mirror, Live Coach, Primary Provider |
 | **Z.ai** | Code AI | Advanced code generation | Development, refactoring |
-| **OpenAI** | Multimodal AI | GPT-4, DALL-E, Whisper | Advanced analysis, media generation |
-| **Anthropic** | Text AI | Claude models | Nuanced reasoning |
-| **Perplexity** | Search + AI | Web search with AI | Research, current information |
-| **OpenRouter** | Model Router | Access to free models | Cost optimization |
+| **OpenAI** | Multimodal AI | GPT-4, DALL-E, Whisper | Advanced analysis, media generation (Fallback) |
+| **Anthropic** | Text AI | Claude models | Nuanced reasoning (Fallback) |
+| **Perplexity** | Search + AI | Web search with AI | Research, current information (Fallback) |
+| **OpenRouter** | Model Router | Access to free models | Cost optimization (Fallback) |
 | **ElevenLabs** | TTS | Natural voice synthesis | Live Coach audio |
 | **Jina AI** | Reader/Search | Content extraction | Web scraping, research |
 | **Brave Search** | Search | Fast web search | MCP web search |

@@ -68,6 +68,8 @@
 | Document                                                     | Description                                                                                             |
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | [AI_INTEGRATION_GUIDE.md](AI_INTEGRATION_GUIDE.md)           | Multi-provider AI architecture                                                                          |
+| [GEMINI_PRO_PLAN_DECISION.md](GEMINI_PRO_PLAN_DECISION.md)   | **Google AI Pro Plan ($20/month)** - Configuration, rationale, and cost analysis for production deployment |
+| [GEMINI_PRO_PLAN_OPTIMIZATION.md](GEMINI_PRO_PLAN_OPTIMIZATION.md) | **Pro Plan Optimization Strategies** - Caching, model routing, token optimization, and cost-saving techniques |
 | [FACS_IMPLEMENTATION_GUIDE.md](FACS_IMPLEMENTATION_GUIDE.md) | **FACS (Facial Action Coding System)** - Complete implementation guide with research references |
 | [PROJECT_REVIEW_2026-01-20.md](../PROJECT_REVIEW_2026-01-20.md) | **Comprehensive project review** - Production and local dev status, technology stack, features, security, performance |
 | [PROJECT_REVIEW_2026-01-06.md](PROJECT_REVIEW_2026-01-06.md) | Repo-wide capture/storage/validation/analysis audit with prioritized risks and research-backed options  |

@@ -333,12 +333,15 @@ MAEPLE/
 
 #### AI Services
 
-- **Google Gemini** - Primary multimodal AI (vision, text, audio)
+- **Google Gemini (Pro Plan)** - Primary multimodal AI with unlimited quota ($20/month optimized)
+  - gemini-2.5-flash for FACS analysis and multimodal tasks
+  - gemini-2.5-flash-image for image generation
+  - gemini-2.5-flash-lite for cost-effective batch processing
 - **Z.ai** - Advanced code generation
-- **OpenAI** - GPT-4, DALL-E, Whisper
-- **Anthropic** - Claude models
-- **Perplexity** - Web search + AI
-- **OpenRouter** - Access to free models
+- **OpenAI** - GPT-4, DALL-E, Whisper (fallback)
+- **Anthropic** - Claude models (fallback)
+- **Perplexity** - Web search + AI (fallback)
+- **OpenRouter** - Access to free models (fallback)
 - **ElevenLabs** - Text-to-speech
 
 #### Development Tools
