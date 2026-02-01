@@ -685,6 +685,19 @@ curl -I https://your-app-url
 vercel logs
 ```
 
+### Latest Deployment (February 1, 2026)
+
+**Version:** v0.97.7  
+**Commit:** 8d91aea  
+**Status:** ✅ Live at https://maeple.vercel.app
+
+**Code Review Remediations Applied:**
+- Phase 1.3: Background sync cleanup (timeout protection, queue limits, stale entry cleanup)
+- Phase 2.1: Test timeout fixes (increased from 5s to 10s)
+- Phase 2.2: React act warnings (added actAsync helper, wrapped state updates)
+
+See [Deployment Summary](DEPLOYMENT_SUMMARY_FEB_2026.md) for complete details.
+
 See [Deployment Guide](deploy/DEPLOY.md) for complete deployment instructions including Docker, Railway, and Render options.
 
 ---
