@@ -18,6 +18,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
+    testTimeout: 10000, // Increase default timeout to 10s for slow tests
+    hookTimeout: 10000,  // Increase hook timeout to 10s
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

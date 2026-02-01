@@ -21,9 +21,17 @@ export interface SyncState {
   error?: string;
 }
 
+// Sync configuration
+const SYNC_TIMEOUT_MS = 60000; // 60 second timeout
+const MAX_PENDING_CHANGES = 100; // Maximum pending changes in queue
+const STALE_ENTRY_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 // Pending changes queue (for offline support)
 const PENDING_KEY = "maeple_pending_sync";
 const LAST_SYNC_KEY = "maeple_last_sync";
+
+// Track active sync operations
+const activeSyncs = new Set<string>();
 
 interface PendingChange {
   type: "entry" | "settings";
@@ -31,6 +39,12 @@ interface PendingChange {
   id: string;
   timestamp: string;
 }
+
+// Helper to create timeout promise
+const createTimeout = (ms: number, message: string) => 
+  new Promise<never>((_, reject) => 
+    setTimeout(() => reject(new Error(`Sync timeout: ${message}`)), ms)
+  );
 
 // Initialize state with persisted values
 let syncState: SyncState = {
@@ -91,6 +105,25 @@ const updateSyncState = (updates: Partial<SyncState>) => {
 // PENDING CHANGES QUEUE
 // ============================================
 
+/**
+ * Add a pending change to the queue with size limits
+ */
+const addPendingChange = (change: PendingChange): void => {
+  const pending = getPendingChanges();
+  
+  // Enforce queue limit
+  if (pending.length >= MAX_PENDING_CHANGES) {
+    // Remove oldest entries
+    const toRemove = pending.slice(0, pending.length - MAX_PENDING_CHANGES + 1);
+    toRemove.forEach(c => removePendingChange(c.id, c.type));
+    console.warn(`[SyncService] Queue full, removed ${toRemove.length} oldest entries`);
+  }
+  
+  pending.push(change);
+  localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+  updateSyncState({ pendingChanges: pending.length });
+};
+
 const removePendingChange = (id: string, type: string) => {
   const pending = getPendingChanges();
   const filtered = pending.filter(p => !(p.id === id && p.type === type));
@@ -132,30 +165,15 @@ export const processPendingChanges = async (): Promise<void> => {
   }
 
   updateSyncState({ status: "syncing" });
+  const syncId = Date.now().toString();
+  activeSyncs.add(syncId);
 
   try {
-    for (const change of pending) {
-      if (change.type === "entry") {
-        if (change.action === "delete") {
-          await apiClient.deleteEntry(change.id);
-        } else {
-          const entries = getEntries();
-          const entry = entries.find(e => e.id === change.id);
-          if (entry) {
-            if (change.action === "create") {
-              await apiClient.createEntry(entry);
-            } else {
-              await apiClient.updateEntry(entry.id, entry);
-            }
-          }
-        }
-      } else if (change.type === "settings") {
-        const settings = getUserSettings();
-        await apiClient.updateSettings(settings);
-      }
-
-      removePendingChange(change.id, change.type);
-    }
+    // Add timeout protection
+    await Promise.race([
+      executeSyncOperations(pending),
+      createTimeout(SYNC_TIMEOUT_MS, `Sync operations exceeded ${SYNC_TIMEOUT_MS}ms`)
+    ]);
 
     updateSyncState({
       status: "synced",
@@ -168,8 +186,42 @@ export const processPendingChanges = async (): Promise<void> => {
       status: "error",
       error: error instanceof Error ? error.message : "Sync failed",
     });
+  } finally {
+    activeSyncs.delete(syncId);
   }
 };
+
+/**
+ * Execute sync operations (extracted for timeout handling)
+ */
+async function executeSyncOperations(pending: PendingChange[]): Promise<void> {
+  for (const change of pending) {
+    if (!activeSyncs.has(change.id)) {
+      continue; // Skip if sync was cancelled
+    }
+    
+    if (change.type === "entry") {
+      if (change.action === "delete") {
+        await apiClient.deleteEntry(change.id);
+      } else {
+        const entries = await getEntries();
+        const entry = entries.find(e => e.id === change.id);
+        if (entry) {
+          if (change.action === "create") {
+            await apiClient.createEntry(entry);
+          } else {
+            await apiClient.updateEntry(entry.id, entry);
+          }
+        }
+      }
+    } else if (change.type === "settings") {
+      const settings = await getUserSettings();
+      await apiClient.updateSettings(settings);
+    }
+
+    removePendingChange(change.id, change.type);
+  }
+}
 
 /**
  * Full sync: Push all local data to cloud
@@ -187,8 +239,8 @@ export const pushToCloud = async (): Promise<{
 
   try {
     // Get all local data
-    const entries = getEntries();
-    const settings = getUserSettings();
+    const entries = await getEntries();
+    const settings = await getUserSettings();
 
     // Push entries using sync endpoint
     const { synced, error } = await apiClient.syncEntries(entries);
@@ -243,7 +295,7 @@ export const pullFromCloud = async (): Promise<{
     if (settingsError) throw new Error(settingsError);
 
     // Get local data
-    const localEntries = getEntries();
+    const localEntries = await getEntries();
 
     // Merge: Add cloud entries that don't exist locally OR are newer
     let addedCount = 0;
@@ -261,8 +313,8 @@ export const pullFromCloud = async (): Promise<{
           addedCount++;
         } else {
           // Conflict resolution: Last Write Wins
-          const cloudTime = new Date(cloudEntry.updatedAt || cloudEntry.timestamp).getTime();
-          const localTime = new Date(localEntry.updatedAt || localEntry.timestamp).getTime();
+          const cloudTime = new Date((cloudEntry as any).updatedAt || cloudEntry.timestamp).getTime();
+          const localTime = new Date((localEntry as any).updatedAt || localEntry.timestamp).getTime();
 
           // If cloud is newer (by at least 1 second to avoid clock skew issues)
           if (cloudTime > localTime + 1000) {
@@ -281,14 +333,14 @@ export const pullFromCloud = async (): Promise<{
       }
 
       // Convert back to array and save
-      const finalEntries = Array.from(localMap.values());
-      bulkSaveEntries(finalEntries);
+      const finalEntries = Array.from(localMap.values()) as HealthEntry[];
+      await bulkSaveEntries(finalEntries);
     }
 
     // Merge settings (cloud wins for now - simple strategy)
     if (cloudSettings) {
-      const localSettings = getUserSettings();
-      saveUserSettings(
+      const localSettings = await getUserSettings();
+      await saveUserSettings(
         {
           ...localSettings,
           ...cloudSettings,
@@ -381,7 +433,7 @@ export const getSyncStats = async (): Promise<{
   lastSyncAt: Date | null;
   syncStatus: string;
 }> => {
-  const localEntries = getEntries().length;
+  const localEntries = (await getEntries()).length;
   const pendingChanges = getPendingChanges().length;
 
   let cloudEntries = 0;
@@ -409,14 +461,27 @@ export const getSyncStats = async (): Promise<{
 };
 
 /**
- * Initialize sync on app startup
+ * Initialize sync on app startup with stale entry cleanup
  */
 export const initializeSync = async () => {
   const pending = getPendingChanges();
-  updateSyncState({ pendingChanges: pending.length });
+  
+  // Clean up stale pending changes (older than 7 days)
+  const staleThreshold = Date.now() - STALE_ENTRY_THRESHOLD_MS;
+  const freshPending = pending.filter(p => 
+    new Date(p.timestamp).getTime() > staleThreshold
+  );
+  
+  if (freshPending.length < pending.length) {
+    const removed = pending.length - freshPending.length;
+    console.warn(`[SyncService] Removed ${removed} stale pending changes`);
+    localStorage.setItem(PENDING_KEY, JSON.stringify(freshPending));
+  }
+  
+  updateSyncState({ pendingChanges: freshPending.length });
 
   // If authenticated, try to sync pending changes
-  if (isCloudSyncAvailable() && pending.length > 0) {
+  if (isCloudSyncAvailable() && freshPending.length > 0) {
     await processPendingChanges();
   }
 };
