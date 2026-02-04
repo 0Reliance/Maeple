@@ -5,6 +5,7 @@ import { useAppStore } from "../stores";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { CircuitState } from "@/patterns/CircuitBreaker";
+import { safeParseAIResponse } from "../utils/safeParse";
 
 const VoiceIntake: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -122,19 +123,21 @@ const VoiceIntake: React.FC = () => {
         );
 
         if (response && response.content) {
-          // Parse JSON
+          const { data, error } = safeParseAIResponse(response.content, {
+            context: 'LiveCoach',
+            stripMarkdown: true,
+          });
+          
           let parsedData;
-          try {
-            // Clean markdown code blocks if present
-            const cleanJson = response.content.replace(/```json\n|\n```/g, '').trim();
-            parsedData = JSON.parse(cleanJson);
-          } catch (e) {
-            console.warn("Failed to parse JSON, using raw text", e);
+          if (error) {
+            console.warn("Failed to parse JSON, using raw text", error);
             parsedData = { summary: response.content };
+          } else {
+            parsedData = data!;
           }
 
           // Save Entry
-          addEntry({
+          await addEntry({
             id: uuidv4(),
             timestamp: new Date().toISOString(),
             rawText: parsedData.summary || "Audio Entry",

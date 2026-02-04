@@ -60,6 +60,7 @@ export interface AITextRequest {
   temperature?: number;
   maxTokens?: number;
   responseFormat?: 'text' | 'json';
+  signal?: AbortSignal;
 }
 
 export interface AITextResponse {
@@ -72,6 +73,7 @@ export interface AIVisionRequest {
   imageData: string;
   mimeType: string;
   prompt: string;
+  signal?: AbortSignal;
 }
 
 export interface AIVisionResponse {

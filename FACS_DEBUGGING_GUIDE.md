@@ -1,382 +1,382 @@
-# FACS System Debugging Guide
+# FACS Debugging and Testing Guide
 
-## Issue Summary
+## Overview
 
-The FACS (Facial Action Coding System) is not returning results - showing empty arrays and "offline mode" messages instead of actual Action Unit detection.
+This guide provides instructions for debugging FACS (Facial Action Coding System) data flow issues where the process appears to work but fails when sending data to the results page and database.
 
-## Root Cause Analysis
+## Changes Made
 
-The issue was traced to **AI router not being initialized** with a provider configuration, causing the system to fall back to offline mode.
+### 1. Enhanced Logging Added
 
-### Architecture Flow
+All critical data flow points now include comprehensive console logging:
 
+#### StateCheckAnalyzing.tsx
+- Logs AI analysis results including actionUnits count, confidence, FACS interpretation
+- Logs jaw tension and eye fatigue values
+- Logs full analysis object for debugging
+- Provides structured fallback result on error
+
+#### StateCheckWizard.tsx
+- Logs when analysis complete callback is received
+- Validates analysis before setting state
+- Checks for actionUnits presence and facsInterpretation
+- Logs error if analysis is invalid
+
+#### StateCheckResults.tsx
+- Logs save operation start with analysis details
+- Logs blob creation and size
+- Logs successful save with returned ID
+- Logs any errors during save
+
+#### stateCheckService.ts
+- Logs input data including actionUnits count
+- Logs coercion process and results
+- Logs encryption completion
+- Logs database put operation
+
+### 2. Improved Error Handling
+
+- **Fallback results** include all required FacialAnalysis fields
+- **Validation checks** before state updates
+- **Error boundaries** with user-friendly messages
+- **Detailed error logging** at each stage
+
+## Testing Instructions
+
+### Step 1: Open Browser DevTools
+
+1. Open Maeple application in Chrome or Firefox
+2. Press F12 to open Developer Tools
+3. Go to Console tab
+4. Clear console (right-click → Clear console)
+
+### Step 2: Run FACS Analysis
+
+1. Navigate to Bio-Mirror Check
+2. Click "Open Bio-Mirror"
+3. Capture a photo
+4. Wait for analysis to complete
+
+### Step 3: Check Console Logs
+
+Look for these specific log patterns:
+
+#### Expected Success Flow:
 ```
-App.tsx → AppContent() → initializeApp()
-                    ↓
-              → appStore.initializeApp()
-                    ↓
-              → initializeAI() [from src/services/ai/index.ts]
-                    ↓
-              → aiSettingsService.initialize()
-                    ↓
-              → Check environment for VITE_GEMINI_API_KEY
-                    ↓
-              → Create providers array or load from localStorage
-                    ↓
-              → aiRouter.initialize(settings)
+[StateCheckAnalyzing] === AI ANALYSIS COMPLETE ===
+[StateCheckAnalyzing] Action Units count: <number>
+[StateCheckAnalyzing] Confidence: <number>
+[StateCheckAnalyzing] FACS Interpretation: { duchennSmile: ..., socialSmile: ... }
+[StateCheckAnalyzing] Jaw Tension: <number>
+[StateCheckAnalyzing] Eye Fatigue: <number>
+[StateCheckAnalyzing] Full analysis object: { ... }
+
+[StateCheckWizard] === ANALYSIS COMPLETE CALLBACK ===
+[StateCheckWizard] Received analysis: { actionUnitsCount: <number>, ... }
+[StateCheckWizard] Analysis is valid, setting state...
 ```
 
-## Fixes Implemented
+#### Save Operation Flow (when clicking Save):
+```
+[StateCheckResults] === SAVE OPERATION START ===
+[StateCheckResults] Analysis to save: { actionUnitsCount: <number>, ... }
+[StateCheckResults] Converting image to blob...
+[StateCheckResults] Blob created, size: <number>
+[StateCheckResults] Calling saveStateCheck...
 
-### 1. Enhanced Environment Variable Detection (`src/services/ai/settingsService.ts`)
+[saveStateCheck] === SAVE OPERATION START ===
+[saveStateCheck] Input data: { id: "...", actionUnitsCount: <number>, ... }
+[saveStateCheck] Coercing facial analysis...
+[saveStateCheck] Coerced analysis: { actionUnitsCount: <number>, ... }
+[saveStateCheck] Encrypting analysis...
+[saveStateCheck] Encryption complete, cipher length: <number>
 
-**Problem**: Environment variable detection was silent, making it hard to debug.
+[StateCheckResults] Save successful, ID: "..."
+```
 
-**Fix**: Added comprehensive logging to show:
-- Whether `import.meta` is available
-- Whether `VITE_GEMINI_API_KEY` is found in `import.meta.env`
-- Whether `process` is available
-- Whether `process.env.VITE_GEMINI_API_KEY` or `process.env.API_KEY` is found
-- API key length (first 4 chars for security)
-- Whether providers were created successfully
+### Step 4: Identify the Failure Point
 
-**Expected Logs**:
+If data is not reaching the results page or database, check where logs stop:
+
+#### Scenario A: Logs stop after AI analysis
+**Issue:** Data lost between `StateCheckAnalyzing` and `StateCheckWizard`
+**Likely cause:** State management issue, callback not firing
+**Check:** Look for React warnings or errors
+
+#### Scenario B: Logs reach wizard but not results
+**Issue:** Data lost between `StateCheckWizard` and `StateCheckResults`
+**Likely cause:** Props not passed correctly, component re-render issue
+**Check:** Verify analysis is not null
+
+#### Scenario C: Logs reach results but save fails
+**Issue:** Database save operation failing
+**Likely cause:** IndexedDB error, encryption failure, storage quota
+**Check:** Look for specific error messages
+
+#### Scenario D: Save completes but data is empty
+**Issue:** Data is saved but actionUnits are empty
+**Likely cause:** AI returned empty array, validation stripped data
+**Check:** Verify actionUnits count in logs
+
+### Step 5: Check IndexedDB
+
+If save appears to succeed but data is lost:
+
+1. Open DevTools → Application tab
+2. Navigate to IndexedDB → maeple_db
+3. Check state_checks object store
+4. Click on recent entries
+5. Verify analysisCipher and iv fields are populated
+6. Check timestamp is current
+
+### Step 6: Test Decryption
+
+If encrypted data exists but results page shows empty:
+
+1. In browser console, run:
 ```javascript
-[AISettings] Environment variable check: {
-  hasImportMeta: true,
-  hasViteEnv: false,  // or true if key found
-  hasProcessEnv: false,
-  foundKey: false  // or true if key found
-}
-[AISettings] Found API key in environment, creating Gemini provider
-[AISettings] API key length: 39 (showing first 4 chars: abcd...)
-[AISettings] Settings saved successfully with 1 provider(s)
-```
-
-### 2. Enhanced Router Initialization Logging (`src/services/ai/router.ts`)
-
-**Problem**: Router initialization had no visibility into what was happening.
-
-**Fix**: Added detailed logging showing:
-- Total provider count
-- Each provider's status (enabled, hasKey, keyLength)
-- Which providers are being skipped and why
-- Which adapters are being created
-- Final count of initialized adapters
-- List of available provider IDs
-
-**Expected Logs**:
-```javascript
-[AIRouter] Initializing with settings: {
-  providerCount: 1,
-  providers: [
-    {
-      id: 'gemini',
-      enabled: true,
-      hasKey: true,
-      keyLength: 39
+// Get latest record
+const request = indexedDB.open('maeple_db', 2);
+request.onsuccess = () => {
+  const db = request.result;
+  const tx = db.transaction('state_checks', 'readonly');
+  const store = tx.objectStore('state_checks');
+  const getAll = store.getAll();
+  getAll.onsuccess = () => {
+    const records = getAll.result;
+    console.log('All records:', records);
+    
+    // Try to decrypt the latest one
+    const latest = records[records.length - 1];
+    if (latest) {
+      console.log('Latest record:', latest);
+      // Check if cipher and iv exist
+      console.log('Has cipher:', !!latest.analysisCipher);
+      console.log('Has iv:', !!latest.iv);
+      console.log('Cipher length:', latest.analysisCipher?.length);
     }
-  ]
-}
-[AIRouter] Initializing adapter for gemini
-[AIRouter] Successfully initialized gemini adapter
-[AIRouter] Initialization complete: 1 adapters ready
-[AIRouter] Available providers: ['gemini']
+  };
+};
 ```
 
-### 3. AI Availability Check (`src/services/geminiVisionService.ts`)
+## Common Issues and Solutions
 
-**Problem**: Vision service would try to analyze image even if AI wasn't configured, leading to confusion.
+### Issue: "AI returned 0 Action Units"
 
-**Fix**: Added early check:
-```typescript
-// Check if AI is available before proceeding
-if (!aiRouter.isAIAvailable()) {
-  console.warn("[FACS] AI not available - checking configuration");
-  onProgress?.("AI not configured, using offline fallback", 5);
-  return getOfflineAnalysis(base64Image);
-}
+**Logs:**
+```
+[GeminiVision] ⚠ WARNING: AI returned 0 Action Units!
 ```
 
-**Expected Behavior**:
-- Immediately returns offline fallback if no providers configured
-- Shows clear message: "AI not configured, using offline fallback"
-- Prevents wasted API calls
+**Possible causes:**
+1. Image quality too low (compression artifacts)
+2. Face not clearly visible
+3. Poor lighting
+4. AI model unable to detect FACS markers
 
-## Debugging Steps
+**Solution:**
+- Capture photo in good lighting
+- Ensure face is clearly visible
+- Check image is not blurry
 
-### Step 1: Clear All Data and Restart
+### Issue: "Invalid analysis received"
 
-**Why**: Remove any cached settings that might be incorrect.
+**Logs:**
+```
+[StateCheckWizard] Invalid analysis received: { ... }
+```
 
-**Commands**:
+**Possible causes:**
+1. AI response structure is malformed
+2. Required fields missing
+3. Type mismatch
+
+**Solution:**
+- Check AI response format in logs
+- Verify API key is valid
+- Test with different image
+
+### Issue: "Encryption failed"
+
+**Logs:**
+```
+[saveStateCheck] Encryption failed: <error>
+```
+
+**Possible causes:**
+1. localStorage not accessible
+2. Crypto API not available
+3. Key generation failed
+
+**Solution:**
+- Clear browser cache and localStorage
+- Try in different browser
+- Check browser supports Web Crypto API
+
+### Issue: "IndexedDB error"
+
+**Logs:**
+```
+[saveStateCheck] IndexedDB error: <error>
+```
+
+**Possible causes:**
+1. Storage quota exceeded
+2. Database version conflict
+3. Transaction aborted
+
+**Solution:**
+- Clear old state checks from database
+- Increase browser storage quota
+- Check for other IndexedDB errors
+
+### Issue: Data Saves but Results Show Empty
+
+**Symptom:** Save completes but actionUnits display as empty
+
+**Check logs for:**
+```
+[StateCheckResults] actionUnitsCount: 0
+```
+
+**Possible causes:**
+1. AI actually returned 0 actionUnits
+2. Validation stripped actionUnits
+3. Decryption returned different data
+
+**Solution:**
+- Check AI response in logs before save
+- Verify coercion preserved actionUnits
+- Test decryption manually
+
+## Debugging Commands
+
+### Test AI Analysis Directly
+
+In browser console:
 ```javascript
-// In browser console
-localStorage.clear()
-location.reload()
+// Test with a sample image
+const testImage = 'data:image/png;base64,...';
+window.maeple?.visionService?.analyzeFromImage(testImage, {
+  onProgress: (stage, progress) => console.log(stage, progress),
+  timeout: 45000
+}).then(result => {
+  console.log('AI Result:', result);
+  console.log('Action Units:', result.actionUnits);
+}).catch(error => {
+  console.error('AI Error:', error);
+});
 ```
 
-### Step 2: Check Browser Console Logs
+### Test Validation Directly
 
-**Open browser console** (F12 or Cmd+Option+I) and look for:
-
-#### Expected Success Logs:
-```
-[AppStore] AI initialization succeeded
-[AISettings] Environment variable check: {...}
-[AISettings] Found API key in environment, creating Gemini provider
-[AISettings] API key length: 39 (showing first 4 chars: abcd...)
-[AIRouter] Initializing with settings: {...}
-[AIRouter] Successfully initialized gemini adapter
-[FACS] AI provider available
-[FACS] AI availability check: true
-```
-
-#### Problem Scenarios:
-
-**Scenario 1: Environment Variable Not Found**
-```
-[AISettings] Environment variable check: {
-  hasImportMeta: true,
-  hasViteEnv: false,
-  hasProcessEnv: false,
-  foundKey: false
-}
-[AISettings] No API key found in environment variables
-[AISettings] Application will run in offline mode unless API key is configured in Settings
-```
-**Solution**: Add `VITE_GEMINI_API_KEY=your_key_here` to `.env` file
-
----
-
-**Scenario 2: Settings Service Not Initialized**
-```
-[FACS] AI not available - checking configuration
-```
-**Solution**: Check if `aiSettingsService.initialize()` is being called. Look for:
-```
-[AppStore] initializeApp:ai
-```
-or
-```
-initializeApp:error AI initialization failed: ...
-```
-
----
-
-**Scenario 3: Router Initialization Failing**
-```
-[AIRouter] Skipping gemini: enabled=true, hasKey=false
-```
-**Solution**: The API key was found but is empty or invalid. Check the API key value.
-
----
-
-**Scenario 4: Vision Service Error**
-```
-[FACS] AI provider available
-[...later...]
-Vision Analysis Error: TypeError: Cannot read property 'text' of undefined
-```
-**Solution**: Check Gemini API response format in `geminiVisionService.ts`
-
-### Step 3: Check Environment Variable Setup
-
-#### For Vite Development:
-
-**File**: `Maeple/.env`
-```bash
-VITE_GEMINI_API_KEY=your_actual_api_key_here
-```
-
-**Verify**: Check that the `.env` file is in the `Maeple` directory.
-
-#### For Production Build:
-
-Environment variables are injected at build time. Check:
-- Deployment configuration (Vercel, Netlify, etc.)
-- Build script in `package.json`
-- CI/CD pipeline variables
-
-#### Runtime Verification:
-
-**Run this in browser console**:
+In browser console:
 ```javascript
-console.log('import.meta.env:', import.meta.env)
-console.log('VITE_GEMINI_API_KEY:', import.meta.env?.VITE_GEMINI_API_KEY)
-console.log('Has API key:', !!import.meta.env?.VITE_GEMINI_API_KEY)
-```
-
-### Step 4: Verify Router State
-
-**Run this in browser console**:
-```javascript
-// Check if router is initialized
-console.log('Router initialized:', aiRouter.isInitialized)
-
-// Check if AI is available
-console.log('AI available:', aiRouter.isAIAvailable())
-
-// Get current settings
-import { aiSettingsService } from './path/to/ai/settingsService'
-const settings = aiSettingsService.getSettings()
-console.log('Current settings:', settings)
-```
-
-**Expected Results**:
-- `isInitialized`: true
-- `isAIAvailable()`: true
-- `settings.providers`: Array with at least 1 provider
-
-### Step 5: Test Vision Service Directly
-
-**Run this in browser console**:
-```javascript
-import { aiRouter } from './path/to/services/ai/router'
-
-// Check if router has vision capability
-console.log('Has vision:', aiRouter.hasCapability('vision'))
-
-// Try a simple vision request
-const result = await aiRouter.vision({
-  imageData: 'test_base64_string',
-  mimeType: 'image/png',
-  prompt: 'Describe this image'
-})
-console.log('Vision result:', result)
-```
-
-**Expected**: Result object with `content` field containing AI response.
-
-## Common Issues
-
-### Issue: "VITE_GEMINI_API_KEY is not defined"
-
-**Cause**: Vite doesn't load `.env` file automatically.
-
-**Solutions**:
-1. **Restart dev server** after adding `.env` file:
-   ```bash
-   npm run dev
-   ```
-
-2. **Check `.env` file location**: Must be in project root (`Maeple/.env`)
-
-3. **Verify `.env` format**: No spaces around `=`:
-   ```bash
-   # Correct
-   VITE_GEMINI_API_KEY=your_key
-   
-   # Wrong
-   VITE_GEMINI_API_KEY = your_key
-   ```
-
-### Issue: Multiple Import Statements
-
-**Cause**: Some files import from `./ai/index.ts` multiple times.
-
-**Solution**: Already fixed - router is a singleton exported directly.
-
-### Issue: Circuit Breaker Triggering
-
-**Cause**: Too many failed API calls cause the circuit breaker to open.
-
-**Solution**: Check Gemini API key is valid and has quota available.
-
-## Verification Checklist
-
-Before reporting the issue as still broken, verify:
-
-- [ ] Browser console shows `[AISettings] Found API key in environment`
-- [ ] Browser console shows `[AIRouter] Successfully initialized gemini adapter`
-- [ ] Browser console shows `[AIRouter] Available providers: ['gemini']`
-- [ ] `aiRouter.isInitialized()` returns `true` in console
-- [ ] `aiRouter.isAIAvailable()` returns `true` in console
-- [ ] Environment variable `VITE_GEMINI_API_KEY` is defined (check with `console.log(import.meta.env?.VITE_GEMINI_API_KEY)`)
-- [ ] When capturing photo, console shows `[FACS] AI provider available`
-- [ ] When capturing photo, FACS result has non-empty `actionUnits` array
-- [ ] When capturing photo, FACS result has `confidence > 0.5`
-
-## Expected FACS Result Structure
-
-When working correctly, the FACS analysis should return:
-
-```json
-{
-  "confidence": 0.85,
-  "actionUnits": [
-    {
-      "auCode": "AU6",
-      "name": "Cheek Raiser",
-      "intensity": "C",
-      "intensityNumeric": 3,
-      "confidence": 0.9
-    },
-    {
-      "auCode": "AU12",
-      "name": "Lip Corner Puller",
-      "intensity": "B",
-      "intensityNumeric": 2,
-      "confidence": 0.8
-    }
+// Test validation service
+const testAnalysis = {
+  confidence: 0.87,
+  actionUnits: [
+    { auCode: 'AU1', name: 'Inner Brow Raiser', intensity: 'C', intensityNumeric: 3, confidence: 0.94 }
   ],
-  "facsInterpretation": {
-    "duchennSmile": true,
-    "socialSmile": false,
-    "maskingIndicators": [],
-    "fatigueIndicators": [],
-    "tensionIndicators": []
+  facsInterpretation: {
+    duchennSmile: false,
+    socialSmile: true,
+    maskingIndicators: [],
+    fatigueIndicators: [],
+    tensionIndicators: []
   },
-  "observations": [
-    "Subject showing genuine smile with AU6 and AU12 activation"
-  ],
-  "lighting": "soft natural",
-  "lightingSeverity": "low",
-  "environmentalClues": ["plain background"],
-  "jawTension": 0.2,
-  "eyeFatigue": 0.1
-}
+  observations: [],
+  lighting: 'moderate',
+  lightingSeverity: 'moderate',
+  environmentalClues: [],
+  primaryEmotion: 'neutral',
+  jawTension: 0.4,
+  eyeFatigue: 0.3,
+  signs: []
+};
+
+const validated = window.maeple?.validationService?.validateFacialAnalysis(testAnalysis);
+console.log('Validated:', validated);
+console.log('Action Units preserved:', validated.actionUnits?.length);
 ```
 
-## Next Steps for Debugging
+### Test Database Operations
 
-1. **Clear localStorage and reload**
-   ```javascript
-   localStorage.clear()
-   sessionStorage.clear()
-   location.reload()
-   ```
+In browser console:
+```javascript
+// Test save directly
+const testData = {
+  id: 'test_' + Date.now(),
+  timestamp: new Date().toISOString(),
+  analysis: testAnalysis
+};
 
-2. **Check console logs** as shown in "Step 2" above
+window.maeple?.stateCheckService?.saveStateCheck(testData)
+  .then(id => console.log('Save success:', id))
+  .catch(error => console.error('Save failed:', error));
 
-3. **Report the exact console output** you see
+// Test retrieval
+window.maeple?.stateCheckService?.getStateCheck(testData.id)
+  .then(record => console.log('Retrieved:', record))
+  .catch(error => console.error('Retrieve failed:', error));
+```
 
-4. **If environment variable not found**, verify:
-   - `.env` file exists in `Maeple` directory
-   - Dev server was restarted after creating `.env`
-   - API key is valid (not empty)
+## Expected Behavior
 
-5. **If router not initializing**, check:
-   - No errors in console before initialization
-   - JavaScript is loading correctly
-   - No conflicting service instances
+### Successful Flow:
 
-## Contact Information
+1. **Photo Capture** → Image converted to base64
+2. **AI Analysis** → Returns analysis with actionUnits
+3. **State Update** → Wizard receives and validates analysis
+4. **Results Display** → Shows actionUnits, interpretation, and metrics
+5. **Save Operation** → Encrypts and stores in IndexedDB
+6. **Success Feedback** → Shows "Saved Securely" message
 
-If after following all steps the issue persists:
+### Data Should Include:
 
-1. **Copy all console logs** from the moment you open the app to when you try to capture a photo
-2. **Verify environment setup** matches your development environment
-3. **Check for any proxy/network issues** that might block API calls
-4. **Verify API key is valid** and has quota remaining
+- **Action Units Array**: 0+ AU objects with auCode, name, intensity, confidence
+- **FACS Interpretation**: duchennSmile, socialSmile, maskingIndicators, etc.
+- **Metrics**: jawTension (0-1), eyeFatigue (0-1)
+- **Observations**: Array of category/value/evidence objects
+- **Metadata**: confidence, lighting, lightingSeverity, environmentalClues
 
-## Summary
+## Reporting Issues
 
-The FACS system should now:
-- ✅ Show detailed environment variable detection logs
-- ✅ Show router initialization progress
-- ✅ Check AI availability before attempting analysis
-- ✅ Provide clear error messages when AI is not configured
-- ✅ Fail gracefully to offline mode only when truly necessary
+When reporting an issue, include:
 
-If these fixes don't resolve the issue, the console logs will reveal exactly where the problem is occurring.
+1. **Console logs** (full log output from start to failure)
+2. **Browser info**: Name and version (e.g., Chrome 120)
+3. **Steps taken**: What you clicked/selected
+4. **Screenshot**: Of the results page if visible
+5. **IndexedDB screenshot**: Of the state_checks store if accessible
+
+## Next Steps
+
+After identifying the failure point:
+
+1. **If AI issue**: Check API key, image quality, Gemini 2.5 availability
+2. **If state issue**: Check React component lifecycle, prop passing, re-renders
+3. **If database issue**: Check IndexedDB quota, encryption key, transaction errors
+4. **If display issue**: Check rendering logic, conditional rendering, data binding
+
+## Success Criteria
+
+FACS is working correctly when:
+
+✅ Console shows actionUnits count > 0
+✅ Results page displays Action Units section
+✅ Action Units show correct codes (AU1, AU4, etc.)
+✅ FACS Interpretation section displays
+✅ Save button shows "Saved Securely" after clicking
+✅ IndexedDB contains encrypted analysis with cipher and iv
+✅ Retrieval returns analysis with actionUnits preserved
+
+## Support
+
+If issues persist:
+
+1. Check this guide's common issues section
+2. Review console logs for specific error messages
+3. Test with different images and browsers
+4. Check FACS_DATA_FLOW_INVESTIGATION.md for technical details
+5. Contact development team with full log output

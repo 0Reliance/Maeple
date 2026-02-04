@@ -80,7 +80,7 @@ const ObjectiveObservation: React.FC<Props> = ({
 
       {/* Observations List */}
       <div className="space-y-3">
-        {observation.observations.map((obs, index) => (
+        {observation.observations && Array.isArray(observation.observations) && observation.observations.map((obs, index) => (
           <div
             key={`${obs.category}-${index}`}
             className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl"

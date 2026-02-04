@@ -36,14 +36,16 @@ export default defineConfig({
     },
   },
   plugins: [
-    react(),
+    react({
+      // Ensure worker files are processed
+      include: /\.(worker|ts|tsx|js|jsx)$/,
+    }),
     copyServiceWorker()
   ],
   worker: {
     format: 'es',
-    plugins: () => [react()],
+    plugins: [react()],
   },
-  assetsInclude: ['**/*.worker.ts'],
   define: {
     // Expose cache version for service worker
     "__BUILD_VERSION__": JSON.stringify(CACHE_VERSION),

@@ -61,7 +61,7 @@ export class OpenAIAdapter extends BaseAIAdapter {
         method: 'POST',
         headers: this.authHeaders(),
         body: JSON.stringify(body),
-      });
+      }, undefined, request.signal);
 
       const reader = response.body?.getReader();
       if (!reader) {
@@ -114,7 +114,7 @@ export class OpenAIAdapter extends BaseAIAdapter {
       method: 'POST',
       headers: this.authHeaders(),
       body: JSON.stringify(body),
-    });
+    }, undefined, request.signal);
 
     const json = await res.json();
     const content = json.choices?.[0]?.message?.content || '';
@@ -147,7 +147,7 @@ export class OpenAIAdapter extends BaseAIAdapter {
       method: 'POST',
       headers: this.authHeaders(),
       body: JSON.stringify(body),
-    });
+    }, undefined, request.signal);
 
     const json = await res.json();
     const content = json.choices?.[0]?.message?.content || '';
@@ -175,7 +175,7 @@ export class OpenAIAdapter extends BaseAIAdapter {
       method: 'POST',
       headers: this.authHeaders(),
       body: JSON.stringify(body),
-    });
+    }, undefined, (request as any).signal);
 
     const json = await res.json();
     const imageUrl = json.data?.[0]?.url as string | undefined;

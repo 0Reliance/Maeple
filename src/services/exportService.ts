@@ -45,8 +45,8 @@ export interface ImportResult {
  * Export all user data to a JSON structure
  */
 export const exportAllData = async (includeImages = false): Promise<ExportData> => {
-  const entries = getEntries();
-  const settings = getUserSettings();
+  const entries = await getEntries();
+  const settings = await getUserSettings();
   let stateChecks = await getRecentStateChecks(1000); // Get all available
 
   // Strip images if not requested to reduce size and prevent timeouts
@@ -91,8 +91,8 @@ export const exportAllData = async (includeImages = false): Promise<ExportData> 
  */
 export const exportToZip = async (): Promise<void> => {
   const zip = new JSZip();
-  const entries = getEntries();
-  const settings = getUserSettings();
+  const entries = await getEntries();
+  const settings = await getUserSettings();
   const stateChecks = await getRecentStateChecks(1000);
 
   // 1. Add JSON data (stripped of images)
@@ -239,7 +239,7 @@ export const importData = async (
 
     // Import entries
     if (importData.data.entries && importData.data.entries.length > 0) {
-      const existingEntries = getEntries();
+      const existingEntries = await getEntries();
       const existingIds = new Set(existingEntries.map(e => e.id));
 
       let newEntries: HealthEntry[];
@@ -254,13 +254,15 @@ export const importData = async (
         result.imported.entries = newEntries.length;
       }
 
-      // Save to storage
-      localStorage.setItem("maeple_entries", JSON.stringify(newEntries));
+      // Save to storage (using storage wrapper)
+      const { bulkSaveEntries } = await import('./storageService');
+      await bulkSaveEntries(newEntries);
     }
 
     // Import settings
     if (importData.data.settings && overwriteSettings) {
-      localStorage.setItem("maeple_user_settings", JSON.stringify(importData.data.settings));
+      const { saveUserSettings } = await import('./storageService');
+      await saveUserSettings(importData.data.settings, true); // skipSync = true
       result.imported.settings = true;
     }
 
@@ -370,7 +372,7 @@ export const getStorageStats = async (): Promise<{
   stateChecks: number;
   estimatedSizeKB: number;
 }> => {
-  const entries = getEntries();
+  const entries = await getEntries();
   const stateChecks = await getRecentStateChecks(1000);
 
   // Estimate size

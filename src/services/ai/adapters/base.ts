@@ -110,13 +110,23 @@ export abstract class BaseAIAdapter {
   protected async fetchWithRetry(
     url: string,
     options: RequestInit,
-    retries: number = this.config.maxRetries ?? 3
+    retries: number = this.config.maxRetries ?? 3,
+    externalSignal?: AbortSignal
   ): Promise<Response> {
     try {
       this.trackRequest();
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+      // Link external signal to our controller
+      if (externalSignal) {
+        if (externalSignal.aborted) {
+          controller.abort();
+        } else {
+          externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
+        }
+      }
 
       const response = await fetch(url, { ...options, signal: controller.signal });
       clearTimeout(timeoutId);
@@ -128,13 +138,13 @@ export abstract class BaseAIAdapter {
         if (retries > 0) {
           const retryAfter = parseInt(response.headers.get('Retry-After') || '2', 10);
           await this.delay(retryAfter * 1000);
-          return this.fetchWithRetry(url, options, retries - 1);
+          return this.fetchWithRetry(url, options, retries - 1, externalSignal);
         }
         throw new AIRateLimitError(this.providerId);
       }
       if (!response.ok && retries > 0) {
         await this.delay(Math.pow(2, (this.config.maxRetries || 3) - retries) * 1000);
-        return this.fetchWithRetry(url, options, retries - 1);
+        return this.fetchWithRetry(url, options, retries - 1, externalSignal);
       }
       if (!response.ok) {
         const errorText = await response.text();
@@ -147,7 +157,7 @@ export abstract class BaseAIAdapter {
       if (error instanceof AIError) throw error;
       if (retries > 0) {
         await this.delay(Math.pow(2, (this.config.maxRetries || 3) - retries) * 1000);
-        return this.fetchWithRetry(url, options, retries - 1);
+        return this.fetchWithRetry(url, options, retries - 1, externalSignal);
       }
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new AIError(`Request failed: ${message}`, this.providerId);

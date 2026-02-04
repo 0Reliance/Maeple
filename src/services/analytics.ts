@@ -35,11 +35,12 @@ export const generateInsights = (entries: HealthEntry[], wearableData: WearableD
 
   // 1. Analyze Capacity vs Mood Correlations
   const profiles = ['focus', 'social', 'sensory', 'structure', 'emotional', 'physical', 'executive'] as const;
-  
+
   profiles.forEach(dimension => {
     // Split entries into High vs Low capacity for this dimension
-    const highCap = entries.filter(e => e.neuroMetrics.capacity[dimension] >= 7);
-    const lowCap = entries.filter(e => e.neuroMetrics.capacity[dimension] <= 4);
+    // Guard against missing capacity data
+    const highCap = entries.filter(e => e.neuroMetrics?.capacity?.[dimension] >= 7);
+    const lowCap = entries.filter(e => e.neuroMetrics?.capacity?.[dimension] <= 4);
 
     if (highCap.length > 0 && lowCap.length > 0) {
       const avgMoodHigh = highCap.reduce((a, b) => a + b.mood, 0) / highCap.length;
@@ -59,11 +60,11 @@ export const generateInsights = (entries: HealthEntry[], wearableData: WearableD
   });
 
   // 2. Sensory Load Impact
-  const highSensory = entries.filter(e => e.neuroMetrics.sensoryLoad >= 7);
+  const highSensory = entries.filter(e => e.neuroMetrics?.sensoryLoad >= 7);
   if (highSensory.length > 2) {
-    const avgFocus = highSensory.reduce((a, b) => a + b.neuroMetrics.capacity.focus, 0) / highSensory.length;
+    const avgFocus = highSensory.reduce((a, b) => a + (b.neuroMetrics?.capacity?.focus || 0), 0) / highSensory.length;
     // Compare to overall average focus
-    const overallFocus = entries.reduce((a, b) => a + b.neuroMetrics.capacity.focus, 0) / entries.length;
+    const overallFocus = entries.reduce((a, b) => a + (b.neuroMetrics?.capacity?.focus || 0), 0) / entries.length;
     
     if (avgFocus < overallFocus - 1) {
        insights.push({
@@ -76,10 +77,10 @@ export const generateInsights = (entries: HealthEntry[], wearableData: WearableD
   }
 
   // 3. Masking Cost
-  const highMasking = entries.filter(e => (e.neuroMetrics.maskingScore || 0) >= 7);
+  const highMasking = entries.filter(e => (e.neuroMetrics?.maskingScore || 0) >= 7);
   if (highMasking.length > 0) {
-      const avgSpoons = highMasking.reduce((a, b) => a + b.neuroMetrics.spoonLevel, 0) / highMasking.length;
-      const overallSpoons = entries.reduce((a, b) => a + b.neuroMetrics.spoonLevel, 0) / entries.length;
+      const avgSpoons = highMasking.reduce((a, b) => a + (b.neuroMetrics?.spoonLevel || 0), 0) / highMasking.length;
+      const overallSpoons = entries.reduce((a, b) => a + (b.neuroMetrics?.spoonLevel || 0), 0) / entries.length;
 
       if (avgSpoons < overallSpoons - 1) {
           insights.push({
@@ -106,8 +107,8 @@ export const generateInsights = (entries: HealthEntry[], wearableData: WearableD
       });
 
       if (poorSleepDays.length > 0 && goodSleepDays.length > 0) {
-          const avgFocusPoor = poorSleepDays.reduce((a, b) => a + b.neuroMetrics.capacity.focus, 0) / poorSleepDays.length;
-          const avgFocusGood = goodSleepDays.reduce((a, b) => a + b.neuroMetrics.capacity.focus, 0) / goodSleepDays.length;
+          const avgFocusPoor = poorSleepDays.reduce((a, b) => a + (b.neuroMetrics?.capacity?.focus || 0), 0) / poorSleepDays.length;
+          const avgFocusGood = goodSleepDays.reduce((a, b) => a + (b.neuroMetrics?.capacity?.focus || 0), 0) / goodSleepDays.length;
           
           if (avgFocusGood - avgFocusPoor > 1.5) {
                insights.push({
@@ -132,8 +133,8 @@ export const generateInsights = (entries: HealthEntry[], wearableData: WearableD
       });
       
       if (lowHRVDays.length > 0 && highHRVDays.length > 0) {
-           const avgSensoryLow = lowHRVDays.reduce((a,b) => a + b.neuroMetrics.capacity.sensory, 0) / lowHRVDays.length;
-           const avgSensoryHigh = highHRVDays.reduce((a,b) => a + b.neuroMetrics.capacity.sensory, 0) / highHRVDays.length;
+           const avgSensoryLow = lowHRVDays.reduce((a,b) => a + (b.neuroMetrics?.capacity?.sensory || 0), 0) / lowHRVDays.length;
+           const avgSensoryHigh = highHRVDays.reduce((a,b) => a + (b.neuroMetrics?.capacity?.sensory || 0), 0) / highHRVDays.length;
 
            if (avgSensoryHigh - avgSensoryLow > 1) {
                insights.push({
@@ -155,13 +156,13 @@ export const generateInsights = (entries: HealthEntry[], wearableData: WearableD
       tagStats.set(tag, {
         count: current.count + 1,
         totalMood: current.totalMood + e.mood,
-        totalSpoons: current.totalSpoons + e.neuroMetrics.spoonLevel
+        totalSpoons: current.totalSpoons + (e.neuroMetrics?.spoonLevel || 0)
       });
     });
   });
 
   const globalAvgMood = entries.reduce((a, b) => a + b.mood, 0) / entries.length;
-  const globalAvgSpoons = entries.reduce((a, b) => a + b.neuroMetrics.spoonLevel, 0) / entries.length;
+  const globalAvgSpoons = entries.reduce((a, b) => a + (b.neuroMetrics?.spoonLevel || 0), 0) / entries.length;
 
   tagStats.forEach((stats, tag) => {
     if (stats.count >= 3) { // Minimum sample size
@@ -199,13 +200,19 @@ export const generateInsights = (entries: HealthEntry[], wearableData: WearableD
  */
 export const generateDailyStrategy = (latestEntry: HealthEntry): StrategyRecommendation[] => {
     // 1. Prefer AI generated strategies from the entry
-    if (latestEntry.aiStrategies && latestEntry.aiStrategies.length > 0) {
+    if (latestEntry.aiStrategies && Array.isArray(latestEntry.aiStrategies) && latestEntry.aiStrategies.length > 0) {
         return latestEntry.aiStrategies;
     }
 
     // 2. Fallback Logic (Legacy)
     const strategies: StrategyRecommendation[] = [];
     const metrics = latestEntry.neuroMetrics;
+    
+    // Guard against missing data
+    if (!metrics || !metrics.capacity) {
+        return strategies; // Return empty array, not undefined
+    }
+    
     const capacity = metrics.capacity;
 
     // Social Battery Check
@@ -360,8 +367,8 @@ export const calculateBurnoutTrajectory = (entries: HealthEntry[]): BurnoutForec
     // Determine Trend
     const firstHalf = recent.slice(0, Math.floor(recent.length / 2));
     const secondHalf = recent.slice(Math.floor(recent.length / 2));
-    const avgFirst = firstHalf.reduce((a,b) => a + (b.neuroMetrics.spoonLevel), 0) / firstHalf.length;
-    const avgSecond = secondHalf.reduce((a,b) => a + (b.neuroMetrics.spoonLevel), 0) / secondHalf.length;
+    const avgFirst = firstHalf.reduce((a,b) => a + (b.neuroMetrics?.spoonLevel || 0), 0) / firstHalf.length;
+    const avgSecond = secondHalf.reduce((a,b) => a + (b.neuroMetrics?.spoonLevel || 0), 0) / secondHalf.length;
     
     if (avgSecond < avgFirst - 1) recentTrend = 'FALLING'; // Capacity is dropping
     else if (avgSecond > avgFirst + 1) recentTrend = 'RISING'; // Capacity is improving
@@ -382,7 +389,7 @@ export const calculateBurnoutTrajectory = (entries: HealthEntry[]): BurnoutForec
  * Quantifies the "tax" of context switching.
  */
 export const calculateCognitiveLoad = (entry: HealthEntry): CognitiveLoadMetrics => {
-  const switches = entry.neuroMetrics.contextSwitches || 0;
+  const switches = entry.neuroMetrics?.contextSwitches || 0;
   
   // Rule of thumb: Each switch costs ~5% efficiency due to "residue"
   // Cap at 60% loss

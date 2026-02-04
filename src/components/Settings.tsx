@@ -72,11 +72,14 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
   const [showCalibration, setShowCalibration] = useState(false);
 
   useEffect(() => {
-    const settings = getUserSettings();
-    if (settings.cycleStartDate) setCycleStart(settings.cycleStartDate);
-    if (settings.avgCycleLength) setCycleLength(settings.avgCycleLength);
-    if (settings.safetyContact) setSafetyContact(settings.safetyContact);
-  }, []);
+    const loadSettings = async () => {
+      const settings = await getUserSettings();
+      if (settings.cycleStartDate) setCycleStart(settings.cycleStartDate);
+      if (settings.avgCycleLength) setCycleLength(settings.avgCycleLength);
+      if (settings.safetyContact) setSafetyContact(settings.safetyContact);
+    };
+    loadSettings();
+  }, [updateSettings]);
 
   const handleConnect = async (provider: ProviderType) => {
     setLoading(provider);
@@ -118,8 +121,8 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
     }
   };
 
-  const saveBioContext = () => {
-    saveUserSettings({
+  const saveBioContext = async () => {
+    await saveUserSettings({
       cycleStartDate: cycleStart,
       avgCycleLength: cycleLength,
       safetyContact: safetyContact,
@@ -484,7 +487,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
           <div className="grid grid-cols-3 gap-4">
             <button
-              onClick={() => updateSettings({ theme: "light" })}
+              onClick={async () => await updateSettings({ theme: "light" })}
               className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                 userSettings.theme === "light"
                   ? "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
@@ -495,7 +498,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               <span className="font-medium">Light</span>
             </button>
             <button
-              onClick={() => updateSettings({ theme: "dark" })}
+              onClick={async () => await updateSettings({ theme: "dark" })}
               className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                 userSettings.theme === "dark"
                   ? "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
@@ -506,7 +509,7 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
               <span className="font-medium">Dark</span>
             </button>
             <button
-              onClick={() => updateSettings({ theme: "system" })}
+              onClick={async () => await updateSettings({ theme: "system" })}
               className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                 userSettings.theme === "system"
                   ? "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"

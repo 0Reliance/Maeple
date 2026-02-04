@@ -93,31 +93,33 @@ class ImageWorkerManager {
     this.isInitializing = true;
     this.initializationPromise = new Promise((resolve, reject) => {
       try {
-        // Dynamically import worker
-        const workerUrl = new URL(
-          '../workers/imageProcessor.worker.ts',
-          import.meta.url
-        );
-        
-        this.worker = new Worker(workerUrl, { type: 'module' });
-        
-        this.worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
-          this.handleMessage(event.data);
-        };
-        
-        this.worker.onerror = (error) => {
-          console.error('[ImageWorkerManager] Worker error:', error);
-          this.cleanup();
-          reject(new Error('Worker initialization failed'));
-        };
-        
-        resolve();
+        // Use Vite's worker import with ?worker suffix
+        // This tells Vite to compile and bundle the worker properly
+        import('../workers/imageProcessor?worker').then((workerModule) => {
+          const WorkerConstructor = workerModule.default;
+          this.worker = new WorkerConstructor();
+          
+          this.worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
+            this.handleMessage(event.data);
+          };
+          
+          this.worker.onerror = (error) => {
+            console.error('[ImageWorkerManager] Worker error:', error);
+            this.cleanup();
+            reject(new Error('Worker initialization failed'));
+          };
+          
+          resolve();
+        }).catch((error) => {
+          console.error('[ImageWorkerManager] Failed to initialize worker:', error);
+          reject(error);
+        }).finally(() => {
+          this.isInitializing = false;
+          this.initializationPromise = null;
+        });
       } catch (error) {
         console.error('[ImageWorkerManager] Failed to initialize worker:', error);
         reject(error);
-      } finally {
-        this.isInitializing = false;
-        this.initializationPromise = null;
       }
     });
     
@@ -281,7 +283,11 @@ class ImageWorkerManager {
     
     // Reject all pending requests
     this.requests.forEach((request) => {
-      request.reject(new Error('Worker terminated'));
+      try {
+        request.reject(new Error('Worker terminated'));
+      } catch (error) {
+        // Ignore errors during rejection
+      }
     });
     
     this.requests.clear();

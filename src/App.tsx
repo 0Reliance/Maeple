@@ -17,13 +17,13 @@ import LandingPage from "./components/LandingPage";
 import MobileNav from "./components/MobileNav";
 import Roadmap from "./components/Roadmap";
 import SearchResources from "./components/SearchResources";
-import SyncIndicator from "./components/SyncIndicator";
+
 import Terms from "./components/Terms";
 import { usePWAInstall } from "./hooks/usePWAInstall";
 
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import ToastNotification from "./components/ToastNotification";
-import UserMenu from "./components/UserMenu";
+
 import { DependencyProvider } from "./contexts/DependencyContext";
 import { ObservationProvider } from "./contexts/ObservationContext";
 import { getDependencies } from "./factories/dependencyFactory";
@@ -149,30 +149,25 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-bg-primary dark:bg-dark-bg-primary flex flex-col font-sans text-text-primary dark:text-dark-text-primary">
-      {/* Top Header (Branding & Sync) */}
-      <div className="bg-bg-card/90 dark:bg-dark-bg-card/90 backdrop-blur-md border-b border-bg-secondary dark:border-dark-bg-secondary p-4 flex justify-between items-center sticky top-0 z-30 shadow-card">
-        <div className="w-8"></div> {/* Spacer */}
+      {/* Top Header - Thin Decorative */}
+      <div className="bg-bg-card/90 dark:bg-dark-bg-card/90 backdrop-blur-md border-b border-bg-secondary dark:border-dark-bg-secondary px-4 py-2 flex justify-between items-center sticky top-0 z-30 shadow-card">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent-action rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
+          <div className="w-6 h-6 bg-gradient-to-br from-primary to-accent-action rounded-md flex items-center justify-center text-white font-bold text-sm shadow-sm">
             M
           </div>
-          <span className="font-bold text-text-primary dark:text-dark-text-primary tracking-tight">
-            MAEPLE <span className="text-xs text-primary font-normal">v0.97.7</span>
+          <span className="font-semibold text-text-primary dark:text-dark-text-primary text-sm tracking-tight">
+            MAEPLE
           </span>
         </div>
-        <div className="flex items-center gap-4">
-          {isInstallable && (
-            <button
-              onClick={install}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-accent-positive/10 dark:bg-accent-positive/20 text-accent-positive dark:text-accent-positive rounded-lg text-sm font-medium hover:bg-accent-positive/20 dark:hover:bg-accent-positive/30 transition-colors"
-            >
-              <Download size={16} />
-              <span>Install App</span>
-            </button>
-          )}
-          <SyncIndicator />
-          <UserMenu />
-        </div>
+        {isInstallable && (
+          <button
+            onClick={install}
+            className="hidden md:flex items-center gap-1.5 px-2 py-1 bg-accent-positive/10 dark:bg-accent-positive/20 text-accent-positive dark:text-accent-positive rounded text-xs font-medium hover:bg-accent-positive/20 dark:hover:bg-accent-positive/30 transition-colors"
+          >
+            <Download size={14} />
+            <span>Install</span>
+          </button>
+        )}
       </div>
 
       {/* Sidebar Navigation REMOVED - All navigation via bottom bar and UserMenu */}

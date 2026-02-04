@@ -77,12 +77,12 @@ const openDB = (): Promise<IDBDatabase> => {
       }
     };
 
-    request.onsuccess = event => {
-      resolve((event.target as IDBOpenDBRequest).result);
+    request.onsuccess = () => {
+      resolve(request.result);
     };
 
-    request.onerror = event => {
-      reject((event.target as IDBOpenDBRequest).error);
+    request.onerror = () => {
+      reject(request.error);
     };
   });
 };
@@ -92,13 +92,35 @@ export const saveStateCheck = async (
   imageBlob?: Blob
 ): Promise<string> => {
   return withRetry(async () => {
+    console.log('[saveStateCheck] === SAVE OPERATION START ===');
+    console.log('[saveStateCheck] Input data:', {
+      id: data.id,
+      hasAnalysis: !!data.analysis,
+      actionUnitsCount: data.analysis?.actionUnits?.length || 0,
+      hasBlob: !!imageBlob,
+      blobSize: imageBlob?.size || 0
+    });
+    
     const db = await openDB();
     const id = data.id || `state_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    console.log('[saveStateCheck] Coercing facial analysis...');
     const analysisToEncrypt = coerceFacialAnalysis(data.analysis, {
       stateCheckId: id,
       source: "saveStateCheck",
     });
+    
+    console.log('[saveStateCheck] Coerced analysis:', {
+      actionUnitsCount: analysisToEncrypt.actionUnits?.length || 0,
+      confidence: analysisToEncrypt.confidence,
+      hasFacsInterpretation: !!analysisToEncrypt.facsInterpretation,
+      jawTension: analysisToEncrypt.jawTension,
+      eyeFatigue: analysisToEncrypt.eyeFatigue
+    });
+    
+    console.log('[saveStateCheck] Encrypting analysis...');
     const { cipher, iv } = await encryptData(analysisToEncrypt);
+    console.log('[saveStateCheck] Encryption complete, cipher length:', cipher.length);
 
     const record = {
       ...data,

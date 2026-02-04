@@ -5,6 +5,7 @@ import { cacheService } from "./cacheService";
 import { createCircuitBreaker } from "./circuitBreaker";
 import { errorLogger } from "./errorLogger";
 import { rateLimitedCall } from "./rateLimiter";
+import { safeParseAIResponse } from "../utils/safeParse";
 
 // Validate and retrieve API Key - returns null if not available
 const getApiKey = (): string | null => {
@@ -445,11 +446,14 @@ Gentle inquiry format:
     });
 
     if (routerResult?.content) {
-      try {
-        const parsed = JSON.parse(routerResult.content);
-        return validateParsedResponse(parsed);
-      } catch (parseErr) {
-        console.warn("Router JSON parse failed, falling back to Gemini SDK", parseErr);
+      const { data, error } = safeParseAIResponse<ParsedResponse>(routerResult.content, {
+        context: 'geminiService:router',
+        stripMarkdown: true,
+      });
+      if (error) {
+        console.warn("Router JSON parse failed, falling back to Gemini SDK", error);
+      } else if (data) {
+        return validateParsedResponse(data);
       }
     }
 
@@ -479,8 +483,14 @@ Gentle inquiry format:
     const textResponse = response.text;
     if (!textResponse) throw new Error("No response from AI");
 
-    const parsed = JSON.parse(textResponse);
-    const validated = validateParsedResponse(parsed);
+    const { data, error } = safeParseAIResponse<ParsedResponse>(textResponse, {
+      context: 'geminiService:direct',
+      stripMarkdown: true,
+    });
+    if (error) {
+      throw new Error(error);
+    }
+    const validated = validateParsedResponse(data!);
 
     // Cache successful results
     if (useCache) {

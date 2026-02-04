@@ -47,10 +47,10 @@ interface AppActions {
   closeMobileMenu: () => void;
 
   // Entry actions
-  addEntry: (entry: HealthEntry) => void;
-  updateEntry: (entry: HealthEntry) => void;
-  removeEntry: (id: string) => void;
-  loadEntries: () => void;
+  addEntry: (entry: HealthEntry) => Promise<void>;
+  updateEntry: (entry: HealthEntry) => Promise<void>;
+  removeEntry: (id: string) => Promise<void>;
+  loadEntries: () => Promise<void>;
 
   // Wearable actions
   setWearableData: (data: WearableDataPoint[]) => void;
@@ -59,8 +59,8 @@ interface AppActions {
   clearWearableData: () => void;
 
   // Settings actions
-  updateSettings: (settings: Partial<UserSettings>) => void;
-  loadSettings: () => void;
+  updateSettings: (settings: Partial<UserSettings>) => Promise<void>;
+  loadSettings: () => Promise<void>;
 
   // Status actions
   setAiInitialized: (initialized: boolean) => void;
@@ -123,23 +123,23 @@ export const useAppStore = create<AppStore>()(
         },
 
         // Entry actions
-        addEntry: (entry) => {
-          const updated = saveEntry(entry);
+        addEntry: async (entry) => {
+          const updated = await saveEntry(entry);
           set({ entries: updated }, false, "addEntry");
         },
 
-        updateEntry: (entry) => {
-          const updated = saveEntry(entry);
+        updateEntry: async (entry) => {
+          const updated = await saveEntry(entry);
           set({ entries: updated }, false, "updateEntry");
         },
 
-        removeEntry: (id) => {
-          const updated = deleteEntry(id);
+        removeEntry: async (id) => {
+          const updated = await deleteEntry(id);
           set({ entries: updated }, false, "removeEntry");
         },
 
-        loadEntries: () => {
-          const entries = getEntries();
+        loadEntries: async () => {
+          const entries = await getEntries();
           set({ entries }, false, "loadEntries");
         },
 
@@ -179,10 +179,10 @@ export const useAppStore = create<AppStore>()(
         },
 
         // Settings actions
-        updateSettings: (settings) => {
+        updateSettings: async (settings) => {
           const current = get().userSettings;
           const updated = { ...current, ...settings };
-          saveUserSettings(updated);
+          await saveUserSettings(updated);
 
           // Apply theme
           if (settings.theme) {
@@ -204,8 +204,8 @@ export const useAppStore = create<AppStore>()(
           set({ userSettings: updated }, false, "updateSettings");
         },
 
-        loadSettings: () => {
-          const settings = getUserSettings();
+        loadSettings: async () => {
+          const settings = await getUserSettings();
           set({ userSettings: settings }, false, "loadSettings");
         },
 
@@ -230,8 +230,8 @@ export const useAppStore = create<AppStore>()(
 
           try {
             // Load data from storage
-            const entries = getEntries();
-            const settings = getUserSettings();
+            const entries = await getEntries();
+            const settings = await getUserSettings();
 
             // Apply theme
             if (settings.theme) {

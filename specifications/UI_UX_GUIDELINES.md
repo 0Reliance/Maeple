@@ -35,17 +35,32 @@ MAEPLE uses Tailwind CSS with the `class` strategy for dark mode.
 
 ### 3.1 Navigation
 
-- **MobileNav**: Bottom bar navigation visible on all devices with 5 items:
+#### Top Header (Thin & Decorative)
+- **Logo**: MAEPLE branding (minimal, decorative element)
+- **Install Button**: Desktop-only PWA install button (hidden on mobile)
+- Minimal design to maximize content space
+
+#### Bottom Navigation (MobileNav)
+- **5-item bottom bar** visible on all devices:
   - **Patterns** → Dashboard
   - **Reflect** → Bio-Mirror
-  - **Capture** (center action) → Journal
+  - **Capture** (center action, floating) → Journal
   - **Guide** → Live Coach
-  - **Menu** → Settings
-- **UserMenu**: Top-right dropdown for account actions and secondary features:
-  - Settings, Vision Board, Clinical Report
-  - Resources, Guide & Vision, Terms & Legal
+  - **User** (avatar) → User menu dropdown
+- **User Menu Dropdown**: Opens upward from bottom nav with:
+  - Account section (email display)
+  - Settings
+  - MAEPLE Report
+  - Wellness Assistant
+  - Guide & Vision
+  - Terms & Legal
+  - Beta Dashboard
   - Sign Out
-- **PWA Install**: A discrete "Install App" button appears in the top-right corner when the browser supports installation.
+- **Design Principles**:
+  - All primary navigation in bottom bar for thumb-friendly access
+  - User profile/settings accessible from bottom right
+  - Floating action button (Capture) remains prominent in center
+  - Dropdown menu opens above nav bar to avoid covering content
 
 ### 3.2 Dashboard & Cards
 

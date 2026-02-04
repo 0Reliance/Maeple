@@ -1,7 +1,28 @@
 # MAEPLE Product Roadmap
 
-**Last Updated**: January 4, 2026  
-**Current Version**: 0.97.5
+**Last Updated**: February 1, 2026  
+**Current Version**: 0.97.7
+
+---
+
+## 📊 Current Status Overview
+
+| Phase | Status | Completion |
+|-------|--------|------------|
+| Phase 0-16 | ✅ Complete | Core platform, AI, Bio-Mirror, testing |
+| Phase 17 | 🟡 In Progress | Wearable ecosystem |
+| Phase 18 | 🟡 In Progress | Advanced AI features |
+| Test Infrastructure | ⚠️ Needs Attention | Mock fixes required |
+
+**Test Suite Status (Feb 1, 2026):**
+- 423 tests passing (84%)
+- 78 tests failing (infrastructure/mocks)
+- 20 uncaught exceptions (IndexedDB mock)
+- See [PROJECT_STATUS_2026-02-01.md](../PROJECT_STATUS_2026-02-01.md) for details
+
+---
+
+## ✅ Completed Phases
 
 This document tracks the evolution of MAEPLE from a simple journal to a clinical-grade digital phenotype engine.
 
@@ -55,22 +76,29 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 ### Phase 16: Code Quality (January 2026)
 - [x] React 19 upgrade with concurrent features
 - [x] TypeScript strict mode compliance
-- [x] Comprehensive test suite (246 tests)
+- [x] Comprehensive test suite (501 tests)
 - [x] Production-ready authentication (Supabase)
 - [x] Circuit breaker event subscriptions
 - [x] Type-safe Supabase client
+
+### Phase 17: Test Infrastructure Hardening (February 2026)
+- [ ] Fix AI Router mock (`isAIAvailable` method)
+- [ ] Fix IndexedDB mock (null result handling)
+- [ ] Fix Image Worker timeout on invalid input
+- [ ] Review Comparison Engine edge case logic
+- [ ] Achieve 100% test pass rate
 
 ---
 
 ## 🟡 In Progress
 
-### Phase 17: Wearable Ecosystem
+### Phase 18: Wearable Ecosystem (was Phase 17)
 - [ ] Apple Health native integration via Capacitor
 - [ ] Garmin OAuth2 integration for real-time stress data
 - [ ] Fitbit/Whoop provider support
 - [ ] Real-time sync with background refresh
 
-### Phase 18: Advanced AI Features
+### Phase 19: Advanced AI Features (was Phase 18)
 - [ ] OpenAI Realtime voice sessions
 - [ ] Predictive capacity forecasting
 - [ ] Custom strategy learning from user feedback
@@ -79,13 +107,13 @@ This document tracks the evolution of MAEPLE from a simple journal to a clinical
 
 ## 🔮 Future Phases
 
-### Phase 19: Healthcare Integration
+### Phase 20: Healthcare Integration (was Phase 19)
 - [ ] Provider portal for therapists
 - [ ] EHR integration (Epic, Cerner)
 - [ ] Clinical report generation
 - [ ] Therapy session notes import
 
-### Phase 20: Community Features
+### Phase 21: Community Features (was Phase 20)
 - [ ] Anonymous pattern sharing
 - [ ] Community strategies library
 - [ ] Peer support matching

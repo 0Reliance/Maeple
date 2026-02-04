@@ -64,6 +64,33 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
               <p className="text-slate-500 dark:text-slate-400 mt-2">
                   Please log at least 5 entries to generate a meaningful Capacity & Wellness Report.
               </p>
+              <div className="mt-6 p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800 text-left max-w-lg mx-auto">
+                  <h3 className="font-bold text-indigo-800 dark:text-indigo-200 mb-3">Why This Report Matters</h3>
+                  <p className="text-sm text-indigo-700 dark:text-indigo-300 leading-relaxed mb-3">
+                      MAEPLE Report helps you and your care team understand your unique patterns. By tracking capacity, mood, and biological context over time, we can identify:
+                  </p>
+                  <ul className="text-sm text-indigo-700 dark:text-indigo-300 space-y-2">
+                      <li className="flex items-start gap-2">
+                          <span className="text-indigo-500 mt-1">•</span>
+                          <span><strong>Early burnout warning signs</strong> before crisis</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                          <span className="text-indigo-500 mt-1">•</span>
+                          <span><strong>Biological patterns</strong> (cycle phases, sleep quality)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                          <span className="text-indigo-500 mt-1">•</span>
+                          <span><strong>Environmental triggers</strong> that impact your capacity</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                          <span className="text-indigo-500 mt-1">•</span>
+                          <span><strong>Your baseline capacity</strong> across 7 functional domains</span>
+                      </li>
+                  </ul>
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-4 italic">
+                      This is not a diagnostic tool, but a support resource for self-understanding and informed conversations with healthcare providers.
+                  </p>
+              </div>
           </div>
       );
   }
@@ -72,10 +99,16 @@ const ClinicalReport: React.FC<Props> = ({ entries, wearableData }) => {
     <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn pb-12 print:p-0 print:max-w-none">
       
       {/* Header / Actions */}
-      <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm print:hidden">
-        <div>
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Capacity & Wellness Report</h1>
+      <div className="flex justify-between items-start bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm print:hidden gap-6">
+        <div className="flex-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">MAEPLE Report</h1>
             <p className="text-slate-500 dark:text-slate-400">Longitudinal analysis for support context.</p>
+            <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
+                <h3 className="font-bold text-indigo-800 dark:text-indigo-200 text-sm mb-2">What This Report Shows</h3>
+                <p className="text-sm text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                    Based on your journal entries, this report visualizes your capacity patterns, burnout trajectory, and correlational insights. The data is grounded in established metrics for neurodivergent wellness tracking.
+                </p>
+            </div>
         </div>
         <button 
             onClick={handlePrint}

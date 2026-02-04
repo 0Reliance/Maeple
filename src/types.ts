@@ -108,8 +108,8 @@ export interface ChatMessage {
 export interface ParsedResponse {
   moodScore: number;
   moodLabel: string;
-  medications: { name: string; amount: string; unit: string }[];
-  symptoms: { name: string; severity: number }[];
+  medications: { name: string; amount?: string; unit?: string }[];
+  symptoms: { name: string; severity?: number }[];
   neuroMetrics: {
     environmentalMentions: string[];
     socialMentions: string[];

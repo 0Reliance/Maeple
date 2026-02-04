@@ -26,20 +26,36 @@ const StateCheckResults: React.FC<Props> = ({
   const [safetyContact, setSafetyContact] = useState<string>("");
 
   useEffect(() => {
-    const settings = getUserSettings();
-    if (settings.safetyContact) setSafetyContact(settings.safetyContact);
+    const loadSettings = async () => {
+      const settings = await getUserSettings();
+      if (settings.safetyContact) setSafetyContact(settings.safetyContact);
+    };
+    loadSettings();
   }, []);
 
   // Run Comparison Logic with Baseline
   const comparison = compareSubjectiveToObjective(recentEntry, analysis, baseline);
 
   const handleSave = async () => {
+    console.log('[StateCheckResults] === SAVE OPERATION START ===');
+    console.log('[StateCheckResults] Analysis to save:', {
+      actionUnitsCount: analysis.actionUnits?.length || 0,
+      confidence: analysis.confidence,
+      hasFacsInterpretation: !!analysis.facsInterpretation,
+      jawTension: analysis.jawTension,
+      eyeFatigue: analysis.eyeFatigue,
+      hasObservations: analysis.observations?.length || 0
+    });
+    
     setIsSaving(true);
     try {
       // Convert base64 to Blob for storage
+      console.log('[StateCheckResults] Converting image to blob...');
       const response = await fetch(imageSrc);
       const blob = await response.blob();
+      console.log('[StateCheckResults] Blob created, size:', blob.size);
 
+      console.log('[StateCheckResults] Calling saveStateCheck...');
       const id = await saveStateCheck(
         {
           id: uuidv4(),
@@ -49,9 +65,10 @@ const StateCheckResults: React.FC<Props> = ({
         blob
       );
 
+      console.log('[StateCheckResults] Save successful, ID:', id);
       setSavedId(id);
     } catch (e) {
-      console.error("Failed to save", e);
+      console.error("[StateCheckResults] Failed to save:", e);
       alert("Failed to save securely.");
     } finally {
       setIsSaving(false);
@@ -198,13 +215,13 @@ const StateCheckResults: React.FC<Props> = ({
             )}
 
             {/* NEW: FACS Action Units Display */}
-            {analysis.actionUnits && analysis.actionUnits.length > 0 && (
+            {analysis.actionUnits && Array.isArray(analysis.actionUnits) && analysis.actionUnits.length > 0 && (
               <div className="mt-4 bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800">
                 <p className="text-xs text-indigo-600 dark:text-indigo-400 font-bold uppercase mb-3 flex items-center gap-2">
                   <Activity size={14} /> Action Units Detected (FACS)
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {analysis.actionUnits.map((au, i) => (
+                  {analysis.actionUnits.map((au: any, i: number) => (
                     <div
                       key={i}
                       className="px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-indigo-200 dark:border-indigo-700 shadow-sm"

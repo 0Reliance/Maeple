@@ -80,14 +80,13 @@ const UserMenu: React.FC = () => {
 
           <div className="py-1">
             <MenuItem to={viewToPath[View.SETTINGS]} icon={Settings} label="Settings" />
-            <MenuItem to={viewToPath[View.VISION]} icon={ImageIcon} label="Vision Board" />
-            <MenuItem to={viewToPath[View.CLINICAL]} icon={FileText} label="Clinical Report" />
+            <MenuItem to={viewToPath[View.CLINICAL]} icon={FileText} label="MAEPLE Report" />
           </div>
           
           <div className="border-t border-bg-secondary dark:border-dark-bg-secondary my-1"></div>
           
           <div className="py-1">
-            <MenuItem to={viewToPath[View.SEARCH]} icon={Search} label="Resources" />
+            <MenuItem to={viewToPath[View.SEARCH]} icon={Search} label="Wellness Assistant" />
             <MenuItem to={viewToPath[View.GUIDE]} icon={BookOpen} label="Guide & Vision" />
             <MenuItem to={viewToPath[View.TERMS]} icon={Shield} label="Terms & Legal" />
             <MenuItem to={viewToPath[View.BETA_DASHBOARD]} icon={Terminal} label="Beta Dashboard" />

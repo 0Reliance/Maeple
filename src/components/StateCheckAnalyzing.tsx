@@ -144,6 +144,15 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
 
         setAnalysisResult(result);
         
+        // CRITICAL: Log AI result for debugging
+        console.log('[StateCheckAnalyzing] === AI ANALYSIS COMPLETE ===');
+        console.log('[StateCheckAnalyzing] Action Units count:', result.actionUnits?.length || 0);
+        console.log('[StateCheckAnalyzing] Confidence:', result.confidence);
+        console.log('[StateCheckAnalyzing] FACS Interpretation:', result.facsInterpretation);
+        console.log('[StateCheckAnalyzing] Jaw Tension:', result.jawTension);
+        console.log('[StateCheckAnalyzing] Eye Fatigue:', result.eyeFatigue);
+        console.log('[StateCheckAnalyzing] Full analysis object:', result);
+        
         // Extract detected Action Units from result
         if (result.actionUnits) {
           setDetectedAUs(result.actionUnits);
@@ -177,11 +186,33 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
         }, 1000);
 
       } catch (error) {
-        console.error("Analysis failed:", error);
+        console.error("[StateCheckAnalyzing] Analysis failed:", error);
+        
         // Handle error gracefully
         setIsComplete(true);
         setTimeout(() => {
-          onComplete?.({ actionUnits: [], confidence: 0, error: error });
+          const fallbackResult = {
+            actionUnits: [],
+            confidence: 0,
+            observations: [],
+            lighting: 'unknown' as const,
+            lightingSeverity: 'moderate' as const,
+            environmentalClues: [],
+            primaryEmotion: 'neutral',
+            jawTension: 0,
+            eyeFatigue: 0,
+            signs: [],
+            facsInterpretation: {
+              duchennSmile: false,
+              socialSmile: false,
+              maskingIndicators: [],
+              fatigueIndicators: [],
+              tensionIndicators: []
+            },
+            error: error
+          };
+          console.log('[StateCheckAnalyzing] Returning fallback result:', fallbackResult);
+          onComplete?.(fallbackResult);
         }, 1000);
       }
     };
@@ -244,8 +275,8 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
                   className="w-full h-full object-cover scale-x-[-1]"
                 />
                 
-                {/* Facial Landmarks Overlay */}
-                {currentStep >= 1 && (
+                {/* Facial Landmarks Overlay - Only show when we have actual AU detections */}
+                {currentStep >= 1 && detectedAUs.length > 0 && (
                   <div className="absolute inset-0">
                     {FACIAL_LANDMARKS.map((landmark, index) => (
                       <div

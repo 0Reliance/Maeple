@@ -3,6 +3,7 @@ import { Search, Globe, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { useAIService } from "@/contexts/DependencyContext";
 import { CircuitState } from "@/patterns/CircuitBreaker";
 import AILoadingState from "./AILoadingState";
+import { safeParseAIResponse } from "../utils/safeParse";
 
 // Type for search results
 interface GroundingChunk {
@@ -50,13 +51,17 @@ const SearchResources: React.FC = () => {
       const text = response.content;
       let grounding: GroundingChunk[] = [];
       
-      // Try to extract JSON sources
+      // Try to extract JSON sources using safeParse
       const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
       if (jsonMatch) {
-        try {
-          grounding = JSON.parse(jsonMatch[0]);
-        } catch (e) {
-          console.warn("Failed to parse sources JSON", e);
+        const { data, error } = safeParseAIResponse<GroundingChunk[]>(jsonMatch[0], {
+          context: 'SearchResources',
+          stripMarkdown: false,
+        });
+        if (!error && data) {
+          grounding = data;
+        } else {
+          console.warn("Failed to parse sources JSON", error);
         }
       }
       
@@ -81,11 +86,48 @@ const SearchResources: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-6 text-white shadow-lg">
-        <h2 className="text-xl font-bold mb-2">Health Knowledge Base</h2>
+        <h2 className="text-xl font-bold mb-2">Wellness Assistant</h2>
         <p className="text-blue-100 mb-6 text-sm">
-          Powered by Google Search Grounding for up-to-date medical info.
+          Search trusted health information with AI-powered insights and verified sources.
         </p>
+        <div className="mt-6 p-4 bg-white/10 rounded-xl border border-white/20">
+          <h3 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
+            <Globe size={16} className="text-blue-200" />
+            What Makes This Trustworthy
+          </h3>
+          <ul className="text-sm space-y-2 text-blue-100">
+            <li className="flex items-start gap-2">
+              <span className="text-blue-200 mt-1">"</span>
+              <span><strong>Grounded Search:</strong> Uses Google Search Grounding to verify information against current medical sources</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-200 mt-1">"</span>
+              <span><strong>Source Citations:</strong> Every answer includes direct links to original medical literature</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-200 mt-1">"</span>
+              <span><strong>AI Synthesis:</strong> Complex medical information is summarized into understandable language</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-200 mt-1">"</span>
+              <span><strong>Privacy First:</strong> Your search queries are processed but never used to train AI models</span>
+            </li>
+          </ul>
+        </div>
+      </div>
 
+      <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border border-blue-100 dark:border-blue-800">
+        <h3 className="font-bold text-blue-800 dark:text-blue-200 text-sm mb-3 flex items-center gap-2">
+          <AlertCircle size={18} />
+          Important: Not Medical Advice
+        </h3>
+        <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+          The Wellness Assistant provides information for educational purposes only. Always consult with qualified healthcare providers for diagnosis and treatment decisions. This tool helps you ask informed questions during medical conversations.
+        </p>
+      </div>
+
+      {/* Search Input */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
         <form onSubmit={handleSearch} className="relative">
           <input
             type="text"

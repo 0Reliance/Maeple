@@ -33,7 +33,8 @@ import {
   generateInsights,
 } from "../services/analytics";
 import { getUserSettings } from "../services/storageService";
-import { HealthEntry, WearableDataPoint } from "../types";
+import { HealthEntry, UserSettings, WearableDataPoint } from "../types";
+import { useEffect } from "react";
 import { Badge } from "./ui/Badge";
 import { Button } from "./ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/Card";
@@ -65,6 +66,16 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
   wearableData = [],
 }) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [userSettings, setUserSettings] = useState<UserSettings>({ avgCycleLength: 28 });
+
+  // Load user settings asynchronously
+  useEffect(() => {
+    const loadSettings = async () => {
+      const settings = await getUserSettings();
+      setUserSettings(settings);
+    };
+    loadSettings();
+  }, []);
 
   // Generate Insights
   const insights = useMemo(() => generateInsights(entries, wearableData), [entries, wearableData]);
@@ -77,7 +88,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
     );
     const latest = sorted[0];
     return {
-      strategies: generateDailyStrategy(latest),
+      strategies: generateDailyStrategy(latest) || [],
       cognitiveLoad: calculateCognitiveLoad(latest),
     };
   }, [entries]);
@@ -86,7 +97,6 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
   const forecast = useMemo(() => calculateBurnoutTrajectory(entries), [entries]);
 
   // Generate Cycle Context
-  const userSettings = getUserSettings();
   const cycleContext = useMemo(() => calculateCyclePhase(userSettings), [userSettings]);
 
   // Sleep Stats
@@ -325,7 +335,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
       </div>
 
       {/* Top Insights Card - Added Staggered Animation and Staggered Items */}
-      {strategies.length > 0 && (
+      {strategies && strategies.length > 0 && (
         <Card className="bg-gradient-to-r from-primary to-primary-light text-white border-none animate-stagger stagger-delay-2">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">

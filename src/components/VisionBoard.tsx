@@ -33,15 +33,18 @@ const VisionBoard: React.FC = () => {
   }, [visionService]);
 
   useEffect(() => {
-    const entries = getEntries();
-    if (entries.length > 0) {
-      // Sort by date desc just in case
-      const sorted = [...entries].sort(
-        (a, b) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
-      setRecentEntry(sorted[0]);
-    }
+    const loadEntries = async () => {
+      const entries = await getEntries();
+      if (entries.length > 0) {
+        // Sort by date desc just in case
+        const sorted = [...entries].sort(
+          (a, b) =>
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+        setRecentEntry(sorted[0]);
+      }
+    };
+    loadEntries();
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

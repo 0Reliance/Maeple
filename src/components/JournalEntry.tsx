@@ -33,10 +33,13 @@ import VoiceObservations from "./VoiceObservations";
 import { Button } from "./ui/Button";
 import { Card, CardDescription } from "./ui/Card";
 import { Textarea } from "./ui/Input";
+import { normalizeObjectiveObservations } from "../utils/observationNormalizer";
+import { safeParseAIResponse, validateWithZod } from "../utils/safeParse";
 
 // Zod schema for AI response validation
 // Note: moodScore uses 1-10 scale to match HealthEntry.mood type
-const AIResponseSchema = z
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _AIResponseSchemaStrict = z
   .object({
     moodScore: z.number().min(1).max(10).optional().default(5),
     moodLabel: z.string().optional().default("Neutral"),
@@ -64,10 +67,10 @@ const AIResponseSchema = z
     strategies: z
       .array(
         z.object({
-          id: z.string().optional(),
+          id: z.string().default(() => `strategy-${Date.now()}-${Math.random()}`),
           title: z.string(),
           action: z.string(),
-          type: z.enum(["REST", "FOCUS", "SOCIAL", "SENSORY", "EXECUTIVE"]).optional(),
+          type: z.enum(["REST", "FOCUS", "SOCIAL", "SENSORY", "EXECUTIVE"]).default("REST"),
           icon: z.string().optional(),
           relevanceScore: z.number().optional().default(0.7),
         })
@@ -76,18 +79,29 @@ const AIResponseSchema = z
       .default([]),
     summary: z.string().optional().default("Entry analyzed"),
     analysisReasoning: z.string().optional().default(""),
+    // Use permissive schema for objectiveObservations to accept any AI output
+    // The normalizer will handle cleaning and filtering
     objectiveObservations: z
       .array(
         z.object({
-          category: z.enum(["lighting", "noise", "tension", "fatigue", "speech-pace", "tone"]),
+          category: z.string(),
           value: z.string(),
-          severity: z.enum(["low", "moderate", "high"]),
-          evidence: z.string(),
+          severity: z.string(),
+          evidence: z.string().optional(),
         })
       )
       .optional()
       .default([]),
-    gentleInquiry: z.string().nullable().optional(),
+    gentleInquiry: z
+      .object({
+        id: z.string().default(() => `inquiry-${Date.now()}-${Math.random()}`),
+        basedOn: z.array(z.string()).default([]),
+        question: z.string().default(""),
+        tone: z.enum(["curious", "supportive", "informational"]).default("curious"),
+        skipAllowed: z.boolean().default(true),
+        priority: z.enum(["low", "medium", "high"]).default("medium"),
+      })
+      .optional(),
     neuroMetrics: z
       .object({
         environmentalMentions: z.array(z.string()).optional().default([]),
@@ -103,21 +117,10 @@ const AIResponseSchema = z
         physicalMentions: [],
       }),
   })
-  .transform(data => ({
-    ...data,
-    // Ensure strategies have required fields
-    strategies: data.strategies.map((s, idx) => ({
-      id: s.id || `strategy-${Date.now()}-${idx}`,
-      title: s.title,
-      action: s.action,
-      type: s.type || ("REST" as const),
-      icon: s.icon,
-      relevanceScore: s.relevanceScore,
-    })),
-  }));
+  .passthrough();
 
 interface Props {
-  onEntryAdded: (entry: HealthEntry) => void;
+  onEntryAdded: (entry: HealthEntry) => Promise<void>;
 }
 
 const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
@@ -254,12 +257,20 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     }
   };
 
-  const getSuggestedCapacity = (): Partial<CapacityProfile> => {
+  const getSuggestedCapacity = (
+    extraObservations?: any[]
+  ): Partial<CapacityProfile> => {
     const suggestions: Partial<CapacityProfile> = {};
 
-    // Voice analysis suggestions
-    if (voiceObservations) {
-      const highNoise = voiceObservations.observations.some(
+    // 1. Unified observation processing
+    const allObservations = [
+      ...(voiceObservations?.observations || []),
+      ...(photoObservations?.observations || []),
+      ...(extraObservations || []),
+    ];
+
+    if (allObservations.length > 0) {
+      const highNoise = allObservations.some(
         (obs: any) => obs.category === "noise" && obs.severity === "high"
       );
       if (highNoise) {
@@ -267,54 +278,45 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         suggestions.focus = 4;
       }
 
-      const moderateNoise = voiceObservations.observations.some(
+      const moderateNoise = allObservations.some(
         (obs: any) => obs.category === "noise" && obs.severity === "moderate"
       );
       if (moderateNoise) {
-        suggestions.sensory = 5;
+        suggestions.sensory = Math.min(suggestions.sensory || 10, 5);
       }
 
-      const fastPace = voiceObservations.observations.some(
-        (obs: any) => obs.category === "speech-pace" && obs.value.includes("fast")
+      const fastPace = allObservations.some(
+        (obs: any) => obs.category === "speech-pace" && obs.value?.includes("fast")
       );
       if (fastPace) {
         suggestions.executive = 4;
         suggestions.social = 4;
       }
 
-      const highTension = voiceObservations.observations.some(
-        (obs: any) => obs.category === "tone" && obs.severity === "high"
+      const highTension = allObservations.some(
+        (obs: any) =>
+          (obs.category === "tone" || obs.category === "tension") &&
+          (obs.severity === "high" || obs.value?.includes("high"))
       );
       if (highTension) {
         suggestions.emotional = 4;
-      }
-    }
-
-    // Photo analysis suggestions
-    if (photoObservations) {
-      if (photoObservations.lightingSeverity === "high") {
-        suggestions.sensory = 3;
-        suggestions.emotional = 4;
+        suggestions.executive = Math.min(suggestions.executive || 10, 4);
       }
 
-      if (photoObservations.lightingSeverity === "moderate") {
-        suggestions.sensory = 5;
-      }
-
-      const highTension = photoObservations.observations.some(
-        (obs: any) => obs.category === "tension" && obs.value.includes("high")
-      );
-      if (highTension) {
-        suggestions.emotional = 4;
-        suggestions.executive = 4;
-      }
-
-      const fatigueIndicators = photoObservations.observations.some(
+      const fatigueIndicators = allObservations.some(
         (obs: any) => obs.category === "fatigue" && obs.severity !== "low"
       );
       if (fatigueIndicators) {
         suggestions.physical = 4;
-        suggestions.focus = 4;
+        suggestions.focus = Math.min(suggestions.focus || 10, 4);
+      }
+
+      const highLighting = allObservations.some(
+        (obs: any) => obs.category === "lighting" && obs.severity === "high"
+      );
+      if (highLighting) {
+        suggestions.sensory = Math.min(suggestions.sensory || 10, 3);
+        suggestions.emotional = Math.min(suggestions.emotional || 10, 4);
       }
     }
 
@@ -325,7 +327,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     const reasons: string[] = [];
 
     // Voice analysis reasons
-    if (voiceObservations) {
+    if (voiceObservations?.observations) {
       if (field === "sensory") {
         const noiseObs = voiceObservations.observations.find(
           (obs: any) => obs.category === "noise"
@@ -346,7 +348,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     }
 
     // Photo analysis reasons
-    if (photoObservations) {
+    if (photoObservations?.observations) {
       if (field === "sensory") {
         reasons.push("lighting conditions observed");
       }
@@ -394,24 +396,60 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
           "strategies": [{"title": "...", "action": "...", "type": "REST"}],
           "summary": "...",
           "analysisReasoning": "...",
-          "objectiveObservations": [{"type": "...", "value": "...", "severity": "low|moderate|high"}],
+          "objectiveObservations": [
+            {
+              "category": "lighting",  // ONE category from: lighting, noise, tension, fatigue, speech-pace, tone
+              "value": "detailed description of what was observed",
+              "severity": "low",  // or "moderate" or "high"
+              "evidence": "specific evidence from the text supporting this observation"
+            }
+          ],
           "gentleInquiry": "... or null"
         }
+        
+        IMPORTANT: objectiveObservations should be an array of objects. Each object must have EXACTLY ONE category value (not an array). Each observation should describe ONE specific thing you detected.
       `;
 
       const response = await aiService.analyze(prompt);
 
+      const { data, error } = safeParseAIResponse<ParsedResponse>(response.content, {
+        context: 'JournalEntry',
+        stripMarkdown: true,
+      });
+      
       let parsed: ParsedResponse;
-      try {
-        const cleanJson = response.content.replace(/```json\n|\n```/g, "").trim();
-        const jsonData = JSON.parse(cleanJson);
-        // Validate and sanitize with Zod
-        parsed = AIResponseSchema.parse(jsonData) as ParsedResponse;
-      } catch (e) {
-        console.warn("Failed to parse or validate AI response, using fallback", e);
-        // Use Zod defaults for safe fallback
-        parsed = AIResponseSchema.parse({}) as ParsedResponse;
+      if (error) {
+        console.warn("Failed to parse AI response, using fallback", error);
+        parsed = _AIResponseSchemaStrict.parse({}) as ParsedResponse;
+      } else {
+        const parsedCandidate = data ?? ({} as ParsedResponse);
+        // Normalize objectiveObservations to handle messy AI output
+        const normalizedObservations = normalizeObjectiveObservations(
+          parsedCandidate.objectiveObservations
+        );
+        // Construct the parsed response with normalized observations
+        parsed = {
+          ...parsedCandidate,
+          objectiveObservations: normalizedObservations,
+          // Ensure other fields have defaults
+          moodScore: parsedCandidate.moodScore ?? 5,
+          moodLabel: parsedCandidate.moodLabel ?? "Neutral",
+          medications: parsedCandidate.medications ?? [],
+          symptoms: parsedCandidate.symptoms ?? [],
+          activityTypes: parsedCandidate.activityTypes ?? [],
+          strengths: parsedCandidate.strengths ?? [],
+          strategies: Array.isArray(parsedCandidate.strategies) ? parsedCandidate.strategies : [],
+          summary: parsedCandidate.summary ?? "Entry analyzed",
+          analysisReasoning: parsedCandidate.analysisReasoning ?? "",
+        } as ParsedResponse;
       }
+      
+      // Log strategies for debugging
+      console.log('[JournalEntry] Setting lastStrategies:', {
+        isArray: Array.isArray(parsed.strategies),
+        length: parsed.strategies?.length,
+        value: parsed.strategies
+      });
 
       // Build objective observations array
       const objectiveObservations: ObjectiveObservation[] = [];
@@ -449,29 +487,49 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         });
       }
 
+      // 4. Update capacity based on AI detected observations
+      const aiSuggestions = getSuggestedCapacity(parsed.objectiveObservations);
+      const updatedCapacity: CapacityProfile = { ...capacity };
+      
+      // Apply suggestions only for valid keys
+      (Object.keys(aiSuggestions) as Array<keyof CapacityProfile>).forEach(key => {
+        const value = aiSuggestions[key];
+        if (value !== undefined) {
+          updatedCapacity[key] = value;
+        }
+      });
+
+      // Update local state so UI reflects the suggestions
+      if (Object.keys(aiSuggestions).length > 0) {
+        setCapacity(updatedCapacity);
+      }
+
       const newEntry: HealthEntry = {
         id: uuidv4(),
         timestamp: new Date().toISOString(),
         rawText: text,
         mood: parsed.moodScore,
         moodLabel: parsed.moodLabel,
-        medications: parsed.medications.map(m => ({
+        medications: (parsed.medications || []).map(m => ({
           name: m.name,
-          dosage: m.amount,
-          unit: m.unit,
+          dosage: m.amount || '',
+          unit: m.unit || '',
         })),
-        symptoms: parsed.symptoms.map(s => ({
+        symptoms: (parsed.symptoms || []).map(s => ({
           name: s.name,
-          severity: s.severity,
+          severity: s.severity || 5,
         })),
         tags: [],
         activityTypes: parsed.activityTypes || [],
         strengths: parsed.strengths || [],
         neuroMetrics: {
-          spoonLevel: calculateAverageEnergy(),
+          spoonLevel: Math.round(
+            (Object.values(updatedCapacity) as number[]).reduce((a, b) => a + b, 0) /
+              Object.values(updatedCapacity).length
+          ),
           sensoryLoad: 0,
           contextSwitches: 0,
-          capacity: capacity,
+          capacity: updatedCapacity,
         },
         notes: parsed.summary,
         aiStrategies: parsed.strategies,
@@ -494,13 +552,19 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         setShowInquiry(true);
         setPendingEntry(newEntry);
       } else {
-        onEntryAdded(newEntry);
+        await onEntryAdded(newEntry);
         // Clear draft on successful save
         saveDraft({ notes: "" });
         resetForm();
       }
 
-      setLastStrategies(parsed.strategies || []);
+      // Ensure strategies is always an array before setting state
+      const strategiesToSet = Array.isArray(parsed.strategies) ? parsed.strategies : [];
+      console.log('[JournalEntry] Setting state strategies:', {
+        isArray: Array.isArray(strategiesToSet),
+        length: strategiesToSet.length
+      });
+      setLastStrategies(strategiesToSet);
       setLastReasoning(parsed.analysisReasoning || null);
     } catch (e) {
       console.error("Failed to process entry", e);
@@ -520,11 +584,11 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     }
   };
 
-  const handleInquirySubmit = () => {
+  const handleInquirySubmit = async () => {
     if (!inquiryResponse.trim() || !pendingEntry) {
       setShowInquiry(false);
       if (pendingEntry) {
-        onEntryAdded(pendingEntry);
+        await onEntryAdded(pendingEntry);
         // Clear draft on successful save
         saveDraft({ notes: "" });
       }
@@ -539,16 +603,16 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         : pendingEntry.notes,
     };
 
-    onEntryAdded(entryWithInquiry);
+    await onEntryAdded(entryWithInquiry);
     // Clear draft on successful save
     saveDraft({ notes: "" });
     resetForm();
   };
 
-  const handleInquirySkip = () => {
+  const handleInquirySkip = async () => {
     setShowInquiry(false);
     if (pendingEntry) {
-      onEntryAdded(pendingEntry);
+      await onEntryAdded(pendingEntry);
       // Clear draft on successful save
       saveDraft({ notes: "" });
     }
@@ -691,7 +755,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
       )}
 
       {/* Strategy Feedback */}
-      {lastStrategies.length > 0 && (
+      {lastStrategies?.length > 0 && (
         <Card className="bg-gradient-to-r from-accent-positive to-primary text-white border-none shadow-lg shadow-accent-positive/20">
           <button
             onClick={() => setLastStrategies([])}
@@ -712,7 +776,7 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
           )}
 
           <div className="grid md:grid-cols-3 gap-lg">
-            {lastStrategies.map(strat => (
+            {lastStrategies?.map(strat => (
               <div
                 key={strat.id}
                 className="bg-white/10 border border-white/20 p-lg rounded-xl backdrop-blur-sm"
@@ -833,15 +897,14 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
               Capture Your Moment
             </p>
             <p className="text-small text-text-secondary">
-              Note your <strong>environment</strong>, <strong>interactions</strong>, and{" "}
-              <strong>energy levels</strong>.
+              Track: <strong>Physical sensations</strong> (tension, fatigue, alertness), <strong>emotional state</strong> (mood, stress level), <strong>environment</strong> (noise, lighting, location), <strong>social interactions</strong> (who you're with, quality of interaction), <strong>food & drink intake</strong>, and <strong>activities</strong> (what you're doing).
             </p>
           </div>
 
           <Textarea
             value={text}
             onChange={e => setText(e.target.value)}
-            placeholder="How are you feeling right now? (e.g., 'Overwhelmed by noise', 'In peak focus')"
+            placeholder="Describe your current state... (e.g., 'Feeling mentally foggy after lunch, sitting in a noisy café, just had coffee and a sandwich, talking with a colleague about the project')"
             className="resize-none"
             rows={4}
           />

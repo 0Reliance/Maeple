@@ -137,6 +137,8 @@ module.exports = {
     "dist",
     "build",
     "node_modules",
+    "package",
+    "package/**",
     "*.config.js",
     "*.config.ts",
     "public",

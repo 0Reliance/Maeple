@@ -112,3 +112,185 @@ Object.defineProperty(window, 'crypto', {
 beforeEach(() => {
   localStorageMock.clear();
 });
+
+// Mock URL.createObjectURL and URL.revokeObjectURL while preserving URL constructor
+const OriginalURL = window.URL;
+class URLMock extends OriginalURL {
+  constructor(url: string | URL, base?: string | URL) {
+    super(url, base);
+  }
+  static createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+  static revokeObjectURL = vi.fn();
+}
+
+Object.defineProperty(window, 'URL', {
+  value: URLMock,
+  configurable: true,
+  writable: true,
+});
+
+// Mock FileReader
+class FileReaderMock {
+  result: string | ArrayBuffer | null = null;
+  onloadend: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  readAsDataURL(blob: Blob) {
+    this.result = 'data:image/webp;base64,mockdata';
+    setTimeout(() => this.onloadend?.(), 0);
+  }
+
+  readAsText(blob: Blob) {
+    this.result = 'mock text content';
+    setTimeout(() => this.onloadend?.(), 0);
+  }
+
+  readAsArrayBuffer(blob: Blob) {
+    this.result = new ArrayBuffer(8);
+    setTimeout(() => this.onloadend?.(), 0);
+  }
+}
+
+Object.defineProperty(window, 'FileReader', {
+  value: FileReaderMock,
+  configurable: true,
+  writable: true,
+});
+
+// Mock OffscreenCanvas
+class OffscreenCanvasMock {
+  width: number;
+  height: number;
+
+  constructor(width: number, height: number) {
+    this.width = width;
+    this.height = height;
+  }
+
+  getContext(contextId: string) {
+    return {
+      drawImage: vi.fn(),
+      getImageData: vi.fn().mockReturnValue({
+        data: new Uint8ClampedArray(this.width * this.height * 4),
+        width: this.width,
+        height: this.height,
+      }),
+      putImageData: vi.fn(),
+      fillRect: vi.fn(),
+      clearRect: vi.fn(),
+    };
+  }
+
+  convertToBlob(options?: { type?: string; quality?: number }): Promise<Blob> {
+    return Promise.resolve(new Blob(['mock'], { type: options?.type || 'image/webp' }));
+  }
+}
+
+Object.defineProperty(window, 'OffscreenCanvas', {
+  value: OffscreenCanvasMock,
+  configurable: true,
+  writable: true,
+});
+
+// Mock Image
+class ImageMock {
+  width = 100;
+  height = 100;
+  src = '';
+  onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor() {
+    // Auto-trigger load after setting src
+    setTimeout(() => {
+      if (this.onload) this.onload();
+    }, 0);
+  }
+}
+
+Object.defineProperty(window, 'Image', {
+  value: ImageMock,
+  configurable: true,
+  writable: true,
+});
+
+// Mock fetch for StateCheckResults
+global.fetch = vi.fn().mockResolvedValue({
+  blob: vi.fn().mockResolvedValue(new Blob(['mock'], { type: 'image/webp' })),
+  json: vi.fn().mockResolvedValue({}),
+  text: vi.fn().mockResolvedValue(''),
+  ok: true,
+  status: 200,
+});
+
+// Mock Worker
+class WorkerMock {
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((error: ErrorEvent) => void) | null = null;
+
+  postMessage(data: unknown, transfer?: Transferable[]) {
+    // Simulate async response
+    setTimeout(() => {
+      if (this.onmessage) {
+        this.onmessage(new MessageEvent('message', {
+          data: {
+            id: (data as any).id,
+            type: (data as any).type,
+            result: {
+              imageData: (data as any).imageData,
+              blob: new Blob(['mock'], { type: 'image/webp' }),
+              width: (data as any).options?.width || 100,
+              height: (data as any).options?.height || 100,
+              processingTime: 10,
+            },
+          },
+        }));
+      }
+    }, 10);
+  }
+
+  terminate() {
+    // Cleanup
+  }
+}
+
+// Mock dynamic worker imports
+vi.mock('../src/workers/imageProcessor?worker', () => {
+  return {
+    default: WorkerMock,
+  };
+});
+
+// Mock navigator.vibrate
+Object.defineProperty(navigator, 'vibrate', {
+  value: vi.fn(),
+  configurable: true,
+  writable: true,
+});
+
+// Mock ImageData for canvas/image processing tests
+class ImageDataMock {
+  data: Uint8ClampedArray;
+  width: number;
+  height: number;
+  colorSpace: PredefinedColorSpace;
+
+  constructor(data: Uint8ClampedArray, width: number, height?: number, settings?: ImageDataSettings) {
+    this.data = data;
+    this.width = width;
+    this.height = height ?? Math.floor(data.length / (width * 4));
+    this.colorSpace = settings?.colorSpace ?? 'srgb';
+  }
+}
+
+Object.defineProperty(global, 'ImageData', {
+  value: ImageDataMock,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(window, 'ImageData', {
+  value: ImageDataMock,
+  configurable: true,
+  writable: true,
+});

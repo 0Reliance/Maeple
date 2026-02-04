@@ -49,7 +49,7 @@ describe("JournalEntry Component", () => {
     renderWithDependencies(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
 
     // 1. Enter text
-    const input = screen.getByPlaceholderText(/How are you feeling right now/i);
+    const input = screen.getByPlaceholderText(/Describe your current state/i);
     fireEvent.change(input, { target: { value: "Feeling great today!" } });
 
     // 3. Mock AI response
@@ -76,7 +76,7 @@ describe("JournalEntry Component", () => {
   it("handles submission error", async () => {
     renderWithDependencies(<JournalEntry onEntryAdded={mockOnEntryAdded} />);
 
-    const input = screen.getByPlaceholderText(/How are you feeling right now/i);
+    const input = screen.getByPlaceholderText(/Describe your current state/i);
     fireEvent.change(input, { target: { value: "Test entry" } });
 
     mockDependencies.aiService.analyze.mockRejectedValue(new Error("Analysis failed"));

@@ -245,3 +245,10 @@ self.onmessage = async (event: MessageEvent<ProcessImageRequest>) => {
 export function healthCheck(): boolean {
   return true;
 }
+
+// Export default Worker class for Vite's ?worker import syntax
+export default class ImageProcessorWorker {
+  constructor() {
+    // Worker initialization is handled by Vite
+  }
+}

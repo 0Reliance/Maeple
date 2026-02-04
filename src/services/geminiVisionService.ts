@@ -4,6 +4,7 @@ import { aiRouter } from "./ai";
 import { cacheService } from "./cacheService";
 import { errorLogger } from "./errorLogger";
 import { rateLimitedCall } from "./rateLimiter";
+import { safeParseAIResponse } from "../utils/safeParse";
 
 // Note: Circuit breaker is handled by VisionServiceAdapter.
 // This service is a pure function - resilience is managed at the adapter layer.
@@ -12,23 +13,15 @@ import { rateLimitedCall } from "./rateLimiter";
 const getApiKey = (): string | null => {
   const envKey = import.meta.env.VITE_GEMINI_API_KEY;
   
-  // DEBUG: Log what we're getting
-  console.log("[GeminiVision] ===== DEBUG: getApiKey() called =====");
-  console.log("[GeminiVision] DEBUG: envKey exists:", !!envKey);
-  console.log("[GeminiVision] DEBUG: envKey length:", envKey?.length || 0);
-  if (envKey) {
-    console.log("[GeminiVision] DEBUG: envKey prefix:", envKey.substring(0, 20));
-    console.log("[GeminiVision] DEBUG: envKey suffix:", envKey.substring(envKey.length - 8));
+  if (import.meta.env.DEV) {
+    console.log("[GeminiVision] API key loaded");
   }
-  console.log("[GeminiVision] DEBUG: All VITE_ env keys:", Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
-  console.log("[GeminiVision] ============================================");
 
   if (!envKey) {
     console.warn(
       "[GeminiVision] API Key not found. Vision features will be limited. " +
         "Add VITE_GEMINI_API_KEY to your .env file or configure in Settings."
     );
-    console.warn("[GeminiVision] Available env keys:", Object.keys(import.meta.env));
     return null;
   }
   return envKey;
@@ -301,7 +294,21 @@ Your analysis helps neurodivergent users recognize when they are masking and ide
 
     onProgress?.("Validating direct API data", 90);
 
-    const result = JSON.parse(textResponse) as FacialAnalysis;
+    const { data, error } = safeParseAIResponse<FacialAnalysis>(textResponse, {
+      context: 'GeminiVision:direct',
+      stripMarkdown: true,
+    });
+    if (error) {
+      throw new Error(error);
+    }
+    let result = data!;
+    
+    // Unwrap facs_analysis wrapper if present (AI sometimes wraps the response)
+    if ((result as any).facs_analysis && typeof (result as any).facs_analysis === 'object') {
+      console.log('[DirectGemini] Unwrapping facs_analysis wrapper');
+      result = (result as any).facs_analysis;
+    }
+    
     console.log("[DirectGemini] Direct API call successful:", result);
     
     onProgress?.("Direct API analysis complete", 100);
@@ -455,14 +462,25 @@ Return structured JSON matching schema. Be precise and evidence-based.`;
       imageData: base64Image,
       mimeType: "image/png",
       prompt: promptText,
+      signal,
     });
 
     if (routed?.content) {
-      try {
+      const { data, error } = safeParseAIResponse<FacialAnalysis>(routed.content, {
+        context: 'GeminiVision:router',
+        stripMarkdown: true,
+      });
+      if (error) {
+        console.warn("Vision router JSON parse failed, falling back to Gemini SDK", error);
+      } else if (data) {
         onProgress?.("Parsing AI response", 90);
-        return JSON.parse(routed.content) as FacialAnalysis;
-      } catch (parseErr) {
-        console.warn("Vision router JSON parse failed, falling back to Gemini SDK", parseErr);
+        // Unwrap facs_analysis wrapper if present (AI sometimes wraps the response)
+        let result = data;
+        if ((result as any).facs_analysis && typeof (result as any).facs_analysis === 'object') {
+          console.log('[GeminiVision:router] Unwrapping facs_analysis wrapper');
+          result = (result as any).facs_analysis;
+        }
+        return result;
       }
     }
 
@@ -569,13 +587,48 @@ Your analysis helps neurodivergent users recognize when they are masking and ide
 
     onProgress?.("Validating analysis data", 95);
 
-    let result: FacialAnalysis;
-    try {
-      result = JSON.parse(textResponse) as FacialAnalysis;
-    } catch (parseErr) {
-      console.error("Failed to parse AI response as JSON:", parseErr);
-      // Return basic analysis instead of failing completely
+    console.log("[GeminiVision] Raw AI response (first 500 chars):", textResponse.substring(0, 500));
+    console.log("[GeminiVision] Full AI response length:", textResponse.length);
+
+    const { data, error } = safeParseAIResponse<FacialAnalysis>(textResponse, {
+      context: 'GeminiVision:main',
+      stripMarkdown: true,
+    });
+    
+    if (error) {
+      console.error("[GeminiVision] Failed to parse AI response:", error);
+      console.error("[GeminiVision] Raw response was:", textResponse);
       return getOfflineAnalysis(base64Image);
+    }
+    
+    let result = data!;
+    
+    // Unwrap facs_analysis wrapper if present (AI sometimes wraps the response)
+    if ((result as any).facs_analysis && typeof (result as any).facs_analysis === 'object') {
+      console.log('[GeminiVision] Unwrapping facs_analysis wrapper');
+      result = (result as any).facs_analysis;
+    }
+    
+    // CRITICAL: Log what AI actually returned
+    console.log("[GeminiVision] === ANALYSIS RESULT ===");
+    console.log("[GeminiVision] Confidence:", result.confidence);
+    console.log("[GeminiVision] Action Units count:", result.actionUnits?.length || 0);
+    console.log("[GeminiVision] Action Units:", result.actionUnits);
+    console.log("[GeminiVision] Lighting:", result.lighting);
+    console.log("[GeminiVision] FACS Interpretation:", result.facsInterpretation);
+    console.log("[GeminiVision] Observations:", result.observations);
+    console.log("[GeminiVision] Jaw Tension:", result.jawTension);
+    console.log("[GeminiVision] Eye Fatigue:", result.eyeFatigue);
+    
+    // Warn if empty results
+    if (!result.actionUnits || result.actionUnits.length === 0) {
+      console.warn("[GeminiVision] � WARNING: AI returned 0 Action Units!");
+      console.warn("[GeminiVision] This may indicate:");
+      console.warn("  1. Image quality too low after compression");
+      console.warn("  2. Face not clearly visible in image");
+      console.warn("  3. Lighting conditions insufficient");
+      console.warn("  4. Gemini vision model unable to detect FACS markers");
+      console.warn("[GeminiVision] Full response:", JSON.stringify(result, null, 2));
     }
 
     // Cache successful results with confidence threshold

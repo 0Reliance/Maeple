@@ -43,6 +43,7 @@ export class GeminiAdapter extends BaseAIAdapter {
       const config: any = {
         systemInstruction,
         temperature: request.temperature ?? 0.7,
+        signal: request.signal, // Pass signal in config
       };
 
       if (request.responseFormat === "json") {
@@ -80,6 +81,9 @@ export class GeminiAdapter extends BaseAIAdapter {
             { text: request.prompt },
           ],
         },
+        config: {
+          signal: request.signal, // Pass signal in config
+        } as any,
       });
 
       return {
@@ -103,6 +107,9 @@ export class GeminiAdapter extends BaseAIAdapter {
             { text: request.prompt },
           ],
         },
+        config: {
+          signal: (request as any).signal, // Pass signal if it exists
+        } as any,
       });
 
       return {
@@ -134,6 +141,9 @@ export class GeminiAdapter extends BaseAIAdapter {
       const response = await this.client.models.generateContent({
         model: "gemini-2.5-flash-image",
         contents: { parts },
+        config: {
+          signal: (request as any).signal,
+        } as any,
       });
 
       for (const part of response.candidates?.[0]?.content?.parts || []) {
@@ -160,7 +170,8 @@ export class GeminiAdapter extends BaseAIAdapter {
         contents: request.query,
         config: {
           tools: [{ googleSearch: {} }],
-        },
+          signal: (request as any).signal,
+        } as any,
       });
 
       const sources =

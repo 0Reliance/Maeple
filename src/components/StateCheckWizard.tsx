@@ -1,13 +1,15 @@
 import { useVisionService } from "@/contexts/DependencyContext";
 import { CircuitState } from "@/patterns/CircuitBreaker";
 import { AlertCircle, ArrowRight, Camera, Loader2, X } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getBaseline } from "../services/stateCheckService";
 import { getEntries as getJournalEntries } from "../services/storageService";
 import { FacialAnalysis, FacialBaseline, HealthEntry } from "../types";
 import BiofeedbackCameraModal from "./BiofeedbackCameraModal";
 import StateCheckAnalyzing from "./StateCheckAnalyzing";
 import StateCheckResults from "./StateCheckResults";
+
+const ANALYSIS_TIMEOUT_SECONDS = 45;
 
 const StateCheckWizard: React.FC = () => {
   const [step, setStep] = useState<"INTRO" | "CAMERA" | "ANALYZING" | "RESULTS" | "ERROR">("INTRO");
@@ -45,7 +47,7 @@ const StateCheckWizard: React.FC = () => {
   useEffect(() => {
     const loadContext = async () => {
       // 1. Get Journal Entry
-      const entries = getJournalEntries();
+      const entries = await getJournalEntries();
       if (entries.length > 0) {
         const sorted = [...entries].sort(
           (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -85,7 +87,7 @@ const StateCheckWizard: React.FC = () => {
     setStep("ANALYZING");
     setProgress(0);
     setCurrentStage("Initializing analysis...");
-    setEstimatedTime(45); // 45 seconds timeout
+    setEstimatedTime(ANALYSIS_TIMEOUT_SECONDS);
     setError("");
 
     // Note: The actual AI analysis is now handled by the StateCheckAnalyzing component
@@ -102,6 +104,47 @@ const StateCheckWizard: React.FC = () => {
       abortControllerRef.current.abort();
     }
   };
+
+  const handleAnalysisProgress = useCallback(
+    (stage: string, progressPercent: number) => {
+      setProgress(progressPercent);
+      setCurrentStage(stage);
+      const remainingPercent = Math.max(0, 100 - progressPercent);
+      const estimatedRemainingSeconds = Math.max(
+        0,
+        Math.round((remainingPercent / 100) * ANALYSIS_TIMEOUT_SECONDS)
+      );
+      setEstimatedTime(estimatedRemainingSeconds);
+    },
+    [setCurrentStage, setEstimatedTime, setProgress]
+  );
+
+  const handleAnalysisComplete = useCallback(
+    (analysisResult: FacialAnalysis) => {
+      console.log('[StateCheckWizard] === ANALYSIS COMPLETE CALLBACK ===');
+      console.log('[StateCheckWizard] Received analysis:', {
+        actionUnitsCount: analysisResult.actionUnits?.length || 0,
+        confidence: analysisResult.confidence,
+        hasFacsInterpretation: !!analysisResult.facsInterpretation,
+        jawTension: analysisResult.jawTension,
+        eyeFatigue: analysisResult.eyeFatigue,
+        hasError: !!(analysisResult as any).error
+      });
+      
+      // Validate analysis before setting state
+      if (!analysisResult || !analysisResult.actionUnits) {
+        console.error('[StateCheckWizard] Invalid analysis received:', analysisResult);
+        setError('Analysis returned invalid data');
+        setStep('ERROR');
+        return;
+      }
+      
+      console.log('[StateCheckWizard] Analysis is valid, setting state...');
+      setAnalysis(analysisResult);
+      setStep("RESULTS");
+    },
+    [setAnalysis, setStep]
+  );
 
   const reset = () => {
     // Revoke old image URL before resetting
@@ -181,17 +224,8 @@ const StateCheckWizard: React.FC = () => {
     return (
       <StateCheckAnalyzing
         imageSrc={imageSrc}
-        onProgress={(stage, progressPercent) => {
-          setProgress(progressPercent);
-          setCurrentStage(stage);
-          const remainingPercent = 100 - progressPercent;
-          const estimatedRemainingSeconds = Math.max(0, Math.round((remainingPercent / 100) * 45));
-          setEstimatedTime(estimatedRemainingSeconds);
-        }}
-        onComplete={(analysis) => {
-          setAnalysis(analysis);
-          setStep("RESULTS");
-        }}
+        onProgress={handleAnalysisProgress}
+        onComplete={handleAnalysisComplete}
         onCancel={cancelAnalysis}
         estimatedTime={estimatedTime}
       />

@@ -34,7 +34,6 @@
       "@hooks/*": ["./src/hooks/*"],
       "@workers/*": ["./src/workers/*"]
     },
-    "allowImportingTsExtensions": true,
     "noEmit": true
   },
   "include": ["src/**/*", "src/types/**/*.d.ts"]
