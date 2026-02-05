@@ -234,16 +234,19 @@ const StateCheckWizard: React.FC = () => {
 
   const introContent = (
     <div className="max-w-3xl mx-auto animate-fadeIn py-6">
-      <div className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 space-y-8 text-center">
-        <div className="space-y-2">
-          <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Camera size={28} />
+      <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 space-y-6 md:space-y-8">
+        <div className="flex flex-row items-start md:items-center gap-4 md:gap-6 md:text-center md:flex-col">
+          <div className="w-10 h-10 md:w-14 md:h-14 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0">
+            <Camera size={20} className="md:hidden" />
+            <Camera size={28} className="hidden md:block" />
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Bio-Mirror Check</h3>
-          <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-            Objectively analyze your physical signs of stress and masking. Your body often signals
-            burnout before your mind acknowledges it.
-          </p>
+          <div className="flex-1 space-y-1 md:space-y-2">
+            <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">Bio-Mirror Check</h3>
+            <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+              Objectively analyze your physical signs of stress and masking. Your body often signals
+              burnout before your mind acknowledges it.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3 text-left bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800">

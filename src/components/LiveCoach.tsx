@@ -192,14 +192,19 @@ const VoiceIntake: React.FC = () => {
       </div>
 
       <div className="relative z-10 text-center space-y-6 w-full max-w-md">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight flex items-center justify-center gap-2">
-            <Sparkles className="text-teal-400" size={24} />
-            Mae Live Companion
-          </h2>
-          <p className="text-indigo-200">
-            Real-time, voice-first reflection. Share your thoughts, feelings, or just ramble. Mae will listen and organize it for you.
-          </p>
+        <div className="flex flex-row items-center gap-3 md:flex-col md:space-y-2">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-indigo-50/50 text-teal-400 rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0">
+            <Sparkles size={20} className="md:hidden" />
+            <Sparkles size={24} className="hidden md:block" />
+          </div>
+          <div className="flex-1 md:flex-none text-left md:text-center space-y-1">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
+              Mae Live Companion
+            </h2>
+            <p className="text-sm md:text-base text-indigo-200 leading-relaxed">
+              Real-time, voice-first reflection. Share your thoughts, feelings, or just ramble. Mae will listen and organize it for you.
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-col items-center justify-center gap-6 py-8">

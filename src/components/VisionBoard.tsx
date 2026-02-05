@@ -88,17 +88,24 @@ const VisionBoard: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      <div className="bg-gradient-to-r from-purple-600 to-pink-500 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-purple-600 to-pink-500 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
 
-        <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-          <Wand2 className="text-pink-200" />
-          Visual Therapy
-        </h2>
-        <p className="text-purple-100 text-base max-w-xl leading-relaxed mb-6">
-          Process your emotions visually. Use generative art to externalize
-          feelings, visualize safe spaces, or celebrate your strengths.
-        </p>
+        <div className="flex flex-row items-start gap-4 md:flex-col md:text-center">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0">
+            <Wand2 size={20} className="md:hidden text-pink-200" />
+            <Wand2 size={24} className="hidden md:block text-pink-200" />
+          </div>
+          <div className="flex-1 space-y-2 md:space-y-4">
+            <h2 className="text-xl md:text-2xl font-bold text-white">
+              Visual Therapy
+            </h2>
+            <p className="text-sm md:text-base text-purple-100 max-w-xl leading-relaxed">
+              Process your emotions visually. Use generative art to externalize
+              feelings, visualize safe spaces, or celebrate your strengths.
+            </p>
+          </div>
+        </div>
 
         {recentEntry && (
           <div className="bg-white/10 border border-white/20 rounded-xl p-4 backdrop-blur-sm">

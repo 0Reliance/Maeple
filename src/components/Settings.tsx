@@ -474,9 +474,9 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto pb-12 animate-fadeIn">
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-8 rounded-3xl shadow-xl">
-        <h2 className="text-2xl font-bold mb-2">Settings & Integrations</h2>
-        <p className="text-slate-300">
+      <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-xl">
+        <h2 className="text-xl md:text-2xl font-bold text-white">Settings & Integrations</h2>
+        <p className="text-sm md:text-base text-slate-300 mt-2">
           Customize your biological context and connect external devices to
           build a complete digital phenotype.
         </p>

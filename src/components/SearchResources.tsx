@@ -85,12 +85,12 @@ const SearchResources: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-6 text-white shadow-lg">
-        <h2 className="text-xl font-bold mb-2">Wellness Assistant</h2>
-        <p className="text-blue-100 mb-6 text-sm">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-5 md:p-6 text-white shadow-lg">
+        <h2 className="text-lg md:text-xl font-bold mb-1 md:mb-2">Wellness Assistant</h2>
+        <p className="text-blue-100 mb-4 md:mb-6 text-sm">
           Search trusted health information with AI-powered insights and verified sources.
         </p>
-        <div className="mt-6 p-4 bg-white/10 rounded-xl border border-white/20">
+        <div className="mt-4 md:mt-6 p-4 bg-white/10 rounded-xl border border-white/20">
           <h3 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
             <Globe size={16} className="text-blue-200" />
             What Makes This Trustworthy
