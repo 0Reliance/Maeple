@@ -78,15 +78,27 @@ An optional photo-based check-in that can add structured context alongside self-
 
 ---
 
-## 📊 Health Metrics Dashboard
+## 📊 Health Metrics Dashboard (Patterns)
 
-A comprehensive view of your longitudinal health data.
+A comprehensive view of your longitudinal health data with tabbed interface for personal insights and clinical reporting.
 
-- **Pattern Literacy**: Visualizes the hidden connections between your capacity and your environment.
+### Daily Patterns Tab
+- **Pattern Literacy**: Visualizes hidden connections between your capacity and your environment.
 - **Burnout Prediction**: Algorithms that analyze trends in sleep, HRV (if connected), and subjective logs to predict burnout risks before they happen.
 - **Cycle Tracking**: Menstrual cycle tracking with a focus on hormonal impacts on neurodivergent traits (e.g., PMDD sensitivity).
-- **Sleep Analytics**: Correlates sleep quality with executive function the next day.
+- **Sleep Analytics**: Correlates sleep quality with executive function next day.
 - **Cold Start Friendly**: Intelligent "Empty States" guide you through your first few days of logging, explaining exactly what data is needed to unlock insights.
+- **Interactive Details**: Toggle to show/hide detailed charts and insights for cognitive load management.
+
+### Clinical Report Tab
+- **Executive Summary**: High-level trends and concerns for care team review.
+- **Capacity Profile Radar**: Visual representation of your 7-domain capacity baseline.
+- **30-Day Stability Trend**: Longitudinal analysis of capacity and mood patterns.
+- **Correlational Analysis**: AI-detected patterns and insights for clinical context.
+- **Print to PDF**: Generate professional reports for healthcare providers.
+- **Minimum Data Requirement**: Requires 5+ entries for meaningful analysis.
+
+**Access**: Navigate to **Patterns** view, then switch between "Daily Patterns" and "Clinical Report" tabs.
 
 ---
 
@@ -136,13 +148,6 @@ A real-time, voice-first AI companion designed for neurodivergent processing.
 
 ---
 
-## 📄 Capacity Reports
-
-Generate professional, PDF-ready reports for your support team or healthcare providers.
-
-- **Executive Summary**: High-level trends and concerns.
-- **Visual Charts**: Easy-to-read graphs of mood vs. capacity.
-- **Neuro-Affirming Language**: Reports are written to advocate for your needs, not just list your deficits.
 
 ---
 

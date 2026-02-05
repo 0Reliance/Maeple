@@ -58,7 +58,7 @@ test.describe('Mobile Navigation Redesign', () => {
 
     // Verify Menu Items
     await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'MAEPLE Report' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Guide' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible();
 
     // 9. Navigate to Settings

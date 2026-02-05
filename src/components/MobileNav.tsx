@@ -183,14 +183,13 @@ const MobileNav: React.FC<Props> = ({
 
                 <div className="py-1">
                   <UserMenuItem to={viewToPath[View.SETTINGS]} icon={Settings} label="Settings" />
-                  <UserMenuItem to={viewToPath[View.CLINICAL]} icon={FileText} label="MAEPLE Report" />
                 </div>
                 
                 <div className="border-t border-bg-secondary dark:border-dark-bg-secondary my-1"></div>
                 
                 <div className="py-1">
                   <UserMenuItem to={viewToPath[View.SEARCH]} icon={Search} label="Wellness Assistant" />
-                  <UserMenuItem to={viewToPath[View.GUIDE]} icon={BookOpen} label="Guide & Vision" />
+                  <UserMenuItem to={viewToPath[View.GUIDE]} icon={BookOpen} label="Guide" />
                   <UserMenuItem to={viewToPath[View.TERMS]} icon={Shield} label="Terms & Legal" />
                   <UserMenuItem to={viewToPath[View.BETA_DASHBOARD]} icon={Terminal} label="Beta Dashboard" />
                 </div>

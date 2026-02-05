@@ -11,7 +11,6 @@ export enum View {
   GUIDE = "GUIDE",
   TERMS = "TERMS",
   ROADMAP = "ROADMAP",
-  CLINICAL = "CLINICAL",
   BETA_DASHBOARD = "BETA_DASHBOARD",
 }
 

@@ -1,11 +1,14 @@
 import {
   Activity,
   AlertCircle,
+  AlertTriangle,
   Brain,
   ChevronDown,
   ChevronUp,
   CloudFog,
+  FileText,
   Layers,
+  Printer,
   Shield,
   Sparkles,
   Star,
@@ -16,10 +19,16 @@ import {
 import React, { useMemo, useState } from "react";
 import {
   Area,
+  AreaChart,
   CartesianGrid,
   ComposedChart,
   Legend,
   Line,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -67,6 +76,7 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [userSettings, setUserSettings] = useState<UserSettings>({ avgCycleLength: 28 });
+  const [activeTab, setActiveTab] = useState<'daily' | 'clinical'>('daily');
 
   // Load user settings asynchronously
   useEffect(() => {
@@ -265,6 +275,41 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
 
   const chartData = Array.from(dateMap.values());
 
+  // Clinical Report Data
+  const avgProfile = useMemo(() => {
+    if (entries.length === 0) return null;
+    const sums: Record<string, number> = { focus: 0, social: 0, structure: 0, emotional: 0, physical: 0, sensory: 0, executive: 0 };
+    entries.forEach(e => {
+        Object.keys(sums).forEach(k => {
+            sums[k] += (e.neuroMetrics.capacity as Record<string, number>)[k] || 0;
+        });
+    });
+    const result = Object.keys(sums).map(k => ({
+        subject: k.charAt(0).toUpperCase() + k.slice(1),
+        A: (sums[k] / entries.length).toFixed(1),
+        fullMark: 10
+    }));
+    return result;
+  }, [entries]);
+
+  const burnoutStats = useMemo(() => calculateBurnoutTrajectory(entries), [entries]);
+  const avgSensory = entries.length ? (entries.reduce((a,b) => a + b.neuroMetrics.sensoryLoad, 0) / entries.length).toFixed(1) : '0.0';
+
+  const clinicalChartData = useMemo(() => {
+     return [...entries]
+        .sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        .slice(-30)
+        .map(e => ({
+            date: new Date(e.timestamp).toLocaleDateString(undefined, {month:'numeric', day:'numeric'}),
+            spoons: e.neuroMetrics.spoonLevel,
+            mood: e.mood * 2
+        }));
+  }, [entries]);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   // Stats
   const validEnergy = chartData.filter(
     (d): d is ChartDataPoint & { energy: number } => d.energy !== null
@@ -306,32 +351,47 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
 
   return (
     <div className="space-y-xl">
-      {/* Dashboard Header - Added Staggered Animation */}
-      <div className="flex items-center justify-between animate-stagger">
-        <div>
-          <h2 className="text-h1 font-display font-bold text-text-primary">Pattern Dashboard</h2>
-          <p className="text-base text-text-secondary">
-            Tracking {entries.length} patterns • Last updated 2 hours ago
-          </p>
+      {/* Dashboard Header with Tabs */}
+      <div className="animate-stagger">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-h1 font-display font-bold text-text-primary">Patterns</h2>
+            <p className="text-base text-text-secondary">
+              Tracking {entries.length} patterns • Last updated 2 hours ago
+            </p>
+          </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowDetails(!showDetails)}
-          className="btn-magnetic"
-        >
-          {showDetails ? (
-            <>
-              <ChevronUp size={16} className="mr-2" />
-              Show Less
-            </>
-          ) : (
-            <>
-              <ChevronDown size={16} className="mr-2" />
-              Show Details
-            </>
-          )}
-        </Button>
+        
+        {/* Tab Navigation */}
+        <div className="flex gap-2 border-b border-bg-secondary pb-2">
+          <button
+            onClick={() => setActiveTab('daily')}
+            className={`px-6 py-2.5 text-sm font-medium transition-all relative ${
+              activeTab === 'daily'
+                ? 'text-primary dark:text-primary-light'
+                : 'text-text-secondary dark:text-dark-text-secondary hover:text-text-primary dark:hover:text-dark-text-primary'
+            }`}
+          >
+            Daily Patterns
+            {activeTab === 'daily' && (
+              <span className="absolute bottom-[-9px] left-0 right-0 h-1 bg-primary dark:bg-primary-light rounded-t-full"></span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('clinical')}
+            className={`px-6 py-2.5 text-sm font-medium transition-all relative flex items-center gap-2 ${
+              activeTab === 'clinical'
+                ? 'text-primary dark:text-primary-light'
+                : 'text-text-secondary dark:text-dark-text-secondary hover:text-text-primary dark:hover:text-dark-text-primary'
+            }`}
+          >
+            <FileText size={16} />
+            Clinical Report
+            {activeTab === 'clinical' && (
+              <span className="absolute bottom-[-9px] left-0 right-0 h-1 bg-primary dark:bg-primary-light rounded-t-full"></span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Top Insights Card - Added Staggered Animation and Staggered Items */}
@@ -780,6 +840,201 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = ({
               </div>
             </div>
           </Card>
+        </div>
+      )}
+
+      {/* Clinical Report Tab */}
+      {activeTab === 'clinical' && (
+        <div className="animate-fadeIn space-y-8 pb-12">
+          {/* Header / Actions */}
+          <div className="flex justify-between items-start bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm print:hidden gap-6">
+            <div className="flex-1">
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">MAEPLE Clinical Report</h1>
+                <p className="text-slate-500 dark:text-slate-400">Longitudinal analysis for support context.</p>
+                <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
+                    <h3 className="font-bold text-indigo-800 dark:text-indigo-200 text-sm mb-2">What This Report Shows</h3>
+                    <p className="text-sm text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                        Based on your journal entries, this report visualizes your capacity patterns, burnout trajectory, and correlational insights. The data is grounded in established metrics for neurodivergent wellness tracking.
+                    </p>
+                </div>
+            </div>
+            <button 
+                onClick={handlePrint}
+                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 dark:shadow-none"
+            >
+                <Printer size={18} />
+                Print to PDF
+            </button>
+          </div>
+
+          {/* The Report (Printable Area) */}
+          <div className="bg-white dark:bg-slate-800 p-8 md:p-12 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl print:shadow-none print:border-none print:p-0">
+            
+            {/* Report Header */}
+            <header className="border-b border-slate-100 dark:border-slate-700 pb-8 mb-8 flex justify-between items-start">
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 bg-slate-900 dark:bg-slate-700 rounded-lg flex items-center justify-center text-white font-bold">P</div>
+                        <span className="font-bold text-slate-900 dark:text-slate-100 tracking-tight text-xl">MAEPLE</span>
+                    </div>
+                    <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Capacity Pattern Analysis</h2>
+                    <div className="mt-4 space-y-1 text-sm text-slate-500 dark:text-slate-400">
+                        <p><strong>Report Date:</strong> {new Date().toLocaleDateString()}</p>
+                        <p><strong>Entries Analyzed:</strong> {entries.length}</p>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <span className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold uppercase tracking-wider">
+                        CONFIDENTIAL
+                    </span>
+                </div>
+            </header>
+
+            {entries.length < 5 ? (
+                <div className="text-center py-12">
+                    <FileText size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+                    <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200 mb-2">Insufficient Data</h2>
+                    <p className="text-slate-500 dark:text-slate-400">
+                        Please log at least 5 entries to generate a meaningful Capacity & Wellness Report.
+                    </p>
+                </div>
+            ) : (
+                <>
+                    {/* Executive Summary */}
+                    <section className="mb-12">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-l-4 border-indigo-500 pl-3">Executive Summary</h3>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="bg-slate-50 dark:bg-slate-700/50 p-6 rounded-xl">
+                                <h4 className="font-bold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2">
+                                    <Activity size={18} className="text-rose-500" /> Burnout Risk
+                                </h4>
+                                <div className="flex items-baseline gap-2 mb-1">
+                                    <span className={`text-2xl font-bold ${
+                                        burnoutStats.riskLevel === 'CRITICAL' ? 'text-rose-600 dark:text-rose-400' : 
+                                        burnoutStats.riskLevel === 'MODERATE' ? 'text-orange-600 dark:text-orange-400' : 'text-emerald-600 dark:text-emerald-400'
+                                    }`}>{burnoutStats.riskLevel}</span>
+                                </div>
+                                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{burnoutStats.description}</p>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-700/50 p-6 rounded-xl">
+                                <h4 className="font-bold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2">
+                                    <Brain size={18} className="text-indigo-500 dark:text-indigo-400" /> Neuro-Cognitive Load
+                                </h4>
+                                <div className="space-y-2 mt-3">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500 dark:text-slate-400">Avg Sensory Load</span>
+                                        <span className="font-bold text-slate-700 dark:text-slate-200">{avgSensory}/10</span>
+                                    </div>
+                                    <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
+                                        <div className="bg-orange-400 h-1.5 rounded-full" style={{width: `${parseFloat(avgSensory)*10}%`}}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Capacity Profile */}
+                    <section className="mb-12">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 border-l-4 border-teal-500 pl-3">Baseline Capacity Profile</h3>
+                        <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={avgProfile || []}>
+                                    <PolarGrid stroke="#e2e8f0" className="dark:stroke-slate-600" />
+                                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 'bold' }} />
+                                    <PolarRadiusAxis angle={30} domain={[0, 10]} tick={false} axisLine={false} />
+                                    <Radar
+                                        name="Average Capacity"
+                                        dataKey="A"
+                                        stroke="#0d9488"
+                                        strokeWidth={2}
+                                        fill="#0d9488"
+                                        fillOpacity={0.3}
+                                    />
+                                </RadarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </section>
+
+                    {/* Longitudinal Trends */}
+                    <section className="mb-12 break-inside-avoid">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 border-l-4 border-blue-500 pl-3">30-Day Stability Trend</h3>
+                        <div className="h-64 border border-slate-100 dark:border-slate-700 rounded-xl p-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={clinicalChartData}>
+                                    <defs>
+                                        <linearGradient id="colorSpoons" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-700" />
+                                    <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{fill: '#94a3b8', fontSize: 10}} dy={10} />
+                                    <YAxis domain={[0, 10]} hide />
+                                    <Tooltip 
+                                        contentStyle={{
+                                            borderRadius:'8px',
+                                            backgroundColor: 'var(--tooltip-bg, #fff)',
+                                            color: 'var(--tooltip-text, #1e293b)',
+                                            border: 'none',
+                                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                        }} 
+                                        wrapperClassName="dark:!bg-slate-800 dark:!text-slate-100"
+                                    />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="spoons" 
+                                        name="Capacity (Spoons)" 
+                                        stroke="#10b981" 
+                                        strokeWidth={2} 
+                                        fill="url(#colorSpoons)" 
+                                    />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="mood" 
+                                        name="Mood (Scaled)" 
+                                        stroke="#6366f1" 
+                                        strokeWidth={2} 
+                                        fillOpacity={0} 
+                                        strokeDasharray="4 4"
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 text-center">Green = Capacity (Spoons) • Dotted Purple = Mood</p>
+                    </section>
+
+                    {/* Detected Patterns */}
+                    <section className="break-inside-avoid">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 border-l-4 border-purple-500 pl-3">Correlational Analysis</h3>
+                        <div className="space-y-4">
+                            {insights.length > 0 ? insights.map((insight, i) => (
+                                <div key={i} className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <div className="mt-1">
+                                        {insight.type === 'WARNING' && <AlertTriangle className="text-orange-500" size={20} />}
+                                        {insight.type === 'BIO-LINK' && <Activity className="text-rose-500" size={20} />}
+                                        {insight.type === 'CORRELATION' && <Zap className="text-indigo-500" size={20} />}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm">{insight.title}</h4>
+                                        <p className="text-sm text-slate-600 dark:text-slate-300">{insight.description}</p>
+                                    </div>
+                                </div>
+                            )) : (
+                                <p className="text-slate-500 dark:text-slate-400 italic">Not enough data to detect patterns yet.</p>
+                            )}
+                        </div>
+                    </section>
+                </>
+            )}
+
+            <footer className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-700 text-center">
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                    Generated by MAEPLE (Powered by Poziverse). 
+                    This report uses the <strong>MAEPLE Capacity Metrics</strong> framework (Bandwidth, Load, Interference) to track neurodivergent patterns.
+                    It is not a diagnostic tool.
+                </p>
+            </footer>
+          </div>
         </div>
       )}
     </div>

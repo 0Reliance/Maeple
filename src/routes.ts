@@ -11,7 +11,6 @@ export const viewToPath: Record<View, string> = {
   [View.GUIDE]: '/guide',
   [View.TERMS]: '/terms',
   [View.ROADMAP]: '/roadmap',
-  [View.CLINICAL]: '/clinical',
   [View.BETA_DASHBOARD]: '/beta-dashboard',
 };
 

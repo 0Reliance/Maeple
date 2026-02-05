@@ -39,9 +39,6 @@ vi.mock("../../src/components/StateCheckWizard", () => ({
 vi.mock("../../src/components/Settings", () => ({
   default: () => <div data-testid="settings">Settings</div>,
 }));
-vi.mock("../../src/components/ClinicalReport", () => ({
-  default: () => <div data-testid="clinical-report">Clinical Report</div>,
-}));
 
 describe("App Navigation", () => {
   beforeEach(() => {

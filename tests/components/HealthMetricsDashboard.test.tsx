@@ -9,7 +9,13 @@ import * as analyticsService from '../../src/services/analytics';
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   ComposedChart: ({ children }: { children: React.ReactNode }) => <div data-testid="composed-chart">{children}</div>,
+  AreaChart: ({ children }: { children: React.ReactNode }) => <div data-testid="area-chart">{children}</div>,
+  RadarChart: ({ children }: { children: React.ReactNode }) => <div data-testid="radar-chart">{children}</div>,
+  Radar: () => <div />,
   Area: () => <div />,
+  PolarGrid: () => <div />,
+  PolarAngleAxis: () => <div />,
+  PolarRadiusAxis: () => <div />,
   XAxis: () => <div />,
   YAxis: () => <div />,
   CartesianGrid: () => <div />,
@@ -97,32 +103,132 @@ describe('HealthMetricsDashboard Component', () => {
     expect(screen.getByText(/Every pattern you notice is a seed/)).toBeInTheDocument();
   });
 
-  it('renders dashboard with data', async () => {
+  it('renders dashboard with Daily Patterns tab active by default', async () => {
     render(<HealthMetricsDashboard entries={mockEntries} />);
     
-    expect(screen.getByText('Pattern Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Patterns')).toBeInTheDocument();
+    expect(screen.getByText('Daily Patterns')).toBeInTheDocument();
+    expect(screen.getByText('Clinical Report')).toBeInTheDocument();
+  });
+
+  it('renders Daily Patterns tab content', async () => {
+    render(<HealthMetricsDashboard entries={mockEntries} />);
     
-    // Expand details to see the chart
+    // Daily Patterns tab should be active
+    const dailyTab = screen.getByText('Daily Patterns');
+    expect(dailyTab).toHaveClass('text-primary');
+    
+    // Should show energy metrics
+    expect(screen.getByText("Today's Energy")).toBeInTheDocument();
+    
+    // Expand details to see chart
     const showDetailsBtn = screen.getByText('Show Details');
     showDetailsBtn.click();
     
     await screen.findByTestId('composed-chart');
   });
 
-  it('displays cycle context', async () => {
+  it('switches to Clinical Report tab', async () => {
     render(<HealthMetricsDashboard entries={mockEntries} />);
-    // Need to expand details to see cycle context
+    
+    // Click Clinical Report tab
+    const clinicalTab = screen.getByText('Clinical Report');
+    clinicalTab.click();
+    
+    // Clinical Report content should appear
+    await screen.findByText('MAEPLE Clinical Report');
+    expect(screen.getByText('Longitudinal analysis for support context.')).toBeInTheDocument();
+  });
+
+  it('displays Clinical Report executive summary', async () => {
+    render(<HealthMetricsDashboard entries={mockEntries} />);
+    
+    // Switch to Clinical Report tab
+    const clinicalTab = screen.getByText('Clinical Report');
+    clinicalTab.click();
+    
+    await screen.findByText('Executive Summary');
+    expect(screen.getByText('Burnout Risk')).toBeInTheDocument();
+    expect(screen.getByText('Neuro-Cognitive Load')).toBeInTheDocument();
+  });
+
+  it('displays Clinical Report capacity profile', async () => {
+    render(<HealthMetricsDashboard entries={mockEntries} />);
+    
+    // Switch to Clinical Report tab
+    const clinicalTab = screen.getByText('Clinical Report');
+    clinicalTab.click();
+    
+    await screen.findByTestId('radar-chart');
+    expect(screen.getByText('Baseline Capacity Profile')).toBeInTheDocument();
+  });
+
+  it('displays Clinical Report longitudinal trends', async () => {
+    render(<HealthMetricsDashboard entries={mockEntries} />);
+    
+    // Switch to Clinical Report tab
+    const clinicalTab = screen.getByText('Clinical Report');
+    clinicalTab.click();
+    
+    await screen.findByTestId('area-chart');
+    expect(screen.getByText('30-Day Stability Trend')).toBeInTheDocument();
+  });
+
+  it('displays Clinical Report correlational analysis', async () => {
+    render(<HealthMetricsDashboard entries={mockEntries} />);
+    
+    // Switch to Clinical Report tab
+    const clinicalTab = screen.getByText('Clinical Report');
+    clinicalTab.click();
+    
+    await screen.findByText('Correlational Analysis');
+    expect(screen.getByText('Test Insight')).toBeInTheDocument();
+  });
+
+  it('shows insufficient data message for Clinical Report', async () => {
+    const fewEntries = [mockEntries[0]]; // Only 1 entry
+    render(<HealthMetricsDashboard entries={fewEntries} />);
+    
+    // Switch to Clinical Report tab
+    const clinicalTab = screen.getByText('Clinical Report');
+    clinicalTab.click();
+    
+    await screen.findByText('Insufficient Data');
+    expect(screen.getByText(/Please log at least 5 entries/)).toBeInTheDocument();
+  });
+
+  it('has Print to PDF button in Clinical Report tab', async () => {
+    render(<HealthMetricsDashboard entries={mockEntries} />);
+    
+    // Switch to Clinical Report tab
+    const clinicalTab = screen.getByText('Clinical Report');
+    clinicalTab.click();
+    
+    await screen.findByText('Print to PDF');
+    const printButton = screen.getByText('Print to PDF');
+    expect(printButton).toBeInTheDocument();
+  });
+
+  it('toggles details section in Daily Patterns tab', async () => {
+    render(<HealthMetricsDashboard entries={mockEntries} />);
+    
+    // Initially "Show Details"
     const showDetailsBtn = screen.getByText('Show Details');
+    expect(showDetailsBtn).toBeInTheDocument();
+    
     showDetailsBtn.click();
     
+    // Should now say "Show Less" and show cycle context
+    await screen.findByText('Show Less');
     await screen.findByText('Cycle Context');
     expect(screen.getByText('Day 5/28')).toBeInTheDocument();
     expect(screen.getByText('High')).toBeInTheDocument();
   });
 
-  it('displays insights', async () => {
+  it('displays insights in Daily Patterns details', async () => {
     render(<HealthMetricsDashboard entries={mockEntries} />);
-    // Need to expand details to see insights
+    
+    // Expand details
     const showDetailsBtn = screen.getByText('Show Details');
     showDetailsBtn.click();
 
@@ -131,7 +237,7 @@ describe('HealthMetricsDashboard Component', () => {
     expect(screen.getByText('Test Description')).toBeInTheDocument();
   });
 
-  it('displays energy metrics', () => {
+  it('displays energy metrics in Daily Patterns tab', () => {
     render(<HealthMetricsDashboard entries={mockEntries} />);
     expect(screen.getByText("Today's Energy")).toBeInTheDocument();
     // 4.5 out of 10 (avg of 5 and 4)
