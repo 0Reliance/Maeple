@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { WearableDataPoint, UserSettings } from "../types";
 import { useAppStore } from "../stores";
+import { usePWAInstall } from "../hooks/usePWAInstall";
 import {
   exportAllData,
   downloadExport,
@@ -70,6 +71,9 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
 
   // Calibration State
   const [showCalibration, setShowCalibration] = useState(false);
+
+  // PWA Installation
+  const { isInstallable, install } = usePWAInstall();
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -522,6 +526,28 @@ const Settings: React.FC<Props> = ({ onDataSynced }) => {
           </div>
         </div>
       </section>
+
+      {/* PWA Installation */}
+      {isInstallable && (
+        <section className="space-y-4 animate-fadeIn">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <Download className="text-emerald-500" size={20} />
+            Install MAEPLE
+          </h3>
+          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-800/30 shadow-sm">
+            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+              Install MAEPLE as a native app on your device for quick access, offline functionality, and a faster experience.
+            </p>
+            <button
+              onClick={install}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 dark:shadow-emerald-900/50"
+            >
+              <Download size={20} />
+              Install App
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* AI Provider Configuration */}
       <section className="space-y-4">

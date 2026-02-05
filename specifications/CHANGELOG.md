@@ -1,5 +1,136 @@
 # MAEPLE Changelog
 
+## v0.97.9 (February 5, 2026)
+
+**Status**: ✅ Navigation Architecture Refinement
+
+### 🎨 Navigation Refactoring
+
+#### Removed Top Navigation Header
+**Changes**:
+- Eliminated decorative top header from App.tsx
+- Removed MAEPLE logo and PWA install button from top
+- Cleaned up unused imports (`Download` icon from lucide-react)
+- Removed `usePWAInstall` hook from App.tsx
+
+**Impact**:
+- ✅ More vertical content space (~50-60px gained)
+- ✅ Cleaner, more focused interface
+- ✅ Better mobile experience
+
+**Files Modified**:
+- `src/App.tsx` - Removed header, adjusted spacing
+- `src/components/MobileNav.tsx` - Added floating brand label
+- `src/components/Settings.tsx` - Added PWA install section
+
+#### Floating Brand Label
+**New Feature**:
+- Added pill-shaped MAEPLE logo above bottom navigation
+- Positioned at `-top-6` with subtle shadow
+- Contains gradient "M" icon and "MAEPLE" text
+- Non-intrusive design maintaining brand identity
+
+**Styling**:
+```tsx
+<div className="absolute -top-6 left-0 right-0 flex justify-center">
+  <div className="flex items-center gap-1.5 px-3 py-1 bg-bg-card ... rounded-full shadow-sm">
+    <div className="w-4 h-4 bg-gradient-to-br from-primary to-accent-action rounded-sm ...">
+      M
+    </div>
+    <span className="text-[10px] font-bold ... tracking-wider">
+      MAEPLE
+    </span>
+  </div>
+</div>
+```
+
+#### PWA Install Moved to Settings
+**Changes**:
+- PWA install button moved from top header to Settings page
+- New "Install MAEPLE" section with emerald/teal gradient design
+- Conditional rendering (only when `isInstallable` is true)
+- Positioned between Appearance and AI Provider Configuration
+
+**Implementation**:
+```tsx
+{isInstallable && (
+  <section className="space-y-4 animate-fadeIn">
+    <h3>
+      <Download className="text-emerald-500" />
+      Install MAEPLE
+    </h3>
+    <div className="bg-gradient-to-br from-emerald-50 to-teal-50 ...">
+      <p>Install MAEPLE as a native app...</p>
+      <button onClick={install}>
+        <Download />
+        Install App
+      </button>
+    </div>
+  </section>
+)}
+```
+
+**Rationale**:
+- PWA install naturally belongs in Settings
+- Cleaner main interface
+- Logical placement for app installation features
+
+#### Content Spacing Adjusted
+**Changes**:
+- Removed top padding from main content container
+- Changed from `p-4 md:p-8` to `px-4 pb-4 md:px-8 md:pb-8`
+- Maintains `pb-24` for bottom navigation clearance
+
+**Spacing Strategy**:
+- Horizontal padding: `px-4` mobile, `md:px-8` desktop
+- Bottom padding: `pb-4` mobile, `md:pb-8` desktop
+- No top padding: Maximizes vertical content space
+- Bottom clearance: `pb-24` for navigation bar
+
+### 🧪 Test Updates
+
+**Updated Test Files**:
+- `tests/components/App.test.tsx`
+  - Added test verifying absence of top navigation
+  - Updated main content spacing tests
+- `tests/components/MobileNav.test.tsx`
+  - Added tests for floating MAEPLE brand label
+  - Verified logo positioning and styling
+- `tests/components/Settings.test.tsx`
+  - Added PWA install section tests
+  - Tested conditional rendering
+  - Verified emerald/teal gradient styling
+
+### 📚 Documentation Updates
+
+**New Documentation**:
+- `NAVIGATION_REFACTOR_2026-02-05.md` - Comprehensive refactoring documentation
+
+**Updated Documentation**:
+- `specifications/MASTER_PLAN.md` - Version 0.97.9, navigation architecture updated
+- `specifications/UI_UX_GUIDELINES.md` - Navigation section updated
+- `specifications/CHANGELOG.md` - This entry
+
+### 📊 Impact Summary
+
+**Positive Changes**:
+✅ More vertical space for content (~50-60px gained)
+✅ Cleaner, more focused interface
+✅ Better mobile experience
+✅ Consistent navigation patterns (bottom-only)
+✅ Logical PWA install placement
+✅ No breaking changes to core functionality
+
+**Technical Benefits**:
+✅ Simplified App.tsx component logic
+✅ Removed unused dependencies
+✅ Cleaner component hierarchy
+✅ Better separation of concerns
+
+**Documentation**: See [`NAVIGATION_REFACTOR_2026-02-05.md`](../NAVIGATION_REFACTOR_2026-02-05.md)
+
+---
+
 ## v0.97.8 (February 2, 2026)
 
 **Status**: ✅ Journal Entry Validation Fix + Build Error Resolution

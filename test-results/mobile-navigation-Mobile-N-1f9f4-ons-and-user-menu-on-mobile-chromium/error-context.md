@@ -1,0 +1,318 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]: M
+    - generic [ref=e7]: MAEPLE
+  - main [ref=e8]:
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - heading "Settings & Integrations" [level=2] [ref=e13]
+        - paragraph [ref=e14]: Customize your biological context and connect external devices to build a complete digital phenotype.
+      - generic [ref=e15]:
+        - heading "Appearance" [level=3] [ref=e16]:
+          - img [ref=e17]
+          - text: Appearance
+        - generic [ref=e20]:
+          - button "Light" [ref=e21] [cursor=pointer]:
+            - img [ref=e22]
+            - generic [ref=e28]: Light
+          - button "Dark" [ref=e29] [cursor=pointer]:
+            - img [ref=e30]
+            - generic [ref=e32]: Dark
+          - button "System" [ref=e33] [cursor=pointer]:
+            - img [ref=e34]
+            - generic [ref=e36]: System
+      - generic [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e40]:
+            - heading "AI Providers" [level=3] [ref=e41]:
+              - img [ref=e42]
+              - text: AI Providers
+            - paragraph [ref=e45]: Configure AI providers for intelligent analysis
+          - generic [ref=e46]:
+            - heading "Configured" [level=4] [ref=e47]
+            - generic [ref=e49] [cursor=pointer]:
+              - generic [ref=e50]:
+                - img [ref=e52]
+                - generic [ref=e55]:
+                  - heading "Google Gemini" [level=4] [ref=e56]
+                  - paragraph [ref=e57]: Google's multimodal AI with native search
+              - generic [ref=e58]:
+                - generic [ref=e59]:
+                  - img [ref=e60]
+                  - text: Configured
+                - img [ref=e62]
+          - generic [ref=e64]:
+            - heading "Available Providers" [level=4] [ref=e65]
+            - generic [ref=e67] [cursor=pointer]:
+              - generic [ref=e68]:
+                - img [ref=e70]
+                - generic [ref=e73]:
+                  - heading "OpenRouter" [level=4] [ref=e74]
+                  - paragraph [ref=e75]: Access 100+ AI models through one API
+              - img [ref=e77]
+            - generic [ref=e80] [cursor=pointer]:
+              - generic [ref=e81]:
+                - img [ref=e83]
+                - generic [ref=e86]:
+                  - heading "Perplexity" [level=4] [ref=e87]
+                  - paragraph [ref=e88]: AI search with real-time web grounding
+              - img [ref=e90]
+            - generic [ref=e93] [cursor=pointer]:
+              - generic [ref=e94]:
+                - img [ref=e96]
+                - generic [ref=e99]:
+                  - heading "OpenAI" [level=4] [ref=e100]
+                  - paragraph [ref=e101]: GPT-4, DALL-E, and real-time audio
+              - img [ref=e103]
+            - generic [ref=e106] [cursor=pointer]:
+              - generic [ref=e107]:
+                - img [ref=e109]
+                - generic [ref=e112]:
+                  - heading "Ollama" [level=4] [ref=e113]
+                  - paragraph [ref=e114]: Run AI models locally - free & private
+              - img [ref=e116]
+            - generic [ref=e119] [cursor=pointer]:
+              - generic [ref=e120]:
+                - img [ref=e122]
+                - generic [ref=e125]:
+                  - heading "Z.ai" [level=4] [ref=e126]
+                  - paragraph [ref=e127]: Z.ai conversational AI platform
+              - img [ref=e129]
+            - generic [ref=e132] [cursor=pointer]:
+              - generic [ref=e133]:
+                - img [ref=e135]
+                - generic [ref=e138]:
+                  - heading "Anthropic Claude" [level=4] [ref=e139]
+                  - paragraph [ref=e140]: Advanced reasoning with constitutional AI
+              - img [ref=e142]
+          - generic [ref=e144]:
+            - heading "How it works" [level=4] [ref=e145]
+            - list [ref=e146]:
+              - listitem [ref=e147]: • Configure one or more AI providers
+              - listitem [ref=e148]: • Journal analysis uses configured AI for insights
+              - listitem [ref=e149]: • All API keys are encrypted locally
+              - listitem [ref=e150]: • The app works without AI, but features are limited
+              - listitem [ref=e151]: • Ollama runs locally - no API key needed!
+        - generic [ref=e152]:
+          - generic [ref=e153]:
+            - heading "AI Provider Health & Usage" [level=3] [ref=e154]:
+              - img [ref=e155]
+              - text: AI Provider Health & Usage
+            - button "Refresh Stats" [ref=e157] [cursor=pointer]:
+              - img [ref=e158]
+          - generic [ref=e164]:
+            - generic [ref=e165]:
+              - generic [ref=e166]:
+                - heading "Google Gemini" [level=4] [ref=e167]
+                - generic [ref=e169]:
+                  - img [ref=e170]
+                  - text: Operational
+              - button "Reset Stats" [ref=e173] [cursor=pointer]:
+                - img [ref=e174]
+            - generic [ref=e177]:
+              - generic [ref=e178]:
+                - generic [ref=e179]: Requests
+                - generic [ref=e180]: "0"
+              - generic [ref=e181]:
+                - generic [ref=e182]: Error Rate
+                - generic [ref=e183]: 0.0%
+              - generic [ref=e184]:
+                - generic [ref=e185]: Last Active
+                - generic [ref=e186]: Never
+      - generic [ref=e187]:
+        - heading "Cloud Sync" [level=3] [ref=e188]:
+          - img [ref=e189]
+          - text: Cloud Sync
+        - generic [ref=e192]:
+          - heading "Cloud Sync" [level=3] [ref=e193]:
+            - img [ref=e194]
+            - text: Cloud Sync
+          - generic [ref=e196]:
+            - generic [ref=e197]:
+              - generic [ref=e198]: T
+              - generic [ref=e199]:
+                - paragraph [ref=e200]: test-1770248552284@example.com
+                - paragraph [ref=e201]: Not synced yet
+              - button "Sign Out" [ref=e202] [cursor=pointer]
+            - generic [ref=e203]:
+              - generic [ref=e204]:
+                - paragraph [ref=e205]: "0"
+                - paragraph [ref=e206]: Local
+              - generic [ref=e207]:
+                - paragraph [ref=e208]: "0"
+                - paragraph [ref=e209]: Pending
+              - generic [ref=e210]:
+                - paragraph [ref=e211]: ○
+                - paragraph [ref=e212]: idle
+            - generic [ref=e213]:
+              - button "Pull" [ref=e214] [cursor=pointer]:
+                - img [ref=e215]
+                - generic [ref=e217]: Pull
+              - button "Sync" [ref=e218] [cursor=pointer]:
+                - img [ref=e219]
+                - generic [ref=e221]: Sync
+              - button "Push" [ref=e222] [cursor=pointer]:
+                - img [ref=e223]
+                - generic [ref=e225]: Push
+            - paragraph [ref=e226]: Your data is saved locally first, then synced to the cloud when online.
+      - generic [ref=e227]:
+        - heading "Reminders & Notifications" [level=3] [ref=e228]:
+          - img [ref=e229]
+          - text: Reminders & Notifications
+        - generic [ref=e233]:
+          - generic [ref=e235]:
+            - img [ref=e236]
+            - generic [ref=e241]:
+              - paragraph [ref=e242]: Notifications Blocked
+              - paragraph [ref=e243]: You've blocked notifications. To enable them, click the lock icon in your browser's address bar and allow notifications.
+          - generic [ref=e244]:
+            - generic [ref=e245]:
+              - img [ref=e246]
+              - generic [ref=e251]:
+                - paragraph [ref=e252]: Reminders
+                - paragraph [ref=e253]: Gentle check-in notifications
+            - button [disabled] [ref=e254]
+      - generic [ref=e256]:
+        - heading "Safety & Support Protocol" [level=3] [ref=e257]:
+          - img [ref=e258]
+          - text: Safety & Support Protocol
+        - generic [ref=e263]:
+          - paragraph [ref=e264]: If MAEPLE detects critical burnout or high dissociation (via Bio-Mirror), who should we suggest you call?
+          - generic [ref=e265]:
+            - generic [ref=e266]: Support Contact Number
+            - generic [ref=e267]:
+              - img [ref=e269]
+              - textbox "e.g. Partner, Therapist, or Best Friend" [ref=e271]
+          - button "Save Safety Plan" [ref=e273] [cursor=pointer]:
+            - img [ref=e274]
+            - text: Save Safety Plan
+      - generic [ref=e278]:
+        - heading "Bio-Mirror Calibration" [level=3] [ref=e279]:
+          - img [ref=e280]
+          - text: Bio-Mirror Calibration
+        - generic [ref=e286]:
+          - generic [ref=e287]:
+            - heading "Neutral Baseline" [level=4] [ref=e288]
+            - paragraph [ref=e289]: Teach Mae what your "Resting Face" looks like. This improves accuracy by filtering out natural features (like heavy eyelids) from fatigue scores.
+          - button "Calibrate" [ref=e290] [cursor=pointer]
+      - generic [ref=e291]:
+        - heading "Data Management" [level=3] [ref=e292]:
+          - img [ref=e293]
+          - text: Data Management
+        - generic [ref=e295]:
+          - paragraph [ref=e296]: Your data belongs to you. Export your journal entries and state checks for backup or transfer to another device.
+          - paragraph [ref=e297]: Your data belongs to you. Export your journal entries and state checks for backup or transfer to another device.
+          - generic [ref=e298]:
+            - button "Export JSON (Text Only)" [ref=e299] [cursor=pointer]:
+              - img [ref=e300]
+              - text: Export JSON (Text Only)
+            - button "Export Full Backup (ZIP)" [ref=e305] [cursor=pointer]:
+              - img [ref=e306]
+              - text: Export Full Backup (ZIP)
+            - generic [ref=e309] [cursor=pointer]:
+              - img [ref=e310]
+              - text: Import Backup (JSON)
+          - generic [ref=e314]:
+            - generic [ref=e315]:
+              - heading "Danger Zone" [level=4] [ref=e316]
+              - paragraph [ref=e317]: Permanently delete all your data from this browser
+            - button "Delete All" [ref=e318] [cursor=pointer]:
+              - img [ref=e319]
+              - text: Delete All
+      - generic [ref=e322]:
+        - heading "Biological Context" [level=3] [ref=e323]:
+          - img [ref=e324]
+          - text: Biological Context
+        - generic [ref=e326]:
+          - paragraph [ref=e327]: Tracking your hormonal cycle allows HealthFlow to predict energy dips (Luteal Phase) and correlate them with neurodivergent symptoms.
+          - generic [ref=e328]:
+            - generic [ref=e329]:
+              - generic [ref=e330]: Last Cycle Start Date
+              - textbox [ref=e331]
+            - generic [ref=e332]:
+              - generic [ref=e333]: Average Length (Days)
+              - spinbutton [ref=e334]: "28"
+          - button "Save Context" [ref=e336] [cursor=pointer]:
+            - img [ref=e337]
+            - text: Save Context
+      - generic [ref=e341]:
+        - heading "Device Integrations" [level=3] [ref=e342]:
+          - img [ref=e343]
+          - text: Device Integrations
+        - generic [ref=e345]:
+          - generic [ref=e346]:
+            - generic [ref=e347]:
+              - img [ref=e349]
+              - generic [ref=e351]:
+                - heading "Oura Ring" [level=3] [ref=e352]
+                - paragraph [ref=e353]: Sync sleep & biometric data
+            - button "Connect" [ref=e355] [cursor=pointer]
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - img
+                - generic:
+                  - heading "Google Fit" [level=3]
+                  - paragraph: Sync sleep & biometric data
+              - generic:
+                - button "Connect"
+      - generic [ref=e356]: Phase 2 Beta • Data stored locally in browser
+  - generic [ref=e358]:
+    - link "Patterns" [ref=e359] [cursor=pointer]:
+      - /url: /dashboard
+      - img [ref=e360]
+      - generic [ref=e365]: Patterns
+    - link "Reflect" [ref=e366] [cursor=pointer]:
+      - /url: /bio-mirror
+      - img [ref=e367]
+      - generic [ref=e370]: Reflect
+    - link "Capture" [ref=e371] [cursor=pointer]:
+      - /url: /journal
+      - img [ref=e373]
+      - generic [ref=e376]: Capture
+    - link "Guide" [ref=e377] [cursor=pointer]:
+      - /url: /coach
+      - img [ref=e378]
+      - generic [ref=e381]: Guide
+    - generic [ref=e382]:
+      - button "T test-1770248552284" [active] [ref=e383] [cursor=pointer]:
+        - generic [ref=e384]: T
+        - generic [ref=e385]: test-1770248552284
+      - generic [ref=e387]:
+        - generic [ref=e388]:
+          - paragraph [ref=e389]: Account
+          - paragraph [ref=e390]: test-1770248552284@example.com
+        - generic [ref=e391]:
+          - link "Settings" [ref=e392] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e393]
+            - generic [ref=e396]: Settings
+          - link "MAEPLE Report" [ref=e397] [cursor=pointer]:
+            - /url: /clinical
+            - img [ref=e398]
+            - generic [ref=e401]: MAEPLE Report
+        - generic [ref=e403]:
+          - link "Wellness Assistant" [ref=e404] [cursor=pointer]:
+            - /url: /resources
+            - img [ref=e405]
+            - generic [ref=e408]: Wellness Assistant
+          - link "Guide & Vision" [ref=e409] [cursor=pointer]:
+            - /url: /guide
+            - img [ref=e410]
+            - generic [ref=e413]: Guide & Vision
+          - link "Terms & Legal" [ref=e414] [cursor=pointer]:
+            - /url: /terms
+            - img [ref=e415]
+            - generic [ref=e417]: Terms & Legal
+          - link "Beta Dashboard" [ref=e418] [cursor=pointer]:
+            - /url: /beta-dashboard
+            - img [ref=e419]
+            - generic [ref=e421]: Beta Dashboard
+        - button "Sign Out" [ref=e423] [cursor=pointer]:
+          - img [ref=e424]
+          - generic [ref=e427]: Sign Out
+```

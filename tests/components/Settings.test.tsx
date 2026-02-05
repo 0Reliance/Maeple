@@ -34,8 +34,14 @@ vi.mock('../../src/components/AIProviderSettings', () => ({ default: () => <div 
 vi.mock('../../src/components/NotificationSettings', () => ({ default: () => <div data-testid="notification-settings">Notification Settings</div> }));
 vi.mock('../../src/components/CloudSyncSettings', () => ({ default: () => <div data-testid="cloud-sync-settings">Cloud Sync Settings</div> }));
 
+// Mock PWA install hook
+vi.mock('../../src/hooks/usePWAInstall', () => ({
+  usePWAInstall: vi.fn(),
+}));
+
 describe('Settings Component', () => {
   const mockOnDataSynced = vi.fn();
+  const mockInstall = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -44,6 +50,13 @@ describe('Settings Component', () => {
       cycleStartDate: '2023-01-01',
       avgCycleLength: 28,
       safetyContact: '123-456-7890'
+    });
+    
+    // Mock PWA install hook
+    const { usePWAInstall } = require('../../src/hooks/usePWAInstall');
+    usePWAInstall.mockReturnValue({
+      isInstallable: false,
+      install: mockInstall,
     });
   });
 
@@ -102,5 +115,68 @@ describe('Settings Component', () => {
       expect(wearableManager.syncRecentData).toHaveBeenCalled();
       expect(mockOnDataSynced).toHaveBeenCalled();
     });
+  });
+
+  it('does not render PWA install section when not installable', () => {
+    // Mock not installable
+    const { usePWAInstall } = require('../../src/hooks/usePWAInstall');
+    usePWAInstall.mockReturnValue({
+      isInstallable: false,
+      install: mockInstall,
+    });
+
+    render(<Settings onDataSynced={mockOnDataSynced} />);
+    
+    expect(screen.queryByText('Install MAEPLE')).not.toBeInTheDocument();
+    expect(screen.queryByText('Install App')).not.toBeInTheDocument();
+  });
+
+  it('renders PWA install section when installable', () => {
+    // Mock installable
+    const { usePWAInstall } = require('../../src/hooks/usePWAInstall');
+    usePWAInstall.mockReturnValue({
+      isInstallable: true,
+      install: mockInstall,
+    });
+
+    render(<Settings onDataSynced={mockOnDataSynced} />);
+    
+    expect(screen.getByText('Install MAEPLE')).toBeInTheDocument();
+    expect(screen.getByText('Install App')).toBeInTheDocument();
+  });
+
+  it('PWA install section has correct styling', () => {
+    // Mock installable
+    const { usePWAInstall } = require('../../src/hooks/usePWAInstall');
+    usePWAInstall.mockReturnValue({
+      isInstallable: true,
+      install: mockInstall,
+    });
+
+    const { container } = render(<Settings onDataSynced={mockOnDataSynced} />);
+    
+    // Find PWA install section
+    const installSection = screen.getByText('Install MAEPLE').closest('section');
+    expect(installSection).toBeInTheDocument();
+    
+    // Verify emerald/teal gradient background styling
+    const gradientDiv = container.querySelector('.from-emerald-50');
+    expect(gradientDiv).toBeInTheDocument();
+  });
+
+  it('calls install function when install button clicked', async () => {
+    // Mock installable
+    const { usePWAInstall } = require('../../src/hooks/usePWAInstall');
+    usePWAInstall.mockReturnValue({
+      isInstallable: true,
+      install: mockInstall,
+    });
+
+    render(<Settings onDataSynced={mockOnDataSynced} />);
+    
+    const installButton = screen.getByText('Install App');
+    fireEvent.click(installButton);
+    
+    expect(mockInstall).toHaveBeenCalledTimes(1);
   });
 });

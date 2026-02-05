@@ -128,13 +128,25 @@ const MobileNav: React.FC<Props> = ({
         className="fixed bottom-0 left-0 right-0 bg-bg-card dark:bg-dark-bg-card border-t border-bg-secondary dark:border-dark-bg-secondary shadow-card z-50"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
       >
+        {/* MAEPLE Brand Label - Subtle Identification */}
+        <div className="absolute -top-6 left-0 right-0 flex justify-center">
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-bg-card dark:bg-dark-bg-card border border-bg-secondary/50 dark:border-dark-bg-secondary/50 rounded-full shadow-sm">
+            <div className="w-4 h-4 bg-gradient-to-br from-primary to-accent-action rounded-sm flex items-center justify-center text-white font-bold text-[8px] shadow-sm">
+              M
+            </div>
+            <span className="text-[10px] font-bold text-text-secondary dark:text-dark-text-secondary tracking-wider">
+              MAEPLE
+            </span>
+          </div>
+        </div>
+
         <div className="flex justify-around items-end h-16 pb-1 max-w-md mx-auto md:max-w-2xl">
           <NavItem
             view={View.DASHBOARD}
             icon={LayoutDashboard}
             label="Patterns"
           />
-          <NavItem view={View.BIO_MIRROR} icon={Camera} label="Reflect" />
+          <NavItem view={View.BIO_MIRROR} icon={Camera} label="Snap" isAction />
 
           {/* Central Action Button */}
           <NavItem
@@ -144,7 +156,7 @@ const MobileNav: React.FC<Props> = ({
             isAction
           />
 
-          <NavItem view={View.LIVE_COACH} icon={MessagesSquare} label="Guide" />
+          <NavItem view={View.LIVE_COACH} icon={MessagesSquare} label="Journal" isAction />
 
           {/* User Menu Button */}
           <div className="relative" ref={menuRef}>

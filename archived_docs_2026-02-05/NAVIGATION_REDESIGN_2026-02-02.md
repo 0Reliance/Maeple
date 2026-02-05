@@ -1,5 +1,32 @@
 # Mobile Navigation Redesign - February 2, 2026
 
+## Update: February 5, 2026
+
+**Status**: ✅ Further Refinement Complete (v0.97.9)
+
+### Additional Changes (v0.97.9)
+
+On February 5, 2026, the navigation was further refined beyond the February 2 redesign:
+
+1. **Top Header Removed**: The decorative top header (containing MAEPLE logo and PWA install button) was eliminated entirely from the application
+2. **Floating Brand Label**: Added a subtle pill-shaped MAEPLE logo positioned above the bottom navigation at `-top-6`
+3. **PWA Install Moved**: PWA installation feature moved from top header to Settings page as an emerald/teal gradient section
+4. **Content Spacing Adjusted**: Removed top padding from main content container to maximize vertical space
+
+**Impact**:
+- Additional ~50-60px of vertical content space gained
+- Cleaner, more focused interface
+- PWA install logically positioned in Settings
+- Subtle brand identity via floating label
+
+**Documentation**: 
+- See [`NAVIGATION_REFACTOR_2026-02-05.md`](./NAVIGATION_REFACTOR_2026-02-05.md) for comprehensive implementation details
+- See [`NAVIGATION_REMOVAL_SUMMARY.md`](./NAVIGATION_REMOVAL_SUMMARY.md) for quick reference
+
+---
+
+# Mobile Navigation Redesign - February 2, 2026
+
 ## Overview
 Redesigned MAEPLE's mobile navigation to follow premium mobile UX standards by consolidating user menu functionality to the bottom navigation bar and simplifying the top header to a thin, decorative element.
 

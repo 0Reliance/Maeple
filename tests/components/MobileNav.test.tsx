@@ -56,4 +56,33 @@ describe('MobileNav Component', () => {
     
     expect(screen.getByText('Menu').closest('a')).toHaveAttribute('href', '/settings');
   });
+
+  it('renders floating MAEPLE brand label', () => {
+    renderWithRouter(<MobileNav {...defaultProps} />);
+    
+    // Verify MAEPLE brand text is present
+    expect(screen.getByText('MAEPLE')).toBeInTheDocument();
+  });
+
+  it('brand label has correct positioning and styling', () => {
+    const { container } = renderWithRouter(<MobileNav {...defaultProps} />);
+    
+    // Find the brand label container (positioned above nav)
+    const brandLabel = container.querySelector('.absolute.-top-6');
+    expect(brandLabel).toBeInTheDocument();
+    
+    // Verify it has pill-shaped styling
+    expect(brandLabel).toHaveClass('rounded-full', 'shadow-sm');
+  });
+
+  it('brand label contains gradient logo icon', () => {
+    const { container } = renderWithRouter(<MobileNav {...defaultProps} />);
+    
+    // Find the logo container with gradient
+    const logoContainer = container.querySelector('.bg-gradient-to-br');
+    expect(logoContainer).toBeInTheDocument();
+    
+    // Verify it contains the "M" text
+    expect(logoContainer).toHaveTextContent('M');
+  });
 });

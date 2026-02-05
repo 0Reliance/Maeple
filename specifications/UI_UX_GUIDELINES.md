@@ -35,10 +35,11 @@ MAEPLE uses Tailwind CSS with the `class` strategy for dark mode.
 
 ### 3.1 Navigation
 
-#### Top Header (Thin & Decorative)
-- **Logo**: MAEPLE branding (minimal, decorative element)
-- **Install Button**: Desktop-only PWA install button (hidden on mobile)
-- Minimal design to maximize content space
+#### Navigation Architecture
+- **No Top Header**: Removed for cleaner, content-focused interface
+- **Floating Brand Label**: MAEPLE logo positioned as subtle pill above bottom navigation
+- **PWA Install**: Available in Settings page (emerald/teal gradient section)
+- Single navigation bar (bottom) for all devices - maximizes content space
 
 #### Bottom Navigation (MobileNav)
 - **5-item bottom bar** visible on all devices:

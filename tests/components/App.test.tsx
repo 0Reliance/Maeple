@@ -72,6 +72,30 @@ describe("App Navigation", () => {
     });
   });
 
+  it("does not render top navigation header", async () => {
+    render(<App />);
+    await waitFor(() => {
+      // Verify no top navigation header exists
+      const topNav = document.querySelector('[class*="sticky top-0"]');
+      expect(topNav).toBeNull();
+      
+      // Verify no MAEPLE logo in header position
+      const headerLogo = document.querySelector('header');
+      expect(headerLogo).toBeNull();
+    });
+  });
+
+  it("has correct main content spacing", async () => {
+    render(<App />);
+    await waitFor(() => {
+      const mainContent = screen.getByRole('main');
+      expect(mainContent).toBeInTheDocument();
+      
+      // Verify main content has correct padding classes (no top padding)
+      expect(mainContent).toHaveClass('px-4', 'pb-4', 'md:px-8', 'md:pb-8');
+    });
+  });
+
   it("navigates to Dashboard", async () => {
     render(<App />);
     

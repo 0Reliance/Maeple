@@ -20,32 +20,8 @@ interface LandingPageProps {
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onRegister }) => {
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary font-body">
-      {/* Navigation */}
-      <nav className="fixed w-full glass border-b border-bg-secondary z-50">
-        <div className="max-w-7xl mx-auto px-lg md:px-xl">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent-positive rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-primary/20">
-                M
-              </div>
-              <span className="font-display font-bold text-xl tracking-tight">
-                MAEPLE
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="md" onClick={onLogin}>
-                Sign In
-              </Button>
-              <Button variant="primary" size="md" onClick={onRegister}>
-                Get Started
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section - Redesigned with Asymmetric Layout */}
-      <section className="pt-24 pb-20 px-lg md:px-xl max-w-7xl mx-auto">
+      <section className="pt-12 pb-20 px-lg md:px-xl max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-12 gap-xl items-center">
           {/* Left: Text Content */}
           <div className="lg:col-span-7 space-y-8">
