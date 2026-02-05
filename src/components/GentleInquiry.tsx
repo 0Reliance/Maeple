@@ -77,7 +77,7 @@ const GentleInquiry: React.FC<Props> = ({
               I noticed:
             </p>
             <ul className="space-y-1">
-              {inquiry.basedOn.map((item, index) => (
+              {(inquiry.basedOn || []).map((item, index) => (
                 <li
                   key={index}
                   className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"

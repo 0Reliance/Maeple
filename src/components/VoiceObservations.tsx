@@ -88,7 +88,7 @@ const VoiceObservations: React.FC<Props> = ({
 
       {/* Observations List */}
       <div className="space-y-3">
-        {analysis.observations.map((obs: Observation, index: number) => (
+        {(analysis.observations || []).map((obs: Observation, index: number) => (
           <div
             key={`${obs.category}-${index}`}
             className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl"

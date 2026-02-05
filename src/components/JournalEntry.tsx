@@ -25,6 +25,8 @@ import {
   ObjectiveObservation,
   ParsedResponse,
   StrategyRecommendation,
+  FacialAnalysis,
+  GentleInquiry as GentleInquiryType,
 } from "../types";
 import AILoadingState from "./AILoadingState";
 import GentleInquiry from "./GentleInquiry";
@@ -35,6 +37,7 @@ import { Card, CardDescription } from "./ui/Card";
 import { Textarea } from "./ui/Input";
 import { normalizeObjectiveObservations } from "../utils/observationNormalizer";
 import { safeParseAIResponse, validateWithZod } from "../utils/safeParse";
+import { validateFacialAnalysis, validateGentleInquiry } from "../utils/dataValidation";
 
 // Zod schema for AI response validation
 // Note: moodScore uses 1-10 scale to match HealthEntry.mood type
@@ -150,18 +153,19 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
   const [voiceObservations, setVoiceObservations] = useState<AudioAnalysisResult | null>(null);
 
   // Photo/Bio-Mirror Observations State
-  const [photoObservations, setPhotoObservations] = useState<any>(null);
+  const [photoObservations, setPhotoObservations] = useState<FacialAnalysis | null>(null);
 
   // Gentle Inquiry State
-  const [gentleInquiry, setGentleInquiry] = useState<any>(null);
+  const [gentleInquiry, setGentleInquiry] = useState<GentleInquiryType | null>(null);
   const [inquiryResponse, setInquiryResponse] = useState<string>("");
   const [showInquiry, setShowInquiry] = useState(false);
 
-  const handlePhotoAnalysis = (analysis: any) => {
-    setPhotoObservations(analysis);
+  const handlePhotoAnalysis = (analysis: unknown) => {
+    const validated = validateFacialAnalysis(analysis);
+    setPhotoObservations(validated);
     // Add to ObservationContext for correlation
-    if (analysis) {
-      addObservation(faceAnalysisToObservation(analysis));
+    if (validated) {
+      addObservation(faceAnalysisToObservation(validated));
     }
   };
 
@@ -467,13 +471,8 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
 
       // 2. Add photo observations if available
       if (photoObservations) {
-        objectiveObservations.push({
-          type: "visual",
-          source: "bio-mirror",
-          observations: photoObservations.observations,
-          confidence: photoObservations.confidence,
-          timestamp: new Date().toISOString(),
-        });
+        const convertedObservation = faceAnalysisToObservation(photoObservations);
+        objectiveObservations.push(convertedObservation);
       }
 
       // 3. Add text observations if AI extracted them

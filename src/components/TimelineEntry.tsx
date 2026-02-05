@@ -151,13 +151,25 @@ const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry, variant = 'list' }
             )}
 
             {/* Meds */}
-            {entry.medications.map((med, idx) => (
+            {(entry.medications || []).map((med, idx) => (
                 <div key={`med-${idx}`} className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-xs font-medium border border-blue-100">
                     <Pill size={12} />
                     <span>{med.name}</span>
                 </div>
             ))}
         </div>
+
+        {/* Row 3: Symptoms */}
+        {(entry.symptoms || []).length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                {(entry.symptoms || []).map((sym, idx) => (
+                    <div key={`sym-${idx}`} className="flex items-center gap-1.5 px-2 py-1 bg-rose-50 text-rose-600 rounded-md text-xs font-medium border border-rose-100" title={`Severity: ${sym.severity}/10`}>
+                        <span className="text-rose-400">Ï</span>
+                        <span>{sym.name} ({sym.severity}/10)</span>
+                    </div>
+                ))}
+            </div>
+        )}
 
       </div>
     </div>

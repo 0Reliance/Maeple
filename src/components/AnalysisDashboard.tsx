@@ -18,8 +18,8 @@ const AnalysisDashboard: React.FC<Props> = ({ entries }) => {
 
   // Stats
   const avgMood = entries.length ? (entries.reduce((acc, curr) => acc + curr.mood, 0) / entries.length).toFixed(1) : 0;
-  const totalMeds = entries.reduce((acc, curr) => acc + curr.medications.length, 0);
-  const totalSymptoms = entries.reduce((acc, curr) => acc + curr.symptoms.length, 0);
+  const totalMeds = entries.reduce((acc, curr) => acc + (curr.medications?.length || 0), 0);
+  const totalSymptoms = entries.reduce((acc, curr) => acc + (curr.symptoms?.length || 0), 0);
 
   // Generate Insights
   const insights = generateInsights(entries);
@@ -137,12 +137,12 @@ const AnalysisDashboard: React.FC<Props> = ({ entries }) => {
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{entry.notes}</p>
                     <div className="flex flex-wrap gap-2">
-                        {entry.medications.map((m, i) => (
+                        {(entry.medications || []).map((m, i) => (
                             <span key={i} className="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs rounded-md border border-emerald-100 dark:border-emerald-800">
                                 💊 {m.name} {m.dosage}
                             </span>
                         ))}
-                        {entry.symptoms.map((s, i) => (
+                        {(entry.symptoms || []).map((s, i) => (
                             <span key={i} className="px-2 py-1 bg-rose-50 text-rose-700 text-xs rounded-md border border-rose-100">
                                 🌡️ {s.name} ({s.severity}/10)
                             </span>

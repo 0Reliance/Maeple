@@ -133,12 +133,12 @@ const PhotoObservations: React.FC<Props> = ({
       </div>
 
       {/* Observations List */}
-      {analysis.observations.length > 0 && (
+      {Array.isArray(analysis.observations) && analysis.observations.length > 0 && (
         <div className="space-y-3">
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Additional Observations
           </p>
-          {analysis.observations.map((obs, index) => (
+          {(analysis.observations || []).map((obs, index) => (
             <div
               key={`${obs.category}-${index}`}
               className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl"
@@ -169,7 +169,7 @@ const PhotoObservations: React.FC<Props> = ({
       )}
 
       {/* Environmental Clues */}
-      {analysis.environmentalClues.length > 0 && (
+      {Array.isArray(analysis.environmentalClues) && analysis.environmentalClues.length > 0 && (
         <div className="p-4 bg-cyan-50 dark:bg-cyan-900/20 rounded-2xl">
           <div className="flex items-center gap-2 mb-2">
             <MapPin size={14} className="text-cyan-600 dark:text-cyan-400" />
@@ -178,7 +178,7 @@ const PhotoObservations: React.FC<Props> = ({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {analysis.environmentalClues.map((clue, index) => (
+            {(analysis.environmentalClues || []).map((clue, index) => (
               <span
                 key={index}
                 className="px-3 py-1 bg-white dark:bg-slate-700 text-cyan-700 dark:text-cyan-300 rounded-full text-sm"
