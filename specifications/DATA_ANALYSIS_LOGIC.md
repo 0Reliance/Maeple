@@ -1,7 +1,10 @@
 # MAEPLE Data Analysis & Logic Specification
 
-**Version**: 1.0.0
-**Created**: December 17, 2025
+**Version**: 1.1.0  
+**Created**: December 17, 2025  
+**Last Updated**: February 8, 2026
+
+> **v1.1.0 Update (February 2026)**: Added FACS Analysis documentation, Quality Assessment logic, and updated AI Decision Matrix.
 
 ## 1. Overview
 
@@ -54,6 +57,45 @@ When a user submits a journal entry, the following logic triggers:
     *   **Logic**: "Given the user has Low Focus (2/10) and High Sensory Load (8/10), what are 3 micro-strategies?"
     *   **Output**: `aiStrategies` array (e.g., "Dim the lights", "Put on noise-canceling headphones").
 
+### 3.1.5 FACS Analysis (Bio-Mirror)
+
+**Input:** Base64-encoded facial image
+
+**Process:**
+
+1. **Image Capture:**
+   - User captures via `StateCheckCamera` component
+   - Compressed to optimize for AI transmission
+   - Encrypted before storage
+
+2. **AI Analysis (Gemini 2.5 Flash):**
+   - Image sent to Gemini Vision API
+   - Prompt requests specific Action Units (AUs)
+   - Structured schema enforces `FacialAnalysis` format
+
+3. **Response Transformation (v0.97.9):**
+   - `transformAIResponse()` handles format variations
+   - Unwraps `facs_analysis` wrapper if present
+   - Maps snake_case to camelCase
+   - Validates all required fields
+
+4. **Quality Assessment (v0.97.9):**
+   - `checkDetectionQuality()` evaluates detection confidence
+   - 0-100 score calculated from multiple factors
+   - Always allows proceeding (non-blocking)
+
+5. **Comparison to Subjective Report:**
+   - `compareSubjectiveToObjective()` calculates discrepancy
+   - Compares mood (1-5) with facial indicators
+   - Generates mask detection and insights
+
+**Output:** `FacialAnalysis` object with:
+- Action Units detected with intensity ratings
+- FACS interpretation (Duchenne vs social smile)
+- Tension and fatigue scores
+- Confidence metrics
+- Quality assessment (informational)
+
 ### 3.2 Longitudinal Analysis (Dashboard)
 Aggregated analysis performed on the client-side (and eventually AI-assisted).
 
@@ -73,12 +115,17 @@ Aggregated analysis performed on the client-side (and eventually AI-assisted).
 
 How the AI "thinks" about the user.
 
-| User State | Detected Pattern | AI Response Strategy |
-| :--- | :--- | :--- |
-| **High Capacity / High Mood** | "Green Zone" | Encourage capitalization on strengths. Suggest creative tasks. |
-| **Low Capacity / High Load** | "Red Zone" | Validate struggle. Suggest immediate sensory reduction. **Do not** suggest complex tasks. |
-| **High Masking Score** | "Discrepancy" | Gentle inquiry: "You seem to be pushing through. Is it safe to unmask?" |
-| **Inconsistent Data** | Text says "Fine", Mood is 1 | Trust the Mood score. Ask about the discrepancy gently. |
+| User State | FACS Detection | Objective State | AI Response Strategy |
+| :--- | :--- | :--- | :--- |
+| **Mood 5** | **Duchenne Smile** (AU6+AU12) | Genuine positive emotion | "Your face matches your report. Great alignment!" |
+| **Mood 5** | **Social Smile** (AU12 only) | Social/posed expression | "Your smile appears social - you may be masking" |
+| **Mood 5** | **High Tension** (AU4+AU24) | Stress markers present | "Your face shows tension despite positive mood. Check in with your body." |
+| **Mood 1** | **High Fatigue** (AU43+AU7) | Exhaustion indicators | "Physical fatigue detected - prioritize rest over pushing through." |
+| **Any Mood** | **Low Quality Score** | Limited markers detected | "Lighting or angle may affect detection. Try again or use these results as-is." |
+| **High Capacity / High Mood** | N/A | "Green Zone" | Encourage capitalization on strengths. Suggest creative tasks. |
+| **Low Capacity / High Load** | N/A | "Red Zone" | Validate struggle. Suggest immediate sensory reduction. **Do not** suggest complex tasks. |
+| **High Masking Score** | N/A | "Discrepancy" | Gentle inquiry: "You seem to be pushing through. Is it safe to unmask?" |
+| **Inconsistent Data** | N/A | Text says "Fine", Mood is 1 | Trust the Mood score. Ask about the discrepancy gently. |
 
 ## 5. Future Logic Roadmap
 
@@ -96,6 +143,131 @@ How the AI "thinks" about the user.
     *   **Privacy**: Processed locally if possible.
 
 ## 6. Data Flow Diagram
+
+**See COMPLETE_SPECIFICATIONS.md for updated data flow including FACS analysis.**
+
+---
+
+## 7. Quality Assessment Logic (v0.97.9)
+
+### Purpose
+
+Evaluate FACS detection quality without blocking results. Quality checks provide users with guidance while ensuring they can always view their analysis.
+
+### Algorithm
+
+```typescript
+qualityScore = (confidence * 0.4) + 
+             (auCountScore * 0.3) + 
+             (criticalAuScore * 0.3)
+
+Where:
+- confidence = 0-1 (AI's overall confidence)
+- auCountScore = min(AUs.length / 8, 1) (number of AUs, max 8)
+- criticalAuScore = min(criticalAUs.length / 2, 1) (key AUs detected)
+```
+
+### Critical AUs
+
+The following Action Units are considered critical for reliable analysis:
+- **AU6**: Cheek Raiser (genuine smile marker)
+- **AU12**: Lip Corner Puller (smile indicator)
+- **AU4**: Brow Lowerer (tension marker)
+- **AU24**: Lip Pressor (tension marker)
+
+### Quality Levels
+
+| Score Range | Level | User Experience |
+| :--- | :--- | :--- |
+| **60-100** | High | Reliable detection, all critical AUs detected. No alert shown. |
+| **30-59** | Medium | Some markers may have been missed. Informative warning with improvement suggestions. |
+| **0-29** | Low | Limited detection, improvement suggestions provided. Still viewable. |
+
+### User Impact
+
+- **NEVER blocks results** - always shows analysis
+- Provides improvement suggestions for low/medium quality
+- Allows informed decision to retry capture
+- Respects user autonomy and judgment
+
+### Quality Suggestions
+
+For low/medium quality, system provides specific guidance:
+
+**Lighting:**
+- "Use soft, frontal lighting"
+- "Avoid harsh shadows on face"
+- "Ensure even illumination"
+
+**Positioning:**
+- "Face camera directly"
+- "Keep face centered in frame"
+- "Maintain consistent distance"
+
+**Environmental:**
+- "Remove glasses if possible"
+- "Clear hair from face"
+- "Ensure clean background"
+
+**Technical:**
+- "Keep camera steady"
+- "Ensure good focus"
+- "Wait for image to stabilize"
+
+---
+
+## 8. FACS Analysis Data Flow
+
+```
+User captures photo
+    ↓
+Image compressed & encrypted
+    ↓
+Sent to Gemini Vision API
+    ↓
+AI analyzes facial features
+    ↓
+Raw AI response received
+    ↓
+transformAIResponse() standardizes format
+    ↓
+checkDetectionQuality() evaluates quality
+    ↓
+compareSubjectiveToObjective() calculates discrepancy
+    ↓
+FacialAnalysis stored in HealthEntry
+    ↓
+UI displays results with quality guidance
+    ↓
+User can view results or retry
+```
+
+---
+
+## 9. References
+
+### Academic Sources
+
+1. Ekman, P., & Friesen, W. (1978). _Facial Action Coding System: A Technique for Measurement of Facial Movement._
+
+2. Cohn, J. F., Ambadar, Z., & Ekman, P. (2007). _Observer-based measurement of facial expression with Facial Action Coding System._
+
+### Implementation Documentation
+
+3. `docs/FACS_IMPLEMENTATION_GUIDE.md` - Comprehensive FACS implementation guide
+4. `specifications/COMPLETE_SPECIFICATIONS.md` - System architecture and data models
+5. `docs/BIO_MIRROR_UX_IMPROVEMENTS.md` - User experience documentation
+
+### AI Documentation
+
+6. Google AI. (2024). _Gemini Vision API Documentation_
+7. Google AI. (2024). _Prompt Engineering Best Practices_
+
+---
+
+**Document Version**: 1.1.0  
+**Last Updated**: February 8, 2026  
+**Maintained By**: MAEPLE Development Team
 
 ```mermaid
 graph TD

@@ -2,6 +2,16 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw, Home, Cpu, Camera } from 'lucide-react';
 import { errorLogger } from '@services/errorLogger';
 
+/** Generate a stable error ID from the error message (deterministic across re-renders) */
+function stableErrorId(error: Error): string {
+  const msg = error.message || 'unknown';
+  let h = 0;
+  for (let i = 0; i < msg.length; i++) {
+    h = ((h << 5) - h + msg.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h).toString(36);
+}
+
 interface Props {
   children: ReactNode;
   fallback?: React.ComponentType<{ error: Error; retry: () => void }>;
@@ -60,7 +70,7 @@ const DefaultErrorFallback: React.FC<{ error: Error; retry: () => void }> = ({ e
         </div>
 
         <p className="text-slate-500 text-xs text-center mt-6">
-          Error ID: {Math.random().toString(36).substring(7)}
+          Error ID: {stableErrorId(error)}
         </p>
       </div>
     </div>
@@ -132,6 +142,7 @@ export class ErrorBoundary extends Component<Props, State> {
  */
 export class VisionErrorBoundary extends ErrorBoundary {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    super.componentDidCatch(error, errorInfo);
     // Additional vision-specific error handling
     errorLogger.error('Vision Component Error', {
       error: error.message,
@@ -148,6 +159,7 @@ export class VisionErrorBoundary extends ErrorBoundary {
  */
 export class BioFeedbackErrorBoundary extends ErrorBoundary {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    super.componentDidCatch(error, errorInfo);
     errorLogger.error('BioFeedback Component Error', {
       error: error.message,
       stack: error.stack,
@@ -228,7 +240,7 @@ const WorkerErrorFallback: React.FC<WorkerErrorFallbackProps> = ({ error, retry 
         </div>
 
         <p className="text-slate-500 text-xs text-center mt-6">
-          Error ID: {Math.random().toString(36).substring(7)}
+          Error ID: {stableErrorId(error)}
         </p>
       </div>
     </div>
@@ -237,6 +249,7 @@ const WorkerErrorFallback: React.FC<WorkerErrorFallbackProps> = ({ error, retry 
 
 export class WorkerErrorBoundary extends ErrorBoundary {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    super.componentDidCatch(error, errorInfo);
     // Worker-specific error logging
     errorLogger.error('Web Worker Error', {
       error: error.message,

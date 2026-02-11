@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-This document outlines the **Phase 1 implementation** of the Bio-Mirror UX improvements, addressing the critical usability issue where users experienced a "black hole" during AI analysis after photo capture.
+This document outlines **Phase 1 implementation** of Bio-Mirror UX improvements, addressing critical usability issue where users experienced a "black hole" during AI analysis after photo capture.
 
 ## 🚀 What's New
 
@@ -16,7 +16,7 @@ This document outlines the **Phase 1 implementation** of the Bio-Mirror UX impro
 2. **Dedicated Analysis Screen**
    - New `StateCheckAnalyzing.tsx` component
    - Modern, engaging interface with real-time progress
-   - Visual feedback throughout the entire analysis process
+   - Visual feedback throughout entire analysis process
 
 3. **Real-time Progress Visualization**
    - 5-step analysis process with clear progress indicators
@@ -178,6 +178,138 @@ StateCheckWizard.tsx (Main orchestrator)
 - **Integration with wearables**
 - **AI-powered insights**
 
+## 🎯 Quality Alert UX (v0.97.9)
+
+### Non-Blocking Quality Warnings
+
+Quality checks are now **informational only** - users can always proceed to view their facial analysis results.
+
+### Alert Display System
+
+**Low Quality (0-29 score):**
+
+```
+Title: "Photo Quality Issues Detected"
+Message: "The image quality may be affecting facial analysis. 
+Some markers couldn't be detected clearly."
+
+Primary Button: "Retake Photo" (restarts capture)
+Secondary Button: "View Results Anyway" (always available)
+```
+
+**Medium Quality (30-59 score):**
+
+```
+Title: "Limited Analysis Quality"
+Message: "Some facial markers may have been missed. 
+Results may be less accurate."
+
+Primary Button: "Try Better Lighting" (restarts capture)
+Secondary Button: "View Results Anyway" (always available)
+```
+
+**High Quality (60-100 score):**
+
+```
+No alert displayed
+Results shown immediately with full analysis
+```
+
+### User Experience Principles
+
+**Respect User Autonomy:**
+- Users can always view their analysis results
+- Quality warnings are suggestions, not requirements
+- User decides whether to retry or use current results
+
+**Transparent Feedback:**
+- Clear explanation of quality issues
+- Specific suggestions for improvement
+- Confidence score visible to user
+
+**Informed Decisions:**
+- Users see results before deciding to retry
+- Can assess accuracy based on displayed AUs
+- Maintain control over their experience
+
+### Quality Suggestions Provided
+
+For low/medium quality alerts, system provides actionable guidance:
+
+**Lighting Improvements:**
+- "Use soft, frontal lighting"
+- "Avoid harsh shadows on face"
+- "Ensure even illumination across face"
+
+**Positioning Tips:**
+- "Face camera directly"
+- "Keep face centered in frame"
+- "Maintain consistent distance (arm's length)"
+
+**Environmental Factors:**
+- "Remove glasses if possible"
+- "Clear hair from face/eyes"
+- "Ensure clean, uncluttered background"
+
+**Technical Advice:**
+- "Keep camera steady during capture"
+- "Ensure good focus and clarity"
+- "Wait for image to stabilize before capture"
+
+### Rationale for Non-Blocking Design
+
+**Previous Behavior (v0.97.8 and earlier):**
+- Quality scores below 30 blocked results display
+- "Did not get good enough picture" alert showed
+- Users couldn't see analysis despite valid AU detections
+- False negatives created poor user experience
+
+**Current Behavior (v0.97.9+):**
+- Quality check is informational only
+- "View Results Anyway" button always available
+- Users can always review their analysis
+- Quality guidance maintained as helpful suggestions
+
+**Why This Matters:**
+
+1. **Valid Photos May Score Low:** Users often capture usable photos that don't meet ideal quality thresholds
+2. **Partial Detection Still Valuable:** Even with limited AUs detected, some information is better than none
+3. **User Judgment Matters:** Users can assess whether results seem accurate based on displayed AUs
+4. **Reduced Friction:** Eliminates false blocking that frustrates users
+5. **Maintained Quality Guidance:** Improvement suggestions still help users capture better photos
+
+### User Feedback Loop
+
+Users can now:
+1. **Review analysis despite quality warnings** - Always see their results
+2. **Assess result accuracy** - Decide if detected AUs seem reasonable
+3. **Choose to retry if needed** - Only recapture if they believe quality can improve
+4. **Save any valuable results** - Keep data they find useful regardless of quality score
+
+### Implementation Notes
+
+**Files Modified:**
+- `src/services/comparisonEngine.ts` - `canProceed` always returns `true`
+- `src/components/StateCheckResults.tsx` - Updated quality alert UI with secondary button
+
+**UI Pattern:**
+```tsx
+{quality.level === 'low' || quality.level === 'medium' ? (
+  <Alert>
+    <AlertTitle>{getQualityTitle(quality.level)}</AlertTitle>
+    <AlertDescription>
+      {getQualityMessage(quality.level)}
+    </AlertDescription>
+    <Button onClick={handleRetake}>Retake Photo</Button>
+    <Button onClick={handleViewAnyway} variant="secondary">
+      View Results Anyway
+    </Button>
+  </Alert>
+) : (
+  // Show results directly for high quality
+)}
+```
+
 ## 🛠️ Troubleshooting
 
 ### Common Issues
@@ -206,6 +338,7 @@ console.log('[BioMirror] Analysis step:', currentStep);
 
 **Created**: January 30, 2026  
 **Status**: Phase 1 Implementation Complete ✅  
+**v0.97.9 Quality Alert Updates**: Complete ✅  
 **Next Review**: February 15, 2026  
 **Lead Developer**: AI Assistant  
-**Version**: 1.0.0
+**Version**: 1.1.0

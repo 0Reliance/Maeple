@@ -1,5 +1,5 @@
 import { useVisionService } from "@/contexts/DependencyContext";
-import { Target, Brain, Gauge, TrendingUp, Shield, Timer } from 'lucide-react';
+import { Brain, Gauge, Shield, Target, Timer, TrendingUp } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 interface AnalysisStep {
@@ -25,13 +25,7 @@ interface StateCheckAnalyzingProps {
   estimatedTime?: number;
 }
 
-const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
-  imageSrc,
-  onProgress,
-  onComplete,
-  onCancel,
-  estimatedTime = 45
-}) => {
+const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({ imageSrc, onProgress, onComplete, onCancel, estimatedTime = 45 }) => {
   const visionService = useVisionService();
   const [currentStep, setCurrentStep] = useState(0);
   const [stepProgress, setStepProgress] = useState(0);
@@ -46,14 +40,14 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
     {
       id: 'encoding',
       label: 'Processing Image',
-      duration: 2000,
+      duration: 400,
       icon: <Shield className="w-6 h-6" />,
       description: 'Securely preparing your photo for analysis'
     },
     {
       id: 'landmarks',
       label: 'Detecting Facial Landmarks',
-      duration: 3000,
+      duration: 400,
       icon: <Target className="w-6 h-6" />,
       description: 'Identifying key facial structure points'
     },
@@ -67,14 +61,14 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
     {
       id: 'baseline',
       label: 'Comparing with Baseline',
-      duration: 3000,
+      duration: 500,
       icon: <Gauge className="w-6 h-6" />,
       description: 'Measuring against your personal patterns'
     },
     {
       id: 'insights',
       label: 'Generating Insights',
-      duration: 5000,
+      duration: 300,
       icon: <TrendingUp className="w-6 h-6" />,
       description: 'Creating personalized health insights'
     }
@@ -115,8 +109,8 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
         setStepProgress(0);
         onProgress?.(ANALYSIS_STEPS[0].id, 0);
 
-        // Simulate encoding step (2 seconds)
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Brief encoding step
+        await new Promise(resolve => setTimeout(resolve, 400));
         setStepProgress(100);
 
         // Move to step 1 (landmarks)
@@ -124,8 +118,8 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
         setStepProgress(0);
         onProgress?.(ANALYSIS_STEPS[1].id, 0);
 
-        // Simulate landmarks detection (3 seconds)
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Brief landmarks step
+        await new Promise(resolve => setTimeout(resolve, 400));
         setStepProgress(100);
 
         // Move to step 2 (AI analysis) - this is where real AI processing happens
@@ -165,8 +159,8 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
         setStepProgress(0);
         onProgress?.(ANALYSIS_STEPS[3].id, 0);
 
-        // Simulate baseline comparison (3 seconds)
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Brief baseline comparison step
+        await new Promise(resolve => setTimeout(resolve, 500));
         setStepProgress(100);
 
         // Move to step 4 (insights)
@@ -174,8 +168,8 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
         setStepProgress(0);
         onProgress?.(ANALYSIS_STEPS[4].id, 0);
 
-        // Simulate insights generation (5 seconds)
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Brief insights generation step
+        await new Promise(resolve => setTimeout(resolve, 300));
         setStepProgress(100);
 
         setIsComplete(true);
@@ -188,10 +182,10 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
       } catch (error) {
         console.error("[StateCheckAnalyzing] Analysis failed:", error);
         
-        // Handle error gracefully
+        // Handle error gracefully - return degraded analysis instead of crashing
         setIsComplete(true);
         setTimeout(() => {
-          const fallbackResult = {
+          const fallbackResult: any = {
             actionUnits: [],
             confidence: 0,
             observations: [],
@@ -206,12 +200,11 @@ const StateCheckAnalyzing: React.FC<StateCheckAnalyzingProps> = ({
               duchennSmile: false,
               socialSmile: false,
               maskingIndicators: [],
-              fatigueIndicators: [],
+              fatigueIndicators: ['Analysis failed - limited data available'],
               tensionIndicators: []
             },
-            error: error
           };
-          console.log('[StateCheckAnalyzing] Returning fallback result:', fallbackResult);
+          console.warn('[StateCheckAnalyzing] Returning fallback result due to error:', error);
           onComplete?.(fallbackResult);
         }, 1000);
       }

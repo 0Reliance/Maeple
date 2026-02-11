@@ -4,9 +4,11 @@
 
 MAEPLE's Bio-Mirror feature uses the **Facial Action Coding System (FACS)** to provide objective physiological analysis of facial expressions. This guide documents the implementation, logic, and scientific foundation.
 
-**Version:** 0.97.7  
-**Last Updated:** January 20, 2026  
+**Version:** 0.97.9  
+**Last Updated:** February 8, 2026  
 **Implementation Type:** AI-Assisted FACS Detection via Gemini Vision API
+
+> **v0.97.9 Update (February 2026)**: AI Response Parsing & Quality Check Fixes - Centralized `transformAIResponse` utility, non-blocking quality assessments, enhanced debugging.
 
 ---
 
@@ -369,6 +371,130 @@ const calculateDiscrepancy = (subjective: HealthEntry, objective: FacialAnalysis
 
 ---
 
+## AI Response Transformation (v0.97.9)
+
+### Overview
+
+The `transformAIResponse` utility centralizes AI response parsing to handle format variations from different AI providers and model versions.
+
+### Function Signature
+
+```typescript
+export const transformAIResponse = (aiResponse: any): FacialAnalysis
+```
+
+### Transformation Rules
+
+#### 1. Wrapper Detection
+
+Detects and unwraps `facs_analysis` wrapper when present:
+
+```typescript
+if (data.facs_analysis && typeof data.facs_analysis === 'object') {
+  data = data.facs_analysis;
+}
+```
+
+#### 2. Action Units Mapping
+
+Supports both snake_case and camelCase field names:
+
+```typescript
+const auArray = data.action_units_detected || data.actionUnits || [];
+
+const transformedAUs: ActionUnit[] = auArray.map((au: any) => ({
+  auCode: au.au || au.auCode,
+  name: au.name,
+  intensity: au.intensity || 'C',
+  intensityNumeric: au.intensity_numeric || au.intensityNumeric || 3,
+  confidence: au.confidence || 0.5
+}));
+```
+
+#### 3. FACS Interpretation Mapping
+
+Handles field name variations for interpretation data:
+
+```typescript
+const rules = data.interpretation_rules || data.facsInterpretation || {};
+
+return {
+  duchennSmile: rules.duchenne_smile || rules.duchennSmile || false,
+  socialSmile: rules.social_posed_smile || rules.socialSmile || false,
+  maskingIndicators: rules.masking_indicators || rules.maskingIndicators || [],
+  fatigueIndicators: rules.fatigue_cluster 
+    ? ['Fatigue detected'] 
+    : rules.fatigue_indicators || rules.fatigueIndicators || [],
+  tensionIndicators: rules.tension_cluster 
+    ? ['Tension detected'] 
+    : rules.tension_indicators || rules.tensionIndicators || []
+};
+```
+
+#### 4. Legacy Field Support
+
+Maintains backward compatibility with legacy numeric fields:
+
+```typescript
+// Derive jawTension from AU4, AU24
+const au4 = findActionUnit(transformedAUs, 'AU4');
+const au24 = findActionUnit(transformedAUs, 'AU24');
+const jawTension = (au4?.intensityNumeric || 0 + au24?.intensityNumeric || 0) / 10;
+
+// Derive eyeFatigue from AU43, ptosis, low intensity
+const au43 = findActionUnit(transformedAUs, 'AU43');
+const eyeFatigue = (au43?.intensityNumeric || 0 + (lowIntensity ? 2 : 0)) / 5;
+```
+
+#### 5. Default Values
+
+Ensures all required fields present with sensible defaults:
+
+```typescript
+return {
+  confidence: data.confidence || 0.5,
+  actionUnits: transformedAUs,
+  facsInterpretation: transformedInterpretation,
+  observations: data.observations || [],
+  lighting: data.lighting || 'unknown',
+  lightingSeverity: data.lightingSeverity || 'moderate',
+  environmentalClues: data.environmentalClues || [],
+  jawTension: data.jawTension || 0,
+  eyeFatigue: data.eyeFatigue || 0,
+  primaryEmotion: data.primaryEmotion,
+  signs: data.signs
+};
+```
+
+### Logging
+
+The utility provides detailed logging at each transformation step:
+
+```
+[transformAIResponse] Input: { ... }
+[transformAIResponse] Unwrapping facs_analysis wrapper
+[transformAIResponse] Mapped 5 AUs from action_units_detected
+[transformAIResponse] Mapped interpretation_rules to facsInterpretation
+[transformAIResponse] Output: { ... }
+```
+
+### Error Handling
+
+- Graceful degradation when fields missing
+- Type-safe transformations with TypeScript
+- Logs warnings for unusual response structures
+- Never blocks analysis - always returns valid `FacialAnalysis`
+
+### Why This Matters
+
+- **AI Model Evolution:** AI providers may change response formats
+- **Multiple Providers:** Different conventions across providers
+- **Single Point of Maintenance:** Centralized logic prevents code duplication
+- **Debugging Support:** Detailed logging for troubleshooting
+- **Future-Proof:** Easy to add new format variations
+
+---
+
 ## Validation & Testing
 
 ### Validation Service
@@ -393,6 +519,46 @@ function validateActionUnit(data: unknown): ActionUnit | null {
 }
 ```
 
+### Quality Assessment Validation (v0.97.9)
+
+```typescript
+// File: src/services/comparisonEngine.ts
+
+interface DetectionQuality {
+  score: number; // 0-100
+  level: "high" | "medium" | "low";
+  suggestions: string[];
+  canProceed: boolean; // Always true - non-blocking
+}
+
+function checkDetectionQuality(analysis: FacialAnalysis): DetectionQuality
+```
+
+**Quality Score Calculation:**
+
+```typescript
+const score = (confidence * 0.4) +           // 40% weight
+             (auCountScore * 0.3) +          // 30% weight  
+             (criticalAuScore * 0.3);          // 30% weight
+
+Where:
+- confidence = 0-1 (AI's overall confidence)
+- auCountScore = min(AUs.length / 8, 1) (number of AUs, max 8)
+- criticalAuScore = min(criticalAUs.length / 2, 1) (key AUs detected)
+```
+
+**Critical AUs:** AU6, AU12, AU4, AU24
+
+**Validation Rules:**
+
+- ✅ Quality score calculation accurate (0-100 scale)
+- ✅ Level determination: high (60+), medium (30-59), low (0-29)
+- ✅ `canProceed` is always `true` (informational only)
+- ✅ High quality has empty suggestions
+- ✅ Medium quality provides improvement guidance
+- ✅ Low quality gives actionable feedback
+- ✅ Suggestions include lighting, positioning, environmental factors
+
 ### Test Coverage
 
 - ✅ Tests passing (run `npm run test:run`)
@@ -400,6 +566,9 @@ function validateActionUnit(data: unknown): ActionUnit | null {
 - ✅ `validateActionUnit` validates intensity ratings
 - ✅ `validateFacsInterpretation` validates AU combinations
 - ✅ Backward compatibility with legacy fields maintained
+- ✅ `transformAIResponse` handles all response formats
+- ✅ Quality assessment score calculation accurate
+- ✅ `canProceed` never blocks results
 
 ---
 
@@ -536,6 +705,61 @@ Potential libraries for Phase 4:
 - **Py-Feat:** [cosanlab/py-feat](https://github.com/cosanlab/py-feat)
 - **OpenFace:** [TadasBaltrusaitis/OpenFace](https://github.com/TadasBaltrusaitis/OpenFace)
 - **Facetorch:** [tomas-gajarsky/facetorch](https://github.com/tomas-gajarsky/facetorch)
+
+---
+
+## Recent Bug Fixes (v0.97.9)
+
+### Fix #1: AI Response Format Variability
+
+**Issue:** Gemini AI sometimes wraps responses in `facs_analysis` object
+
+**Symptoms:**
+- Empty results in UI when AI used wrapped format
+- Missing action units despite successful API call
+- Inconsistent behavior between different AI calls
+
+**Root Cause:**
+Code expected direct response structure only, didn't handle wrapped format.
+
+**Solution:**
+Created `transformAIResponse` utility to:
+- Detect and unwrap `facs_analysis` wrapper
+- Handle both `actionUnits` and `action_units_detected`
+- Support snake_case and camelCase field names
+- Provide consistent `FacialAnalysis` output
+
+**Files Changed:**
+- `src/utils/transformAIResponse.ts` (created)
+- `src/services/geminiVisionService.ts` (updated all three paths)
+
+### Fix #2: Quality Check Blocking Valid Results
+
+**Issue:** Quality check blocked valid analyses from display
+
+**Symptoms:**
+- "Did not get good enough picture" alert for valid results
+- Users couldn't see results with valid AU detections
+- False negatives causing poor user experience
+
+**Root Cause:**
+`canProceed` set to `false` for quality scores below 30
+
+**Solution:**
+- Changed `canProceed` to always be `true`
+- Quality check now informational only
+- Users can always view results with or without retry
+- Added "View Results Anyway" button for clarity
+
+**Files Changed:**
+- `src/services/comparisonEngine.ts` (updated `checkDetectionQuality`)
+- `src/components/StateCheckResults.tsx` (updated UI handling)
+
+**Impact:**
+- Improved user experience by showing all results
+- Maintained quality guidance as informational
+- Reduced false blocking of valid analyses
+- Users maintain control over when to retry capture
 
 ---
 

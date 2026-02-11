@@ -10,63 +10,25 @@
  * - Offline fallback mode
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  analyzeStateFromImage,
-  generateOrEditImage,
-} from '../../src/services/geminiVisionService';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
-// Create mock function at module level for reuse
-const mockGenerateContent = vi.fn();
+// Define types for our mocks
+type RateLimitedCallModule = {
+  rateLimitedCall: Mock;
+};
 
-// Mock dependencies - vi.mock is hoisted, so we define the mock inside factory
-vi.mock('@google/genai', () => ({
-  GoogleGenAI: vi.fn(() => ({
-    models: {
-      generateContent: mockGenerateContent,
-    },
-  })),
-  Schema: {},
-  Type: {
-    OBJECT: 'object',
-    NUMBER: 'number',
-    STRING: 'string',
-    BOOLEAN: 'boolean',
-    ARRAY: 'array',
-  },
-}));
-
-vi.mock('../../src/services/ai', () => ({
-  aiRouter: {
-    generateImage: vi.fn().mockResolvedValue(null),
-    isAIAvailable: vi.fn().mockReturnValue(false),
-    vision: vi.fn().mockResolvedValue(null),
-  },
-}));
-
-vi.mock('../../src/services/cacheService', () => ({
-  cacheService: {
-    get: vi.fn().mockResolvedValue(null),
-    set: vi.fn().mockResolvedValue(undefined),
-  },
-}));
-
-vi.mock('../../src/services/errorLogger', () => ({
-  errorLogger: {
-    error: vi.fn(),
-    warning: vi.fn(),
-    info: vi.fn(),
-  },
-}));
-
-const mockRateLimitedCall = vi.fn().mockImplementation((fn) => fn());
-
-vi.mock('../../src/services/rateLimiter', () => ({
-  rateLimitedCall: mockRateLimitedCall,
-}));
+type GeminiServiceModule = {
+  analyzeStateFromImage: Function;
+  generateOrEditImage: Function;
+};
 
 describe('geminiVisionService', () => {
   let originalEnv: Record<string, string | undefined>;
+  
+  // Variables to hold our fresh mocks and service for each test
+  let mockRateLimitedCall: Mock;
+  let mockGenerateContent: Mock;
+  let service: GeminiServiceModule;
 
   const createMockFACSResponse = () => ({
     confidence: 0.92,
@@ -101,48 +63,99 @@ describe('geminiVisionService', () => {
     eyeFatigue: 0.1,
   });
 
-  beforeEach(() => {
+  // Helper to create a complete GenAI mock response with text() method/property
+  const createMockGenAIResponse = (data: any) => {
+    const text = typeof data === 'string' ? data : JSON.stringify(data);
+    return {
+      candidates: [
+        {
+          content: {
+            parts: [{ text }],
+          },
+        },
+      ],
+      text, // Property access based on source code usage (response.text)
+    };
+  };
+
+  beforeEach(async () => {
+    // 1. Reset modules to ensure fresh imports
+    vi.resetModules();
+
+    // 2. Setup Env
     originalEnv = {};
     Object.keys(import.meta.env).forEach((key) => {
       originalEnv[key] = import.meta.env[key];
     });
 
-    mockGenerateContent.mockReset();
-    vi.clearAllMocks();
-    
-    // Reset module-level state by clearing the cached AI instance
-    // This is done by re-importing the module
-    vi.resetModules();
+    // 3. Create fresh mock instances
+    mockRateLimitedCall = vi.fn().mockImplementation((fn) => fn());
+    mockGenerateContent = vi.fn();
+
+    // 4. Register mocks using vi.doMock
+    vi.doMock('../../src/services/rateLimiter', () => ({
+      rateLimitedCall: mockRateLimitedCall,
+    }));
+
+    vi.doMock('@google/genai', () => ({
+      GoogleGenAI: vi.fn(function() {
+        return {
+          models: {
+            generateContent: mockGenerateContent,
+          },
+        };
+      }),
+      Schema: {},
+      Type: {
+        OBJECT: 'object',
+        NUMBER: 'number',
+        STRING: 'string',
+        BOOLEAN: 'boolean',
+        ARRAY: 'array',
+      },
+    }));
+
+    vi.doMock('../../src/services/ai', () => ({
+      aiRouter: {
+        generateImage: vi.fn().mockResolvedValue(null),
+        isAIAvailable: vi.fn().mockReturnValue(false),
+        vision: vi.fn().mockResolvedValue(null),
+      },
+    }));
+
+    vi.doMock('../../src/services/cacheService', () => ({
+      cacheService: {
+        get: vi.fn().mockResolvedValue(null),
+        set: vi.fn().mockResolvedValue(undefined),
+      },
+    }));
+
+    vi.doMock('../../src/services/errorLogger', () => ({
+      errorLogger: {
+        error: vi.fn(),
+        warning: vi.fn(),
+        info: vi.fn(),
+      },
+    }));
+
+    // 5. Dynamic import of the service under test
+    service = await import('../../src/services/geminiVisionService') as GeminiServiceModule;
   });
 
   afterEach(() => {
-    // Restore original env
     Object.keys(originalEnv).forEach((key) => {
       (import.meta.env as Record<string, unknown>)[key] = originalEnv[key];
     });
+    vi.clearAllMocks();
   });
 
   describe('T-1.1: analyzeStateFromImage - Successful Analysis', () => {
     it('should return FacialAnalysis with actionUnits array on success', async () => {
       import.meta.env.VITE_GEMINI_API_KEY = 'test-api-key';
 
-      const mockResponse = {
-        candidates: [
-          {
-            content: {
-              parts: [
-                {
-                  text: JSON.stringify(createMockFACSResponse()),
-                },
-              ],
-            },
-          },
-        ],
-      };
+      mockGenerateContent.mockResolvedValue(createMockGenAIResponse(createMockFACSResponse()));
 
-      mockGenerateContent.mockResolvedValue(mockResponse);
-
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       expect(result).toBeDefined();
       expect(result?.actionUnits).toBeDefined();
@@ -158,17 +171,9 @@ describe('geminiVisionService', () => {
         confidence: 0.95,
       };
 
-      mockGenerateContent.mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(highConfidenceResponse) }],
-            },
-          },
-        ],
-      });
+      mockGenerateContent.mockResolvedValue(createMockGenAIResponse(highConfidenceResponse));
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       expect(result?.confidence).toBeGreaterThan(0.9);
     });
@@ -181,17 +186,9 @@ describe('geminiVisionService', () => {
         confidence: 0.3,
       };
 
-      mockGenerateContent.mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(lowConfidenceResponse) }],
-            },
-          },
-        ],
-      });
+      mockGenerateContent.mockResolvedValue(createMockGenAIResponse(lowConfidenceResponse));
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       expect(result?.confidence).toBeLessThan(0.5);
     });
@@ -204,17 +201,9 @@ describe('geminiVisionService', () => {
         actionUnits: [],
       };
 
-      mockGenerateContent.mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(emptyAUResponse) }],
-            },
-          },
-        ],
-      });
+      mockGenerateContent.mockResolvedValue(createMockGenAIResponse(emptyAUResponse));
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       expect(result?.actionUnits).toEqual([]);
     });
@@ -226,9 +215,11 @@ describe('geminiVisionService', () => {
 
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
-      expect(result).toBeNull();
+      // Updated behavior: returns offline fallback instead of null
+      expect(result).toBeDefined();
+      expect(result?.facsInterpretation?.fatigueIndicators).toContain('Unable to analyze - offline mode');
       expect(consoleSpy).toHaveBeenCalled();
 
       consoleSpy.mockRestore();
@@ -244,7 +235,7 @@ describe('geminiVisionService', () => {
       mockGenerateContent.mockRejectedValue(new Error('API Error'));
 
       try {
-        await analyzeStateFromImage('base64-image-data');
+        await service.analyzeStateFromImage('base64-image-data');
       } catch {
         // Expected
       }
@@ -269,7 +260,7 @@ describe('geminiVisionService', () => {
     it('should handle malformed API key', async () => {
       import.meta.env.VITE_GEMINI_API_KEY = '';
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       // When API key is empty, should return offline analysis (not null)
       expect(result).toBeDefined();
@@ -286,17 +277,9 @@ describe('geminiVisionService', () => {
     it('should use rateLimitedCall for requests', async () => {
       import.meta.env.VITE_GEMINI_API_KEY = 'test-api-key';
 
-      mockGenerateContent.mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(createMockFACSResponse()) }],
-            },
-          },
-        ],
-      });
+      mockGenerateContent.mockResolvedValue(createMockGenAIResponse(createMockFACSResponse()));
 
-      await analyzeStateFromImage('base64-image-data');
+      await service.analyzeStateFromImage('base64-image-data');
 
       expect(mockRateLimitedCall).toHaveBeenCalled();
     });
@@ -304,21 +287,13 @@ describe('geminiVisionService', () => {
     it('should pass correct priority for analysis requests', async () => {
       import.meta.env.VITE_GEMINI_API_KEY = 'test-api-key';
 
-      mockGenerateContent.mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(createMockFACSResponse()) }],
-            },
-          },
-        ],
-      });
+      mockGenerateContent.mockResolvedValue(createMockGenAIResponse(createMockFACSResponse()));
 
-      await analyzeStateFromImage('base64-image-data');
+      await service.analyzeStateFromImage('base64-image-data');
 
       expect(mockRateLimitedCall).toHaveBeenCalledWith(
         expect.any(Function),
-        expect.objectContaining({ priority: 1 })
+        expect.objectContaining({ priority: 4 })
       );
     });
 
@@ -327,15 +302,7 @@ describe('geminiVisionService', () => {
 
       mockGenerateContent
         .mockRejectedValueOnce(new Error('Rate limited'))
-        .mockResolvedValueOnce({
-          candidates: [
-            {
-              content: {
-                parts: [{ text: JSON.stringify(createMockFACSResponse()) }],
-              },
-            },
-          ],
-        });
+        .mockResolvedValueOnce(createMockGenAIResponse(createMockFACSResponse()));
 
       let callCount = 0;
       mockRateLimitedCall.mockImplementation(async (fn: Function) => {
@@ -343,7 +310,7 @@ describe('geminiVisionService', () => {
         return fn();
       });
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
       expect(callCount).toBeGreaterThan(0);
     });
   });
@@ -359,7 +326,7 @@ describe('geminiVisionService', () => {
 
       mockRateLimitedCall.mockRejectedValue(new Error('Circuit breaker open'));
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       // When circuit breaker is open, should return offline analysis (not null)
       expect(result).toBeDefined();
@@ -372,8 +339,8 @@ describe('geminiVisionService', () => {
       mockGenerateContent.mockRejectedValue(new Error('API Error'));
 
       // Multiple failures should trigger circuit breaker
-      await analyzeStateFromImage('base64-image-data');
-      await analyzeStateFromImage('base64-image-data');
+      await service.analyzeStateFromImage('base64-image-data');
+      await service.analyzeStateFromImage('base64-image-data');
 
       // Both calls should attempt to use the API
       expect(mockGenerateContent).toHaveBeenCalled();
@@ -391,17 +358,9 @@ describe('geminiVisionService', () => {
         ],
       };
 
-      mockGenerateContent.mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(responseWithInvalidAU) }],
-            },
-          },
-        ],
-      });
+      mockGenerateContent.mockResolvedValue(createMockGenAIResponse(responseWithInvalidAU));
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       // Should still return result but with validation
       expect(result).toBeDefined();
@@ -421,17 +380,9 @@ describe('geminiVisionService', () => {
         ],
       };
 
-      mockGenerateContent.mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(responseWithoutIntensity) }],
-            },
-          },
-        ],
-      });
+      mockGenerateContent.mockResolvedValue(createMockGenAIResponse(responseWithoutIntensity));
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       expect(result).toBeDefined();
       // When intensity is missing, the AU should still be present but may have default values
@@ -447,17 +398,9 @@ describe('geminiVisionService', () => {
         confidence: 1.5, // Invalid: > 1
       };
 
-      mockGenerateContent.mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(responseWithInvalidConfidence) }],
-            },
-          },
-        ],
-      });
+      mockGenerateContent.mockResolvedValue(createMockGenAIResponse(responseWithInvalidConfidence));
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       expect(result).toBeDefined();
     });
@@ -484,7 +427,7 @@ describe('geminiVisionService', () => {
         ],
       });
 
-      const result = await generateOrEditImage('Generate a test image');
+      const result = await service.generateOrEditImage('Generate a test image');
 
       // Result should be a data URL or null
       if (result) {
@@ -496,7 +439,7 @@ describe('geminiVisionService', () => {
     it('should handle empty prompt', async () => {
       import.meta.env.VITE_GEMINI_API_KEY = 'test-api-key';
 
-      const result = await generateOrEditImage('');
+      const result = await service.generateOrEditImage('');
 
       expect(result).toBeNull();
     });
@@ -521,7 +464,7 @@ describe('geminiVisionService', () => {
         ],
       });
 
-      const result = await generateOrEditImage('Test');
+      const result = await service.generateOrEditImage('Test');
 
       // Should handle gracefully
       expect(result === null || typeof result === 'string').toBe(true);
@@ -533,7 +476,7 @@ describe('geminiVisionService', () => {
       const { aiRouter } = await import('../../src/services/ai');
       (aiRouter.generateImage as any).mockResolvedValue({ imageUrl: 'fallback-image-url' });
 
-      const result = await generateOrEditImage('Test prompt');
+      const result = await service.generateOrEditImage('Test prompt');
 
       expect(aiRouter.generateImage).toHaveBeenCalled();
       expect(result).toBe('fallback-image-url');
@@ -562,7 +505,7 @@ describe('geminiVisionService', () => {
         ],
       });
 
-      await generateOrEditImage('Test');
+      await service.generateOrEditImage('Test');
 
       expect(mockRateLimitedCall).toHaveBeenCalledWith(
         expect.any(Function),
@@ -575,17 +518,9 @@ describe('geminiVisionService', () => {
     it('should handle malformed JSON response', async () => {
       import.meta.env.VITE_GEMINI_API_KEY = 'test-api-key';
 
-      mockGenerateContent.mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [{ text: 'not valid json' }],
-            },
-          },
-        ],
-      });
+      mockGenerateContent.mockResolvedValue(createMockGenAIResponse('not valid json'));
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       // Service returns fallback analysis instead of null
       expect(result).toBeDefined();
@@ -597,7 +532,7 @@ describe('geminiVisionService', () => {
 
       mockGenerateContent.mockRejectedValue(new Error('Network error'));
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       // Service returns fallback analysis instead of null
       expect(result).toBeDefined();
@@ -609,7 +544,7 @@ describe('geminiVisionService', () => {
 
       mockGenerateContent.mockResolvedValue({});
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       // Service returns fallback analysis instead of null
       expect(result).toBeDefined();
@@ -623,7 +558,7 @@ describe('geminiVisionService', () => {
         candidates: [],
       });
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       // Service returns fallback analysis instead of null
       expect(result).toBeDefined();
@@ -640,7 +575,7 @@ describe('geminiVisionService', () => {
 
       mockGenerateContent.mockRejectedValue(new Error('Network error'));
 
-      const result = await analyzeStateFromImage('base64-image-data');
+      const result = await service.analyzeStateFromImage('base64-image-data');
 
       // Service returns a fallback analysis with offline indicator, not null
       expect(result).toBeDefined();

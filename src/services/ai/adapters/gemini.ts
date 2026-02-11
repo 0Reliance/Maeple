@@ -73,6 +73,25 @@ export class GeminiAdapter extends BaseAIAdapter {
   async vision(request: AIVisionRequest): Promise<AIVisionResponse> {
     this.trackRequest();
     try {
+      const config: any = {
+        signal: request.signal, // Pass signal in config
+      };
+
+      // Add system instruction if provided
+      if (request.systemInstruction) {
+        config.systemInstruction = request.systemInstruction;
+      }
+
+      // Add response format if specified
+      if (request.responseFormat === "json" || request.responseSchema) {
+        config.responseMimeType = "application/json";
+      }
+
+      // Add response schema if provided
+      if (request.responseSchema) {
+        config.responseSchema = request.responseSchema;
+      }
+
       const response = await this.client.models.generateContent({
         model: "gemini-2.5-flash",
         contents: {
@@ -81,9 +100,7 @@ export class GeminiAdapter extends BaseAIAdapter {
             { text: request.prompt },
           ],
         },
-        config: {
-          signal: request.signal, // Pass signal in config
-        } as any,
+        config,
       });
 
       return {

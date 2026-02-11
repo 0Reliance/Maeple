@@ -1,7 +1,7 @@
-import { Activity, EyeOff, Info, PhoneCall, Save, Scale, ShieldCheck } from "lucide-react";
+import { Activity, AlertTriangle, Camera, EyeOff, Info, PhoneCall, Save, Scale, ShieldCheck } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { compareSubjectiveToObjective } from "../services/comparisonEngine";
+import { compareSubjectiveToObjective, checkDetectionQuality, DetectionQuality } from "../services/comparisonEngine";
 import { saveStateCheck } from "../services/stateCheckService";
 import { getUserSettings } from "../services/storageService";
 import { FacialAnalysis, FacialBaseline, HealthEntry } from "../types";
@@ -24,6 +24,10 @@ const StateCheckResults: React.FC<Props> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [safetyContact, setSafetyContact] = useState<string>("");
+  const [quality, setQuality] = useState<DetectionQuality | null>(null);
+  // Initialize showResults to true since canProceed is always true;
+  // quality warning is shown inline, not as a gate
+  const [showResults, setShowResults] = useState<boolean>(true);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -32,6 +36,19 @@ const StateCheckResults: React.FC<Props> = ({
     };
     loadSettings();
   }, []);
+
+  // Check detection quality
+  useEffect(() => {
+    const qualityCheck = checkDetectionQuality(analysis);
+    setQuality(qualityCheck);
+    
+    // For low quality, show the quality warning first (user can still proceed)
+    if (qualityCheck.level === 'low') {
+      setShowResults(false);
+    } else {
+      setShowResults(true);
+    }
+  }, [analysis]);
 
   // Run Comparison Logic with Baseline
   const comparison = compareSubjectiveToObjective(recentEntry, analysis, baseline);
@@ -84,8 +101,97 @@ const StateCheckResults: React.FC<Props> = ({
     }
   };
 
+  const handleRetryPhoto = () => {
+    onClose(); // This will trigger camera capture again
+  };
+
+  const handleContinueAnyway = () => {
+    setShowResults(true);
+  };
+
+  // Quality Warning Screen
+  if (!showResults && quality) {
+    const isLowQuality = quality.level === "low";
+    const isMediumQuality = quality.level === "medium";
+    
+    return (
+      <div className="space-y-6 animate-fadeIn max-w-3xl mx-auto">
+        <div className={`rounded-3xl p-6 border shadow-xl ${
+          isLowQuality 
+            ? "bg-amber-50 border-amber-200" 
+            : "bg-indigo-50 border-indigo-200"
+        }`}>
+          <div className="flex items-start gap-4">
+            <div className={`p-3 rounded-full ${
+              isLowQuality ? "bg-amber-100" : "bg-indigo-100"
+            }`}>
+              {isLowQuality ? (
+                <Camera className="w-6 h-6 text-amber-600" />
+              ) : (
+                <AlertTriangle className="w-6 h-6 text-indigo-600" />
+              )}
+            </div>
+            
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-slate-800 mb-2">
+                {isLowQuality ? "Photo Quality Issues Detected" : "Limited Analysis Quality"}
+              </h2>
+              
+              <p className="text-slate-600 mb-4">
+                {isLowQuality 
+                  ? "The image quality may be affecting facial analysis. Some markers couldn't be detected clearly."
+                  : "Some facial markers may have been missed. Results may be less accurate."
+                }
+              </p>
+              
+              <div className="bg-white/70 rounded-xl p-4 mb-4 border border-slate-200">
+                <p className="text-sm font-bold text-slate-700 mb-2">Detection Quality Score: {quality.score}/100</p>
+                <ul className="space-y-2">
+                  {quality.suggestions.map((suggestion, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                      <span className="text-indigo-500 mt-0.5">•</span>
+                      <span>{suggestion}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={handleRetryPhoto}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-lg"
+                >
+                  <Camera size={20} />
+                  {isLowQuality ? "Retake Photo" : "Try Better Lighting"}
+                </button>
+                <button
+                  onClick={handleContinueAnyway}
+                  className="px-6 py-3 text-slate-500 font-bold hover:bg-white/50 rounded-xl transition-colors"
+                >
+                  View Results Anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fadeIn max-w-3xl mx-auto" data-testid="results">
+      {/* Quality indicator for medium quality results */}
+      {quality?.level === "medium" && (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle size={20} className="text-indigo-600 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm text-indigo-800 font-medium">
+              Limited detection quality (score: {quality.score}/100). Some markers may have been missed.
+            </p>
+          </div>
+        </div>
+      )}
+      
       <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xl overflow-hidden">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Image */}

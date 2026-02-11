@@ -6,7 +6,6 @@ import {
   MessagesSquare,
   User,
   Settings,
-  FileText,
   Search,
   BookOpen,
   Shield,
@@ -140,16 +139,19 @@ const MobileNav: React.FC<Props> = ({
           <NavItem
             view={View.JOURNAL}
             icon={BookHeart}
-            label="Capture"
+            label="Journal"
             isAction
           />
 
-          <NavItem view={View.LIVE_COACH} icon={MessagesSquare} label="Journal" isAction />
+          <NavItem view={View.LIVE_COACH} icon={MessagesSquare} label="Coach" isAction />
 
           {/* User Menu Button */}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              aria-label="User menu"
+              aria-expanded={isUserMenuOpen}
+              aria-haspopup="menu"
               className={`flex flex-col items-center justify-center w-full py-2 transition-colors relative ${
                 isUserMenuOpen
                   ? "text-primary dark:text-primary-light"
@@ -175,7 +177,7 @@ const MobileNav: React.FC<Props> = ({
 
             {/* User Menu Dropdown - positioned above the nav bar */}
             {isUserMenuOpen && (
-              <div className="absolute right-0 bottom-full mb-2 w-56 bg-bg-card dark:bg-dark-bg-card rounded-xl shadow-card-hover border border-bg-secondary dark:border-dark-bg-secondary py-2 z-50 animate-fadeIn origin-bottom-right">
+              <div className="absolute right-0 bottom-full mb-2 w-56 bg-bg-card dark:bg-dark-bg-card rounded-xl shadow-card-hover border border-bg-secondary dark:border-dark-bg-secondary py-2 z-50 animate-fadeIn origin-bottom-right" role="menu" aria-label="User menu">
                 <div className="px-4 py-2 border-b border-bg-secondary dark:border-dark-bg-secondary mb-1">
                   <p className="text-xs font-bold uppercase tracking-wider text-text-tertiary">Account</p>
                   <p className="text-sm font-medium text-text-primary dark:text-dark-text-primary truncate">{user?.email}</p>
@@ -214,6 +216,7 @@ const MobileNav: React.FC<Props> = ({
         <div 
           className="fixed inset-0 z-40"
           onClick={() => setIsUserMenuOpen(false)}
+          aria-hidden="true"
         />
       )}
     </>

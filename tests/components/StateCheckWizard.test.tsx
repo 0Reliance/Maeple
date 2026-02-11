@@ -1,10 +1,8 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor, renderWithDependencies } from '../test-utils';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import StateCheckWizard from '../../src/components/StateCheckWizard';
 import * as stateCheckService from '../../src/services/stateCheckService';
 import * as storageService from '../../src/services/storageService';
-import { createMockDependencies } from '../test-utils';
+import { createMockDependencies, fireEvent, renderWithDependencies, screen, waitFor } from '../test-utils';
 
 // Mock dependencies
 vi.mock('../../src/components/BiofeedbackCameraModal', () => ({
@@ -62,11 +60,21 @@ describe('StateCheckWizard Component', () => {
 
   it('handles image capture and analysis', async () => {
     const mockAnalysis = {
-      fatigueScore: 7,
-      stressScore: 5,
+      confidence: 0.8,
+      actionUnits: [],
+      facsInterpretation: {
+        duchennSmile: false,
+        socialSmile: false,
+        maskingIndicators: [],
+        fatigueIndicators: [],
+        tensionIndicators: []
+      },
+      observations: [
+         { category: 'physical', value: 'Droopy eyes', evidence: 'Visual', severity: 'low' }
+      ],
+      lighting: 'moderate',
+      // Legacy fields if needed by component, though mostly unused now
       emotionalState: 'Tired',
-      physicalSigns: ['Droopy eyes'],
-      recommendations: ['Rest']
     };
     
     // Mock the vision service for this test - use a longer timeout for analysis simulation

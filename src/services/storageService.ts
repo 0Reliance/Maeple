@@ -1,9 +1,22 @@
 import { HealthEntry, UserSettings } from "../types";
 import { storageWrapper } from "./storageWrapper";
+import { validateHealthEntries } from "./validationService";
 
 const STORAGE_KEY = "maeple_entries";
 const SETTINGS_KEY = "maeple_user_settings";
 const PENDING_KEY = "maeple_pending_sync";
+
+/**
+ * Write serialization queue — prevents concurrent read-modify-write races.
+ * All entry mutations (save, delete, bulk) are funneled through this queue
+ * so each operation sees the result of the previous one.
+ */
+let _writeQueue: Promise<unknown> = Promise.resolve();
+const serializedWrite = <T>(fn: () => Promise<T>): Promise<T> => {
+  const next = _writeQueue.then(fn, fn); // run even if previous rejected
+  _writeQueue = next.catch(() => {}); // swallow to keep chain alive
+  return next;
+};
 
 // Simple pending change interface (avoid circular deps)
 interface PendingChange {
@@ -33,7 +46,14 @@ const queuePendingChange = async (
 export const getEntries = async (): Promise<HealthEntry[]> => {
   try {
     const stored = await storageWrapper.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    // Validate and sanitize entries to prevent corrupted data from crashing app
+    const validated = validateHealthEntries(parsed);
+    if (Array.isArray(parsed) && validated.length < parsed.length) {
+      console.warn(`[StorageService] Filtered ${parsed.length - validated.length} invalid entries during read`);
+    }
+    return validated;
   } catch (error) {
     console.error('[StorageService] Failed to get entries:', error);
     return [];
@@ -41,7 +61,7 @@ export const getEntries = async (): Promise<HealthEntry[]> => {
 };
 
 export const saveEntry = async (entry: HealthEntry, skipSync = false): Promise<HealthEntry[]> => {
-  try {
+  return serializedWrite(async () => {
     const entries = await getEntries();
     const existingIndex = entries.findIndex(e => e.id === entry.id);
 
@@ -70,14 +90,11 @@ export const saveEntry = async (entry: HealthEntry, skipSync = false): Promise<H
     }
 
     return updated;
-  } catch (error) {
-    console.error('[StorageService] Failed to save entry:', error);
-    throw error;
-  }
+  });
 };
 
 export const deleteEntry = async (id: string, skipSync = false): Promise<HealthEntry[]> => {
-  try {
+  return serializedWrite(async () => {
     const entries = await getEntries();
     const updated = entries.filter(e => e.id !== id);
     
@@ -92,10 +109,7 @@ export const deleteEntry = async (id: string, skipSync = false): Promise<HealthE
     }
 
     return updated;
-  } catch (error) {
-    console.error('[StorageService] Failed to delete entry:', error);
-    throw error;
-  }
+  });
 };
 
 export const getUserSettings = async (): Promise<UserSettings> => {
@@ -132,16 +146,13 @@ export const saveUserSettings = async (settings: UserSettings, skipSync = false)
  * Does not queue for sync (used when pulling from cloud)
  */
 export const bulkSaveEntries = async (entries: HealthEntry[]): Promise<HealthEntry[]> => {
-  try {
+  return serializedWrite(async () => {
     const success = await storageWrapper.setItem(STORAGE_KEY, JSON.stringify(entries));
     if (!success) {
       throw new Error('Failed to bulk save entries');
     }
     return entries;
-  } catch (error) {
-    console.error('[StorageService] Failed to bulk save entries:', error);
-    throw error;
-  }
+  });
 };
 
 /**

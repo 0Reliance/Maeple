@@ -33,12 +33,18 @@ const BioCalibration: React.FC<Props> = ({ onComplete, onCancel }) => {
       // Use DI with Circuit Breaker protection
       const analysis = await visionService.analyzeFromImage(base64);
 
+      // Derive neutralMasking from AU analysis:
+      // If social smile (AU12 without AU6) detected at rest, that's baseline masking
+      const hasSocialSmile = analysis.facsInterpretation?.socialSmile ?? false;
+      const maskingIndicators = analysis.facsInterpretation?.maskingIndicators ?? [];
+      const baselineMasking = hasSocialSmile ? 0.4 : (maskingIndicators.length > 0 ? 0.2 : 0);
+
       const baseline: FacialBaseline = {
         id: "USER_BASELINE",
         timestamp: new Date().toISOString(),
         neutralTension: Math.max(analysis.jawTension || 0, analysis.eyeFatigue || 0),
         neutralFatigue: analysis.eyeFatigue || 0,
-        neutralMasking: 0, // Default to 0 for baseline (no masking at rest)
+        neutralMasking: baselineMasking,
       };
 
       await saveBaseline(baseline);

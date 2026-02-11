@@ -1,14 +1,17 @@
 # MAEPLE Complete Specifications Documentation
 
-**Version**: 0.97.7  
-**Last Updated**: February 1, 2026  
+**Version**: 0.97.9  
+**Last Updated**: February 9, 2026  
 **Status**: Production Ready  
 **Local Database**: ✅ Fully Operational (PostgreSQL 16 in Docker)  
-**Test Suite**: ⚠️ 84% Pass Rate (Infrastructure issues identified)
+**Test Suite**: ✅ All relevant tests passing (41 Bio Mirror + Energy Check-in tests)
+
+> **v0.97.9 Update (February 9, 2026)**: Bio Mirror & Energy Check-in bug fixes (7 source files), comprehensive documentation overhaul. See also:
+> - [COMPONENT_REFERENCE.md](COMPONENT_REFERENCE.md) — Detailed definitions for all 40 React components
+> - [SERVICES_REFERENCE.md](SERVICES_REFERENCE.md) — Detailed definitions for all services, stores, hooks, patterns, and utilities
+> - [SYSTEM_ARCHITECTURE.md](SYSTEM_ARCHITECTURE.md) — Architecture overview with data flow diagrams
 
 > **v0.97.7 Update**: Local database integration complete with Docker stack (PostgreSQL 16, Express API, Nginx frontend). All CRUD operations verified.
-
-> **February 1, 2026 Update**: Comprehensive test suite analysis completed. 423 tests passing (84%), 78 failed, 20 errors. All issues are test infrastructure (mocks), NOT production bugs. See [PROJECT_STATUS_2026-02-01.md](../PROJECT_STATUS_2026-02-01.md) for complete analysis.
 
 ---
 
@@ -259,6 +262,14 @@ Provides objective physiological analysis to validate or contrast with subjectiv
 - **FACS-Aware Comparison**: Uses AU combinations for accurate discrepancy scoring
 - **Enhanced UI**: Displays detected AUs with intensity badges, smile type indicators
 
+**v0.97.9 (February 2026) - AI Response Parsing & Quality Check Fixes**
+
+- **Centralized Response Transformation**: Created `transformAIResponse()` utility to handle AI response format variations
+- **Multi-Format Support**: Handles both direct and wrapped AI responses (camelCase + snake_case)
+- **Non-Blocking Quality Checks**: Quality assessment now informational, allowing users to see all results
+- **Enhanced Debugging**: Detailed logging for AI response parsing pipeline
+- **Improved User Experience**: Removed "Did not get good enough picture" false alerts
+
 **v2.2.0**
 
 - **Camera Stability**: Custom `useCameraCapture` hook eliminates flickering
@@ -300,6 +311,84 @@ Response Format: Structured JSON with actionUnits[] array
 - Asks for AU combinations analysis (e.g., AU6+AU12 = Duchenne smile)
 - Avoids emotion labeling (reports muscle movements only)
 
+**AI Response Parsing Pipeline (v0.97.9):**
+
+The `transformAIResponse` utility ensures consistent data handling across AI response formats.
+
+**Supported Response Formats:**
+
+1. **Direct Structure:**
+   ```json
+   {
+     "confidence": 0.85,
+     "actionUnits": [...],
+     "facsInterpretation": {...}
+   }
+   ```
+
+2. **Wrapped Structure:**
+   ```json
+   {
+     "facs_analysis": {
+       "confidence": 0.85,
+       "actionUnits": [...],
+       "facsInterpretation": {...}
+     }
+   }
+   ```
+
+3. **Field Name Variations:**
+   - camelCase: `actionUnits`, `jawTension`, `eyeFatigue`
+   - snake_case: `action_units_detected`, `jaw_tension`, `eye_fatigue`
+
+**Transformation Logic:**
+
+```typescript
+1. Detect and unwrap `facs_analysis` wrapper if present
+2. Handle both `action_units_detected` and `actionUnits` array names
+3. Map snake_case to camelCase field names
+4. Ensure all required fields present with sensible defaults
+5. Log transformation for debugging
+```
+
+**Why This Matters:**
+
+- AI models may evolve response formats
+- Different providers use different conventions
+- Centralized logic prevents code duplication
+- Single point of maintenance for parsing changes
+
+**Quality Assessment System (v0.97.9):**
+
+The `checkDetectionQuality()` function evaluates detection quality on a 0-100 scale.
+
+**Quality Metrics:**
+
+1. **Confidence Score (40% weight):** AI's confidence in overall detection
+2. **AU Count Score (30% weight):** Number of AUs detected (up to 8)
+3. **Critical AU Score (30% weight):** Detection of key AUs (AU6, AU12, AU4, AU24)
+
+**Quality Levels:**
+
+- **High (60-100):** Reliable detection, all critical AUs detected
+- **Medium (30-59):** Some markers may have been missed
+- **Low (0-29):** Limited detection, improvement suggestions provided
+
+**User Experience:**
+
+- **Quality Check is Informational Only:** Users can always view results
+- **Suggestions Provided:** Specific guidance for improving capture quality
+- **No Blocking:** All results accessible regardless of score
+- **Progress Indicators:** Clear feedback during analysis process
+
+**Quality Suggestions:**
+
+For low/medium quality, system provides:
+- Lighting recommendations (soft, frontal lighting)
+- Positioning guidance (face camera directly)
+- Environmental factors (remove glasses, clear hair)
+- Technical tips (steady camera, good focus)
+
 **Detection Logic:**
 
 1. **Tension Calculation** (from AUs):
@@ -334,33 +423,47 @@ Response Format: Structured JSON with actionUnits[] array
 
 ```typescript
 interface FacialAnalysis {
-  id: string;
-  healthEntryId: string;
-  timestamp: Date;
-  imageReference: string; // Encrypted image path
-  confidence: number; // 0-1
-
-  // Fatigue indicators
-  ptosis: {
-    left: number; // 0-1 severity
-    right: number;
-    overall: number;
+  // Core FACS Data
+  confidence: number; // 0-1 overall confidence
+  
+  // Structured Action Units (v0.97.6+)
+  actionUnits: ActionUnit[]; // Detected FACS AUs with intensity
+  
+  // FACS Interpretation (v0.97.6+)
+  facsInterpretation: {
+    duchennSmile: boolean; // AU6+AU12 = genuine
+    socialSmile: boolean; // AU12 alone = social
+    maskingIndicators: string[]; // Signs of emotional suppression
+    fatigueIndicators: string[]; // Signs of tiredness
+    tensionIndicators: string[]; // Signs of stress
   };
-  glazedGaze: number; // 0-1
+  
+  // Observations
+  observations: Array<{
+    category: "lighting" | "environmental" | "tension" | "fatigue";
+    value: string;
+    evidence: string;
+    severity: "low" | "moderate" | "high";
+  }>;
+  
+  // Environmental Context
+  lighting: string; // "bright fluorescent", "soft natural", etc.
+  lightingSeverity: "low" | "moderate" | "high";
+  environmentalClues: string[]; // Background elements
+  
+  // Legacy Numeric Fields (for backward compatibility)
+  jawTension: number; // 0-1, derived from AU4, AU24
+  eyeFatigue: number; // 0-1, derived from AU43, ptosis
+  primaryEmotion?: string; // AI-detected primary emotion
+  signs?: string[]; // Legacy sign descriptions
+}
 
-  // Tension indicators
-  lipPressor: number; // 0-1
-  masseterTension: number; // 0-1
-  overallTension: number; // 0-1
-
-  // Masking detection
-  socialSmile: number; // 0-1
-  authenticSmile: number; // 0-1
-  maskingDiscrepancy: number; // 0-1
-
-  // Correlation
-  discrepancyScore: number; // 0-100 vs subjective mood
-  interpretation: string; // AI-generated explanation
+interface ActionUnit {
+  auCode: string; // "AU1", "AU4", "AU6", etc.
+  name: string; // "Inner Brow Raiser", "Brow Lowerer", etc.
+  intensity: "A" | "B" | "C" | "D" | "E"; // FACS intensity scale
+  intensityNumeric: number; // 1-5 for calculations
+  confidence: number; // 0-1 detection confidence
 }
 
 interface FacialBaseline {

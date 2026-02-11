@@ -10,6 +10,7 @@
  */
 
 import { HealthEntry, JournalSession } from '../types';
+import { storageWrapper } from './storageWrapper';
 
 const DRAFT_STORAGE_KEY = 'maeple:journal-draft';
 const DRAFTS_INDEX_KEY = 'maeple:drafts-index';
@@ -123,9 +124,15 @@ class DraftService {
   getDraft(id: string): Draft | null {
     try {
       const key = `${DRAFT_STORAGE_KEY}:${id}`;
-      const data = localStorage.getItem(key);
-      if (!data) return null;
-      return JSON.parse(data) as Draft;
+      // Use synchronous localStorage for reads with async fallback
+      // This maintains backwards compatibility while the rest migrates
+      try {
+        const data = localStorage.getItem(key);
+        if (data) return JSON.parse(data) as Draft;
+      } catch {
+        // localStorage failed, try async path
+      }
+      return null;
     } catch (error) {
       console.warn('Failed to retrieve draft:', error);
       return null;
@@ -228,11 +235,17 @@ class DraftService {
   private scheduleAutoSave(): void {
     this.clearAutoSave();
     this.autoSaveTimeoutId = setTimeout(() => {
-      const draft = this.getCurrent();
-      if (draft && this.isDirty) {
-        // Call parent component's callback to get current data
-        // This should be triggered by the component managing the draft
-        console.log('[DraftService] Auto-save scheduled (data required from parent)');
+      if (!this.isDirty || !this.currentDraftId) return;
+
+      // Retrieve temp data stored by markDirty()
+      try {
+        const tempRaw = localStorage.getItem(`${DRAFT_STORAGE_KEY}:temp`);
+        if (tempRaw) {
+          const tempData = JSON.parse(tempRaw);
+          this.autoSave(tempData);
+        }
+      } catch (error) {
+        console.warn('[DraftService] Auto-save from temp data failed:', error);
       }
     }, DRAFT_AUTO_SAVE_INTERVAL);
   }
@@ -240,7 +253,7 @@ class DraftService {
   private storeDraft(draft: Draft): void {
     try {
       const key = `${DRAFT_STORAGE_KEY}:${draft.id}`;
-      localStorage.setItem(key, JSON.stringify(draft));
+      storageWrapper.setItem(key, JSON.stringify(draft));
 
       const index = this.getIndex();
       const existing = index.drafts.findIndex(d => d.id === draft.id);
@@ -269,7 +282,7 @@ class DraftService {
 
   private storeTempData(data: Partial<HealthEntry | JournalSession>): void {
     try {
-      localStorage.setItem(`${DRAFT_STORAGE_KEY}:temp`, JSON.stringify(data));
+      storageWrapper.setItem(`${DRAFT_STORAGE_KEY}:temp`, JSON.stringify(data));
     } catch (error) {
       console.warn('Failed to store temp data:', error);
     }
@@ -277,15 +290,18 @@ class DraftService {
 
   private getIndex(): DraftsIndex {
     try {
-      const data = localStorage.getItem(DRAFTS_INDEX_KEY);
-      if (!data) {
-        return {
-          currentId: null,
-          drafts: [],
-          lastModified: new Date().toISOString(),
-        };
+      // Synchronous read for index - used in many sync code paths
+      try {
+        const data = localStorage.getItem(DRAFTS_INDEX_KEY);
+        if (data) return JSON.parse(data) as DraftsIndex;
+      } catch {
+        // localStorage failed, return default
       }
-      return JSON.parse(data) as DraftsIndex;
+      return {
+        currentId: null,
+        drafts: [],
+        lastModified: new Date().toISOString(),
+      };
     } catch (error) {
       console.warn('Failed to retrieve drafts index:', error);
       return {
@@ -298,7 +314,7 @@ class DraftService {
 
   private saveIndex(index: DraftsIndex): void {
     try {
-      localStorage.setItem(DRAFTS_INDEX_KEY, JSON.stringify(index));
+      storageWrapper.setItem(DRAFTS_INDEX_KEY, JSON.stringify(index));
     } catch (error) {
       console.error('Failed to save drafts index:', error);
     }
@@ -327,7 +343,7 @@ class DraftService {
 
       deletedIds.forEach(id => {
         const key = `${DRAFT_STORAGE_KEY}:${id}`;
-        localStorage.removeItem(key);
+        storageWrapper.removeItem(key);
       });
 
       // Update index

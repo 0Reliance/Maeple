@@ -1,11 +1,11 @@
 import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { CapacityProfile, ParsedResponse } from "../types";
+import { safeParseAIResponse } from "../utils/safeParse";
 import { aiRouter } from "./ai";
 import { cacheService } from "./cacheService";
 import { createCircuitBreaker } from "./circuitBreaker";
 import { errorLogger } from "./errorLogger";
 import { rateLimitedCall } from "./rateLimiter";
-import { safeParseAIResponse } from "../utils/safeParse";
 
 // Validate and retrieve API Key - returns null if not available
 const getApiKey = (): string | null => {
@@ -223,7 +223,9 @@ const healthEntrySchema: Schema = {
         basedOn: {
           type: Type.ARRAY,
           items: { type: Type.STRING },
-          description: "What observations or text the question is based on",
+          // @ts-expect-error - The SDK type definition incorrectly expects a string for minItems, but JSON schema requires a number
+          minItems: 1,
+          description: "What observations or text question is based on (MUST have 1+ items)",
         },
         question: { type: Type.STRING },
         tone: {
@@ -237,7 +239,7 @@ const healthEntrySchema: Schema = {
         },
       },
       required: ["id", "basedOn", "question", "tone", "skipAllowed", "priority"],
-      description: "Optional gentle question to ask user (only if high-severity observations)",
+      description: "Optional gentle question to ask user (only if high-severity observations present)",
     },
   },
   required: [
@@ -392,27 +394,35 @@ Each observation MUST include:
 
 GENTLE INQUIRY GENERATION:
 
-ONLY generate gentle inquiry if:
-- User mentions high-severity observations, AND
+ONLY generate gentle inquiry if ALL conditions are met:
+- User mentions high-severity observations (severity: "high"), AND
 - The observation could be affecting their state, AND
-- A question would be genuinely helpful
+- A question would be genuinely helpful, AND
+- basedOn array contains at least 1-3 specific observations
+
+CRITICAL: 
+- If basedOn array would be empty, DO NOT generate gentleInquiry at all
+- If only low/moderate severity observations, DO NOT generate gentleInquiry
+- Return gentleInquiry: null or omit entirely if conditions not met
 
 Example of WHEN to generate gentle inquiry:
-- User says "fluorescent lights are killing me" → Ask: "How is the lighting affecting you right now?"
-- User says "my head is pounding" → Ask: "Would you like strategies for managing headache?"
+- User says "fluorescent lights are killing me" (high severity) → basedOn: ["fluorescent lights killing me"]
+- User says "my head is pounding" (high severity) → basedOn: ["headache, pounding sensation"]
 
 Example of WHEN NOT to generate gentle inquiry:
-- Low or moderate severity observations → No inquiry needed
+- Low severity observations → basedOn: ["mild background noise"] → NO inquiry
 - User clearly states their state → No inquiry needed
-- Observation is minor or environmental → No inquiry needed
+- basedOn would be empty → NO inquiry at all
 
 Gentle inquiry format:
 - id: unique identifier
-- basedOn: Array of observations or text question relates to
+- basedOn: Array of 1-3 specific observations or text question relates to (NEVER empty)
 - question: Open-ended, curious question (not yes/no if possible)
 - tone: "curious" (never "interrogating" or "demanding")
 - skipAllowed: always true
 - priority: "high" only if multiple high-severity observations, else "medium"
+
+IMPORTANT: If you cannot populate basedOn with actual observations, DO NOT include gentleInquiry in response.
 
       SUMMARY:
       Your job is to be a careful transcriber of what the user says, not an interpreter of what they mean. Extract exactly what they mention, ask curious questions, and never assume you know their internal state.

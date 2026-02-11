@@ -1,9 +1,7 @@
-import { errorLogger } from "@services/errorLogger";
-import { imageWorkerManager, ImageWorkerManager } from "@services/imageWorkerManager";
 import { RefreshCw, X } from "lucide-react";
 import React, { memo, useCallback, useRef, useState } from "react";
 import { useCameraCapture } from "../hooks/useCameraCapture";
-import { estimateFileSize } from "../utils/imageCompression";
+import { compressCapturedImage } from "../utils/captureAndCompress";
 
 interface Props {
   onCapture: (imageSrc: string) => void;
@@ -13,7 +11,6 @@ interface Props {
 
 const StateCheckCamera: React.FC<Props> = ({ onCapture, onCancel, autoStart = false }) => {
   const mountedRef = useRef(true);
-  const imageDataRef = useRef<ImageData | null>(null);
 
   // Use the stable camera capture hook
   const {
@@ -37,26 +34,6 @@ const StateCheckCamera: React.FC<Props> = ({ onCapture, onCancel, autoStart = fa
   // Local UI states
   const [isCapturing, setIsCapturing] = useState(false);
   const [imageSize, setImageSize] = useState<string>("");
-
-  // Helper function to load image from data URL
-  const loadImage = (src: string): Promise<HTMLImageElement> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error("Failed to load image"));
-      img.src = src;
-    });
-  };
-
-  // Helper function to convert blob to data URL
-  const blobToDataURL = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error("Failed to read blob"));
-      reader.readAsDataURL(blob);
-    });
-  };
 
   // Toggle camera facing mode
   const toggleCamera = useCallback(() => {
@@ -87,83 +64,21 @@ const StateCheckCamera: React.FC<Props> = ({ onCapture, onCancel, autoStart = fa
         return;
       }
 
-      const originalSize = estimateFileSize(rawImage);
-      console.log(`Original image size: ${(originalSize / 1024).toFixed(2)} KB`);
-
-      let compressedImage: string;
-
-      try {
-        const img = await loadImage(rawImage);
-        const imageData = await ImageWorkerManager.imageToImageData(img);
-        imageDataRef.current = imageData;
-
-        // Constrain to 512px max dimension
-        const maxDimension = 512;
-        let targetWidth = imageData.width;
-        let targetHeight = imageData.height;
-
-        if (targetWidth > maxDimension || targetHeight > maxDimension) {
-          const ratio = Math.min(maxDimension / targetWidth, maxDimension / targetHeight);
-          targetWidth = Math.floor(targetWidth * ratio);
-          targetHeight = Math.floor(targetHeight * ratio);
-        }
-
-        const resizedResult = await imageWorkerManager.resizeImage(
-          imageData,
-          targetWidth,
-          targetHeight
-        );
-
-        const compressResult = await imageWorkerManager.compressImage(
-          resizedResult.imageData!,
-          0.85,
-          "image/webp"
-        );
-
-        compressedImage = await blobToDataURL(compressResult.blob!);
-
-        if (compressResult.blob) {
-          URL.revokeObjectURL(URL.createObjectURL(compressResult.blob));
-        }
-
-        if (imageDataRef.current) {
-          imageDataRef.current = null;
-        }
-      } catch (workerError) {
-        errorLogger.warning("Worker compression failed, falling back to main thread", {
-          error: workerError,
-        });
-
-        const { compressImage: mainThreadCompress } = await import("../utils/imageCompression");
-        compressedImage = await mainThreadCompress(rawImage, {
-          maxWidth: 512,
-          maxHeight: 512,
-          quality: 0.85,
-          format: "image/webp",
-        });
-      }
+      const { compressedImage, compressedSizeKB } = await compressCapturedImage(rawImage);
 
       if (!mountedRef.current) {
         console.warn("Component unmounted after compression");
         if (rawImage.startsWith("blob:")) {
           URL.revokeObjectURL(rawImage);
         }
-        if (imageDataRef.current) {
-          imageDataRef.current = null;
-        }
         return;
       }
 
-      const compressedSize = estimateFileSize(compressedImage);
-      const reduction = ((1 - compressedSize / originalSize) * 100).toFixed(0);
-
-      console.log(
-        `Compressed image size: ${(compressedSize / 1024).toFixed(2)} KB (${reduction}% reduction)`
-      );
-      setImageSize(`${(compressedSize / 1024).toFixed(1)} KB`);
+      setImageSize(`${compressedSizeKB.toFixed(1)} KB`);
 
       // Call callback and let hook handle cleanup
       if (mountedRef.current) {
+        setIsCapturing(false);
         onCapture(compressedImage);
       }
     } catch (err) {
@@ -179,15 +94,11 @@ const StateCheckCamera: React.FC<Props> = ({ onCapture, onCancel, autoStart = fa
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      imageWorkerManager.cleanup();
-      if (imageDataRef.current) {
-        imageDataRef.current = null;
-      }
     };
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black flex flex-col" role="dialog" aria-modal="true" aria-label="Camera capture">
       {cameraState.error ? (
         <div className="flex-1 flex flex-col items-center justify-center text-white text-center p-6">
           <p className="mb-4 text-red-400">{cameraState.error}</p>
@@ -302,7 +213,7 @@ const StateCheckCamera: React.FC<Props> = ({ onCapture, onCancel, autoStart = fa
             </div>
 
             <p className="text-slate-500 text-xs">
-              Photos are compressed locally for faster analysis and never stored without permission.
+              Photos are compressed on-device and sent to your AI provider for analysis. Never stored without permission.
             </p>
           </div>
         </>

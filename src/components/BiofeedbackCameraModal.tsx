@@ -1,10 +1,8 @@
-import { errorLogger } from "@services/errorLogger";
-import { imageWorkerManager, ImageWorkerManager } from "@services/imageWorkerManager";
 import { CheckCircle2, RefreshCw, X } from "lucide-react";
 import React, { memo, useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCameraCapture } from "../hooks/useCameraCapture";
-import { estimateFileSize } from "../utils/imageCompression";
+import { compressCapturedImage } from "../utils/captureAndCompress";
 
 interface Props {
   isOpen: boolean;
@@ -15,7 +13,6 @@ interface Props {
 const BiofeedbackCameraModal: React.FC<Props> = ({ isOpen, onCapture, onCancel }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
-  const imageDataRef = useRef<ImageData | null>(null);
 
   // Use the stable camera capture hook
   const {
@@ -41,26 +38,6 @@ const BiofeedbackCameraModal: React.FC<Props> = ({ isOpen, onCapture, onCancel }
   const [imageSize, setImageSize] = useState<string>("");
   const [showCaptureSuccess, setShowCaptureSuccess] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
-
-  // Helper function to load image from data URL
-  const loadImage = (src: string): Promise<HTMLImageElement> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error("Failed to load image"));
-      img.src = src;
-    });
-  };
-
-  // Helper function to convert blob to data URL
-  const blobToDataURL = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error("Failed to read blob"));
-      reader.readAsDataURL(blob);
-    });
-  };
 
   // Toggle camera facing mode
   const toggleCamera = useCallback(() => {
@@ -93,88 +70,27 @@ const BiofeedbackCameraModal: React.FC<Props> = ({ isOpen, onCapture, onCancel }
         return;
       }
 
-      const originalSize = estimateFileSize(rawImage);
-      console.log(`Original image size: ${(originalSize / 1024).toFixed(2)} KB`);
-
-      let compressedImage: string;
-
-      try {
-        const img = await loadImage(rawImage);
-        const imageData = await ImageWorkerManager.imageToImageData(img);
-        imageDataRef.current = imageData;
-
-        // Constrain to 512px max dimension
-        const maxDimension = 512;
-        let targetWidth = imageData.width;
-        let targetHeight = imageData.height;
-
-        if (targetWidth > maxDimension || targetHeight > maxDimension) {
-          const ratio = Math.min(maxDimension / targetWidth, maxDimension / targetHeight);
-          targetWidth = Math.floor(targetWidth * ratio);
-          targetHeight = Math.floor(targetHeight * ratio);
-        }
-
-        const resizedResult = await imageWorkerManager.resizeImage(
-          imageData,
-          targetWidth,
-          targetHeight
-        );
-
-        const compressResult = await imageWorkerManager.compressImage(
-          resizedResult.imageData!,
-          0.85,
-          "image/webp"
-        );
-
-        compressedImage = await blobToDataURL(compressResult.blob!);
-
-        // Note: No URL cleanup needed - blob was converted directly to data URL
-
-        if (imageDataRef.current) {
-          imageDataRef.current = null;
-        }
-      } catch (workerError) {
-        errorLogger.warning("Worker compression failed, falling back to main thread", {
-          error: workerError,
-        });
-
-        const { compressImage: mainThreadCompress } = await import("../utils/imageCompression");
-        compressedImage = await mainThreadCompress(rawImage, {
-          maxWidth: 512,
-          maxHeight: 512,
-          quality: 0.85,
-          format: "image/webp",
-        });
-      }
+      const { compressedImage, compressedSizeKB } = await compressCapturedImage(rawImage);
 
       if (!mountedRef.current) {
         console.warn("Component unmounted after compression");
         if (rawImage.startsWith("blob:")) {
           URL.revokeObjectURL(rawImage);
         }
-        if (imageDataRef.current) {
-          imageDataRef.current = null;
-        }
         return;
       }
 
-      const compressedSize = estimateFileSize(compressedImage);
-      const reduction = ((1 - compressedSize / originalSize) * 100).toFixed(0);
-
-      console.log(
-        `Compressed image size: ${(compressedSize / 1024).toFixed(2)} KB (${reduction}% reduction)`
-      );
-      setImageSize(`${(compressedSize / 1024).toFixed(1)} KB`);
+      setImageSize(`${compressedSizeKB.toFixed(1)} KB`);
 
       // Show success feedback
       setShowCaptureSuccess(true);
 
-      // Small delay before proceeding
+      // Brief delay before proceeding
       setTimeout(() => {
         if (mountedRef.current) {
           onCapture(compressedImage);
         }
-      }, 800);
+      }, 400);
     } catch (err) {
       console.error("Capture error:", err);
       if (mountedRef.current) {
@@ -188,10 +104,6 @@ const BiofeedbackCameraModal: React.FC<Props> = ({ isOpen, onCapture, onCancel }
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      imageWorkerManager.cleanup();
-      if (imageDataRef.current) {
-        imageDataRef.current = null;
-      }
     };
   }, []);
 
@@ -202,6 +114,9 @@ const BiofeedbackCameraModal: React.FC<Props> = ({ isOpen, onCapture, onCancel }
     <div
       ref={containerRef}
       className="fixed inset-0 z-[9999] bg-black flex flex-col"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Camera capture"
       style={{
         // Ensure this modal captures ALL pointer events and nothing passes through
         pointerEvents: "auto",
@@ -372,7 +287,7 @@ const BiofeedbackCameraModal: React.FC<Props> = ({ isOpen, onCapture, onCancel }
 
             {/* Info Text */}
             <p className="text-slate-400 text-xs text-center px-4">
-              Photos are compressed locally for faster analysis and never stored without permission.
+              Photos are compressed on-device and sent to your AI provider for analysis. Never stored without permission.
             </p>
           </div>
         </>

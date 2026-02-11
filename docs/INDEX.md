@@ -1,68 +1,30 @@
 # MAEPLE Documentation Index
 
-**App Version**: 0.97.7  
-**Last Updated**: February 1, 2026  
+**App Version**: 0.97.9  
+**Last Updated**: February 9, 2026  
 **Local Database**: ✅ Fully Operational (PostgreSQL 16 in Docker)  
 **Production**: ✅ Operational (Vercel)  
 **Local Dev**: ✅ Running (Docker Compose)  
-**Test Suite**: ⚠️ 84% Pass Rate (Infrastructure Issues Identified)
+**Test Suite**: ✅ All relevant tests passing
 
 ---
 
 ## 🆕 What's New (Feb 2026)
 
-**Test Suite Analysis (February 1, 2026)**
+**v0.97.9 — Documentation & Bug Fix Release (February 9, 2026)**
 
-Comprehensive test execution completed with findings documented:
+- **Bio Mirror & Energy Check-in Fixes**: 7 bugs fixed across source files including FACS comparison engine flat scoring, array safety guards, camera capture stability, and validation edge cases
+- **Comprehensive Documentation Overhaul**: All specifications and developer docs rewritten with detailed component definitions, service references, and architecture diagrams
+- **New Specification Documents**:
+  - `specifications/COMPONENT_REFERENCE.md` — All 40 React components documented with props, logic, and dependencies
+  - `specifications/SERVICES_REFERENCE.md` — All services, stores, hooks, patterns, and utilities documented
+  - `specifications/SYSTEM_ARCHITECTURE.md` — Complete architecture with data flow diagrams
 
-- **Results**: 423 tests passing, 78 failed, 20 errors
-- **Root Cause**: Test infrastructure issues (mocks), NOT production bugs
-- **Production Code**: ✅ Fully functional
-- **Build**: ✅ Passing (9.76s)
-- **TypeScript**: ✅ Zero errors
+**Previous Updates**
 
-**Key Issues Identified:**
-1. AI Router mock missing `isAIAvailable()` method (13 test failures)
-2. IndexedDB mock returns null (20 uncaught exceptions)
-3. Image worker timeout on invalid input (2 test failures)
-4. Comparison engine edge cases (3 test failures)
-
-**Documentation**: See [PROJECT_STATUS_2026-02-01.md](../PROJECT_STATUS_2026-02-01.md) for complete analysis
-
----
-
-## 🆕 What's New (Jan 2026)
-
-**Vercel Deployment Fix (January 20, 2026)**
-
-- Resolved critical production error: "Cannot access 'e' before initialization"
-- Fixed AI Router Proxy pattern causing circular dependency issues
-- Changed to direct initialization for Vite minification compatibility
-- Production now operational at https://maeple.vercel.app
-- See [VERCEL_DEPLOYMENT_FIX_2026-01-20.md](../VERCEL_DEPLOYMENT_FIX_2026-01-20.md) for details
-
-**Card Interaction Fix (v0.97.7)**
-
-- Fixed critical bug where Energy Check-in sliders and textarea were unclickable
-- Added `position: relative` to Card component for proper absolute child positioning
-- Removed aggressive hover transforms that caused touch/click issues
-- See [CHANGELOG.md](../specifications/CHANGELOG.md) for full details
-
-**Local Database Integration Complete**
-
-- Full Docker stack with PostgreSQL 16, Express API, and Nginx frontend
-- All CRUD operations verified (entries, settings, auth)
-- JWT-based authentication for local development
-- API response time: 14ms average, 0 errors
-- See [LOCAL_DB_STATUS.md](../LOCAL_DB_STATUS.md) for complete status
-
-**Onboarding System Overhaul**
-
-- User-focused messaging reframe (all 5 steps)
-- Clear skip button for graceful exit
-- Dual first-entry detection (localStorage + entries count)
-- Replay feature in Settings → Help & Resources
-- See [FEATURES.md](FEATURES.md) for details, [TESTING_GUIDE.md](TESTING_GUIDE.md) for testing
+- **v0.97.7**: Card interaction fix, local database integration, onboarding overhaul
+- **Vercel Deployment Fix (Jan 20)**: Resolved circular dependency in AI Router Proxy
+- **Test Suite Analysis (Feb 1)**: Infrastructure-level test failures identified and documented
 
 ---
 
@@ -120,14 +82,18 @@ Comprehensive test execution completed with findings documented:
 
 All technical specifications are in the [specifications/](../specifications/) folder:
 
-| Document                                                                   | Description                        |
-| -------------------------------------------------------------------------- | ---------------------------------- |
-| [COMPLETE_SPECIFICATIONS.md](../specifications/COMPLETE_SPECIFICATIONS.md) | Comprehensive system documentation |
-| [SYSTEM_ARCHITECTURE.md](../specifications/SYSTEM_ARCHITECTURE.md)         | Architecture overview              |
-| [API_REFERENCE.md](../specifications/API_REFERENCE.md)                     | REST API documentation             |
-| [DATA_MODELS.md](../specifications/DATA_MODELS.md)                         | Data structure documentation       |
-| [CHANGELOG.md](../specifications/CHANGELOG.md)                             | Version history                    |
-| [ROADMAP.md](../specifications/ROADMAP.md)                                 | Product roadmap                    |
+| Document                                                                   | Description                                                         |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [COMPLETE_SPECIFICATIONS.md](../specifications/COMPLETE_SPECIFICATIONS.md) | Comprehensive system documentation — features, data flows, security |
+| [SYSTEM_ARCHITECTURE.md](../specifications/SYSTEM_ARCHITECTURE.md)         | Architecture overview — data flow diagrams, patterns, deployment    |
+| [COMPONENT_REFERENCE.md](../specifications/COMPONENT_REFERENCE.md)         | **All 40 React components** — props, logic, dependencies            |
+| [SERVICES_REFERENCE.md](../specifications/SERVICES_REFERENCE.md)           | **All services, stores, hooks, patterns, utilities** — interfaces, algorithms |
+| [DATA_MODELS.md](../specifications/DATA_MODELS.md)                         | Core data types — HealthEntry, CapacityProfile, FacialAnalysis      |
+| [DATA_ANALYSIS_LOGIC.md](../specifications/DATA_ANALYSIS_LOGIC.md)         | Analysis algorithms — FACS scoring, quality assessment, AI matrix   |
+| [API_REFERENCE.md](../specifications/API_REFERENCE.md)                     | REST API endpoints and service interfaces                           |
+| [UI_UX_GUIDELINES.md](../specifications/UI_UX_GUIDELINES.md)               | Design philosophy, theming, accessibility                           |
+| [CHANGELOG.md](../specifications/CHANGELOG.md)                             | Version history                                                      |
+| [ROADMAP.md](../specifications/ROADMAP.md)                                 | Product roadmap                                                      |
 
 ---
 

@@ -73,6 +73,10 @@ export interface AIVisionRequest {
   imageData: string;
   mimeType: string;
   prompt: string;
+  systemPrompt?: string;
+  systemInstruction?: string;
+  responseSchema?: any;
+  responseFormat?: 'text' | 'json';
   signal?: AbortSignal;
 }
 

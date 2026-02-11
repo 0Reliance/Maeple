@@ -58,7 +58,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onRegister }) => {
                 Start Free
               </Button>
               <Button variant="secondary" size="lg" onClick={onLogin} className="min-w-[180px]">
-                See How It Works
+                Sign In
               </Button>
             </div>
             

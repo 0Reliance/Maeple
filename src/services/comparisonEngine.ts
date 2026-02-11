@@ -25,11 +25,12 @@ const findAU = (actionUnits: ActionUnit[], code: string): ActionUnit | undefined
 
 /**
  * Helper: Check if AU is present with minimum intensity
+ * Relaxed threshold for demo purposes - accepts trace-level detections (intensity >= 1)
  */
 const hasAUWithIntensity = (
   actionUnits: ActionUnit[],
   code: string,
-  minIntensity: number = 2
+  minIntensity: number = 1
 ): boolean => {
   const au = findAU(actionUnits, code);
   return au ? au.intensityNumeric >= minIntensity : false;
@@ -106,9 +107,11 @@ export const compareSubjectiveToObjective = (
 
   if (baseline) {
     baselineApplied = true;
-    const tensionDelta =
-      tension - Math.max(baseline.neutralTension || 0, baseline.neutralFatigue || 0);
+    // Apply baseline adjustment separately for tension and fatigue
+    const tensionDelta = tension - (baseline.neutralTension || 0);
     tension = Math.max(0, tensionDelta);
+    const fatigueDelta = fatigue - (baseline.neutralFatigue || 0);
+    fatigue = Math.max(0, fatigueDelta);
   }
 
   // Determine smile type from FACS data
@@ -120,9 +123,9 @@ export const compareSubjectiveToObjective = (
       smileType = "social";
     }
   } else {
-    // Fallback: Check raw AUs for smile detection
-    const hasAU6 = hasAUWithIntensity(actionUnits, "AU6", 2); // Cheek Raiser
-    const hasAU12 = hasAUWithIntensity(actionUnits, "AU12", 2); // Lip Corner Puller
+    // Fallback: Check raw AUs for smile detection (relaxed threshold)
+    const hasAU6 = hasAUWithIntensity(actionUnits, "AU6", 1); // Cheek Raiser
+    const hasAU12 = hasAUWithIntensity(actionUnits, "AU12", 1); // Lip Corner Puller
     if (hasAU6 && hasAU12) {
       smileType = "genuine";
     } else if (hasAU12) {
@@ -176,13 +179,13 @@ export const compareSubjectiveToObjective = (
   }
 
   // High tension AUs when reporting good mood
-  if (mood >= 4 && tension > 0.5) {
+  if (mood >= 4 && tension > 0.3) {
     score += 60;
     masking = Math.max(masking, tension);
   }
 
   // Fatigue indicators when reporting high energy
-  if (mood >= 4 && fatigue > 0.5) {
+  if (mood >= 4 && fatigue > 0.3) {
     score += 40;
   }
 
@@ -230,5 +233,85 @@ export const compareSubjectiveToObjective = (
     baselineApplied,
     isMaskingLikely: masking > 0.6 || smileType === "social",
     facsInsights: { detectedAUs, smileType, tensionAUs, fatigueAUs },
+  };
+};
+
+/**
+ * Quality Check: Evaluates FACS detection quality (0-100)
+ * Returns quality score and suggestions for improvement
+ */
+export interface DetectionQuality {
+  score: number; // 0-100
+  level: "high" | "medium" | "low";
+  suggestions: string[];
+  canProceed: boolean;
+}
+
+export const checkDetectionQuality = (analysis: FacialAnalysis): DetectionQuality => {
+  const actionUnits = analysis.actionUnits || [];
+  const confidence = analysis.confidence || 0;
+
+  // Critical AUs we expect to detect for meaningful analysis
+  const criticalAUs = ["AU6", "AU12", "AU4", "AU24"];
+  const detectedCritical = actionUnits.filter(au => criticalAUs.includes(au.auCode));
+  
+  let qualityScore = 0;
+
+  // Factor 1: Confidence score (40% weight)
+  qualityScore += confidence * 40;
+
+  // Factor 2: Number of AUs detected (30% weight)
+  // More AUs = better analysis, up to 8 AUs
+  const auScore = Math.min(actionUnits.length / 8, 1) * 30;
+  qualityScore += auScore;
+
+  // Factor 3: Critical AUs detected (30% weight)
+  // Detecting at least 2 critical AUs indicates good quality
+  const criticalScore = Math.min(detectedCritical.length / 2, 1) * 30;
+  qualityScore += criticalScore;
+
+  // Determine quality level
+  let level: "high" | "medium" | "low";
+  let suggestions: string[] = [];
+  
+  // ALWAYS allow proceeding - user should see results regardless of quality
+  // The quality check is informational only, not a blocker
+  const canProceed = true;
+
+  if (qualityScore >= 60) {
+    level = "high";
+  } else if (qualityScore >= 30) {
+    level = "medium";
+  } else {
+    level = "low";
+  }
+
+  // Only add suggestions for low/medium quality
+  // High quality should have empty suggestions
+  if (level === "low" || level === "medium") {
+    // Generate specific suggestions based on what's missing
+    if (confidence < 0.5) {
+      suggestions.push("Low confidence - image may be blurry or poorly lit");
+    }
+    
+    if (actionUnits.length < 3) {
+      suggestions.push("Few facial markers detected - try better lighting");
+    }
+    
+    if (detectedCritical.length < 2) {
+      suggestions.push("Key expression markers not detected - face the camera directly");
+    }
+
+    // Add general improvement suggestions
+    suggestions.push("Ensure soft, frontal lighting on your face");
+    suggestions.push("Remove glasses or hair covering your eyes/mouth");
+    suggestions.push("Hold camera steady and look directly at the lens");
+  }
+
+  return {
+    score: Math.round(qualityScore),
+    level,
+    suggestions,
+    canProceed,
   };
 };

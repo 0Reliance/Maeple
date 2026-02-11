@@ -1,330 +1,480 @@
 # MAEPLE System Architecture
 
-**Version**: 2.2.6  
-**Last Updated**: February 1, 2026  
-**Refactoring Status**: ✅ Complete (Camera v2.2.3, Vision, Observations, Drafts, Correlations, Onboarding v2.2.4, Card Fix v2.2.5, Test Analysis v2.2.6)
+**Version**: 3.0.0  
+**Last Updated**: February 9, 2026  
+**App Version**: 0.97.9
 
-## Recent Architecture Updates (v2.2.6 - Test Infrastructure Analysis)
-
-- **Test Suite Analysis**: Comprehensive test execution completed (Feb 1, 2026)
-  - **Results**: 423 tests passing (84%), 78 failed, 20 errors
-  - **Root Cause**: Test infrastructure issues (mocks), NOT production bugs
-  - **Production Code**: ✅ Fully functional
-  - **Build**: ✅ Passing (9.76s)
-  - **TypeScript**: ✅ Zero errors
-  
-- **Issues Identified**:
-  1. AI Router mock missing `isAIAvailable()` method (13 test failures)
-  2. IndexedDB mock returns null (20 uncaught exceptions)
-  3. Image worker timeout on invalid input (2 test failures)
-  4. Comparison engine edge cases (3 test failures)
-  
-- **Documentation**: See [PROJECT_STATUS_2026-02-01.md](../PROJECT_STATUS_2026-02-01.md) for complete analysis
+---
 
 ## 1. Overview
 
-MAEPLE (Mental And Emotional Pattern Literacy Engine) is a neuro-affirming health intelligence platform designed to help users track and understand their mental and emotional patterns. It uses a local-first, privacy-centric architecture with optional cloud synchronization via Supabase.
+MAEPLE (Mental And Emotional Pattern Literacy Engine) is a neuro-affirming health intelligence platform that helps users track and understand their mental and emotional patterns. It uses a local-first, privacy-centric architecture with optional cloud synchronization via Supabase.
 
-### Recent Architecture Updates (v2.2.5 - Card Interaction Fix)
+---
 
-- **Card Component Fix v2.2.5**: Fixed critical UI bug where form elements were unclickable
-  - **Root Cause**: `.card` CSS missing `position: relative` for absolute child positioning
-  - **Secondary Issue**: Aggressive hover transforms caused touch/click interaction problems
-  - **Fix**: Added `relative` to `.card` base styles, removed transform from default hover
-  - **New Class**: Added `.card-hoverable` for cards that need scale-on-hover behavior
-  - **Component Update**: Changed Card `hoverable` prop default from `true` to `false`
+## 2. High-Level Architecture
 
-### Recent Architecture Updates (v2.2.4 - Onboarding)
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              MAEPLE System                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌───────────────────┐   ┌──────────────────┐   ┌──────────────────┐      │
+│  │   React 19.2 UI   │◄─►│  Zustand Stores  │◄─►│  React Contexts  │      │
+│  │   (40 components) │   │  (app/auth/sync)  │   │  (DI, Observe)   │      │
+│  └────────┬──────────┘   └──────────────────┘   └──────────────────┘      │
+│           │                                                                 │
+│           ▼                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────┐       │
+│  │                      Services Layer (22 services)               │       │
+│  ├─────────────────────────────────────────────────────────────────┤       │
+│  │ Storage     │ Validation  │ Comparison  │ Analytics   │ Drafts  │       │
+│  │ Encryption  │ RateLimiter │ Correlation │ AudioAnalysis│ Cache  │       │
+│  │ ErrorLogger │ OfflineQueue│ StateCheck  │ Notifications│ Export │       │
+│  │ Sync        │ Auth        │ APIClient   │ Migration    │ ...    │       │
+│  └──────────────────────┬──────────────────────────────────────────┘       │
+│                         │                                                   │
+│           ┌─────────────┴──────────────┐                                   │
+│           ▼                            ▼                                   │
+│  ┌─────────────────┐       ┌─────────────────┐                            │
+│  │   AI Layer      │       │  Wearables Layer│                            │
+│  │   (AIRouter)    │       │  (Manager)      │                            │
+│  ├─────────────────┤       ├─────────────────┤                            │
+│  │ Gemini (primary)│       │ Oura Ring       │                            │
+│  │ OpenAI          │       │ Apple Health    │                            │
+│  │ Anthropic       │       │ Garmin          │                            │
+│  │ Perplexity      │       │ WHOOP           │                            │
+│  │ Z.ai            │       │ Fitbit          │                            │
+│  │ Ollama (local)  │       └────────┬────────┘                            │
+│  │ OpenRouter      │                │                                      │
+│  └────────┬────────┘                │                                      │
+│           │                         │                                      │
+│  ┌────────┴─────────────────────────┴──────────┐                          │
+│  │           Infrastructure Patterns            │                          │
+│  │  Circuit Breaker │ Request Batcher │ Workers │                          │
+│  └──────────────────────────┬───────────────────┘                          │
+│                             │                                              │
+│           ┌─────────────────┴──────────────────┐                          │
+│           ▼                                    ▼                          │
+│  ┌─────────────────┐                ┌─────────────────┐                   │
+│  │  Local Storage   │                │  Cloud Backend   │                   │
+│  ├─────────────────┤                ├─────────────────┤                   │
+│  │ localStorage    │                │ Supabase Auth   │                   │
+│  │ IndexedDB       │                │ PostgreSQL 16   │                   │
+│  │ (AES-GCM enc)   │                │ Express API     │                   │
+│  └─────────────────┘                └─────────────────┘                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-- **Onboarding System v2.2.4**: Complete UX and messaging overhaul
-  - **User-Focused Messaging**: All 5 steps reframed from feature-focused to outcome-focused
-  - **Skip Button**: Visible on every step, allows graceful exit without marking onboarding complete
-  - **Dual First-Entry Detection**: Checks BOTH localStorage flag AND entries.length for robust first-time user detection
-  - **Replay Feature**: Users can re-watch onboarding anytime via Settings → Help & Resources
-  - **Improved Messaging Philosophy**: Changed from "What MAEPLE does" to "Why it matters to you"
-    - Step 1: "Understand Yourself Better" (was "Welcome to MAEPLE")
-    - Step 2: "See Your Patterns Clearly" (was "Pattern Literacy Over Surveillance")
-    - Step 3: "Your Personal Pattern Analyst" (emphasizes Mae's benefit, not just capability)
-    - Step 4: "Your Data Stays Yours" (privacy-first positioning)
-    - Step 5: "Your Pattern Journey Starts with One Entry" (action-oriented)
+---
 
-### Recent Architecture Updates (v2.2.3)
-
-- **Camera System**: Custom `useCameraCapture` hook eliminates flickering via `useRef` pattern
-  - **v2.2.1 Fix**: Config values (`resolutions`, `maxRetries`) stored in refs to prevent dependency cascade
-  - **v2.2.1 Fix**: `initializeCamera` accepts `facingMode` as parameter (not closure)
-  - **v2.2.1 Fix**: Main `useEffect` only depends on `isActive` and `facingMode`
-  - **v2.2.1 Fix**: Modal conditionally rendered only when `isOpen` is true
-  - **v2.2.2 Fix**: React.StrictMode disabled to prevent double-rendering
-  - **v2.2.2 Fix**: GPU optimizations (`willChange`, `contain`, `isolation`) added to video elements
-  - **v2.2.2 Fix**: Removed `backdrop-blur` effects that cause GPU thrashing
-  - **v2.2.2 Fix**: Camera components wrapped with `React.memo()` to block parent re-renders
-  - **v2.2.3 Fix**: StateCheckWizard only renders intro when camera is closed (`!isCameraOpen`)
-  - **v2.2.3 Fix**: Portal captures all mouse events with `stopPropagation()` to prevent leakage
-- **Vision Service**: Enhanced progress callbacks, 45s timeout, offline fallback
-- **Observation Context**: Centralized observation management with `useReducer`
-- **Draft Service**: Auto-save (30s), versioning, localStorage persistence
-- **Correlation Engine**: Real-time masking detection and pattern analysis
-
-## 2. Technology Stack
+## 3. Technology Stack
 
 ### Frontend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 19.2 | UI Framework with concurrent features |
-| TypeScript | 5.2+ | Type safety (strict mode) |
-| Vite | 7.2 | Build tool |
-| Zustand | 5.0 | State management |
-| Tailwind CSS | 3.4 | Styling (dark mode support) |
-| React Router DOM | 7.10 | Routing |
-| Capacitor | 8.0 | Native mobile apps |
+| Technology       | Version | Purpose                               |
+|------------------|---------|---------------------------------------|
+| React            | 19.2    | UI framework with concurrent features |
+| TypeScript       | 5.2+    | Type safety (strict mode)             |
+| Vite             | 7.2     | Build tool and dev server            |
+| Zustand          | 5.0     | Lightweight state management          |
+| Tailwind CSS     | 3.4     | Utility-first styling + dark mode     |
+| React Router DOM | 7.10    | Client-side routing                   |
+| Capacitor        | 8.0     | Native iOS/Android apps               |
+| Recharts         | Latest  | Data visualization charts             |
+| Lucide React     | Latest  | Icon library                          |
+| Zod              | Latest  | Schema validation                     |
 
-### Backend Services
+### Backend
 
-| Service | Technology | Purpose |
-|---------|------------|---------|
-| Database | PostgreSQL 14+ / Supabase | Data persistence |
-| Auth | Supabase Auth | Authentication, user management |
-| API | Node.js 22+ / Express 5 | REST API |
-| Real-time | Supabase Realtime | Live updates |
+| Technology   | Version | Purpose                    |
+|-------------|---------|----------------------------|
+| Node.js     | 22+     | Runtime                    |
+| Express     | 5       | REST API                   |
+| PostgreSQL  | 16      | Primary database           |
+| Supabase    | Latest  | Auth + realtime (production) |
+| JWT + bcrypt| —       | Authentication (local dev) |
 
-### AI Layer
+### AI Providers
 
-- **Orchestration**: `AIRouter` with Circuit Breaker pattern
-- **Primary Provider**: Google Gemini (Text, Vision, Audio, Live)
-- **Secondary Providers**: OpenAI, Anthropic, Z.ai, Perplexity
-- **Fallback**: OpenRouter (free model access)
-- **Local**: Ollama (offline inference)
+| Provider    | Model                 | Capabilities               | Role            |
+|------------|----------------------|---------------------------|-----------------|
+| Gemini     | 2.5 Flash            | Text, Vision, Audio, Live | Primary         |
+| OpenAI     | GPT-4                | Text                      | Secondary       |
+| Anthropic  | Claude               | Text                      | Tertiary        |
+| Z.ai       | —                    | Text                      | Quaternary      |
+| Perplexity | —                    | Web Search                | Search          |
+| Ollama     | Local models         | Text                      | Offline         |
+| OpenRouter | Free/open models     | Text                      | Free fallback   |
 
-## 3. Core Architecture Patterns
+### Development & Testing
 
-### 3.1 Local-First Data
+| Tool         | Version | Purpose                          |
+|-------------|---------|----------------------------------|
+| Vitest       | 4.0     | Unit/integration testing         |
+| React Testing Library | — | Component testing            |
+| Playwright   | Latest  | E2E testing                      |
+| ESLint       | Latest  | Linting with TypeScript rules    |
+| Prettier     | Latest  | Code formatting                  |
 
-- **Primary Source**: `localStorage` and `IndexedDB` (for large blobs like images).
-- **Sync Strategy**: "Last Write Wins" with conflict resolution.
-- **Offline Support**: `offlineQueue` (IndexedDB) stores requests when network is unavailable.
-- **Onboarding State**: `localStorage` flag + entries count for robust first-entry detection
+---
 
-### 3.1.1 Onboarding State Management (v2.2.4)
+## 4. Core Architecture Patterns
 
-The onboarding system uses dual-factor first-entry detection:
+### 4.1 Local-First Data Storage
 
-**localStorage Flag**: `maeple_onboarding_complete`
-- Set to `'true'` when user completes onboarding
-- Can be removed to replay onboarding from Settings
+All user data is stored locally first. Cloud sync is optional and user-controlled.
 
-**Entries Count Check**: `getEntries().length`
-- System checks if user has zero journal entries
-- If entries exist, user is considered "not new" even if flag is missing
-- Survives localStorage clearing and works across devices
+| Storage Layer | Technology   | Data Types                                   |
+|--------------|-------------|----------------------------------------------|
+| Fast access  | localStorage | User settings, AI provider configs, draft state |
+| Structured    | IndexedDB   | Health entries, offline queue, cached AI responses |
+| Encrypted     | IndexedDB   | Bio Mirror images, facial analysis (AES-GCM) |
+| Cloud (opt)   | PostgreSQL  | Synced entries, settings (Supabase-hosted)    |
 
-**Logic**:
+**Offline Support**: All core features work offline. API failures are queued in `offlineQueue` (IndexedDB) and retried with exponential backoff on reconnection.
+
+### 4.2 AI Provider Abstraction
+
+The AI layer abstracts 7 providers behind a unified `BaseAIAdapter` interface:
+
+```
+User Request → AIRouter (capability routing)
+                  ├── Text → Gemini/OpenAI/Anthropic/Z.ai
+                  ├── Vision → Gemini (FACS analysis)
+                  ├── Audio → Gemini/OpenAI Whisper
+                  ├── Live → Gemini (WebSocket)
+                  └── Search → Perplexity
+                  
+On failure → automatic fallback to next provider in chain
+```
+
+**Routing Logic**: User-configured priority → provider health check → capability match → cost optimization
+
+### 4.3 Dependency Injection
+
+Services are injected via React context rather than direct imports:
+
+```
+dependencyFactory.ts → creates service instances with circuit breakers
+         ↓
+DependencyContext.tsx → provides via React context
+         ↓
+Components → consume via useAIService(), useVisionService()
+```
+
+**Benefits**: Testability (mock services), swappability, centralized circuit breaker wrapping.
+
+### 4.4 Circuit Breaker Pattern
+
+All external service calls are wrapped in circuit breakers:
+
+```
+CLOSED ──(5 failures)──► OPEN ──(30s cooldown)──► HALF_OPEN
+   ▲                                                  │
+   └──────────(test request succeeds)─────────────────┘
+```
+
+**Implementation**: `patterns/CircuitBreaker.ts` (core) + `services/circuitBreaker.ts` (factory) + `adapters/serviceAdapters.ts` (wrappers)
+
+### 4.5 Encryption
+
+Sensitive biometric data is encrypted at rest:
+
+| Aspect         | Detail                               |
+|---------------|--------------------------------------|
+| Algorithm      | AES-GCM 256-bit                     |
+| Key derivation | PBKDF2 (100,000 iterations)         |
+| Salt           | Unique per-user                     |
+| IV             | Unique per-encryption               |
+| Encrypted data | Bio Mirror images, facial analysis   |
+
+### 4.6 Onboarding State Management
+
+Dual-factor first-entry detection:
+
 ```typescript
 const onboardingCompleted = localStorage.getItem("maeple_onboarding_complete") === "true";
 const shouldShowOnboarding = !onboardingCompleted && entries.length === 0;
 ```
 
-**Benefits**:
-- ✅ Robust to browser cache clearing
-- ✅ Works across device switches
-- ✅ Distinguishes "true new users" from "returning users with cleared cache"
-- ✅ Only shows onboarding once per user lifetime
+- Survives browser cache clearing
+- Works across device switches
+- Skip button does NOT mark complete (reappears next session)
+- Replay available in Settings
 
-### 3.2 AI Orchestration
+---
 
-- **Router**: `services/ai/router.ts` determines the best provider based on capability (Text, Vision, Audio) and user settings.
-- **Adapters**: Each provider has a standardized adapter implementing `BaseAIAdapter`.
-- **Live Coach Flow**:
-  1.  **Input**: Web Audio API captures microphone stream.
-  2.  **Processing**: `ScriptProcessorNode` converts Float32 audio to PCM16.
-  3.  **Transport**: `GeminiAdapter` streams PCM16 to Gemini API via WebSocket.
-  4.  **Output**: Gemini returns Audio (played via Web Audio API) and Text (displayed as transcript).
-- **Rate Limiting**: Client-side token bucket limiter (`services/rateLimiter.ts`) prevents API quota exhaustion.
+## 5. Data Flow Architecture
 
-### 3.3 Security
-
-- **Encryption**: AES-GCM 256-bit encryption for sensitive biometric data (Bio-Mirror) before storage.
-- **API Keys**: Stored in `localStorage` (encrypted at rest) or environment variables.
-- **Auth**: JWT-based authentication with secure password hashing.
-
-## 4. Directory Structure
+### 5.1 Journal Entry Flow
 
 ```
-/workspaces/Maeple/
+User Input (text/voice/photo)
+    │
+    ├── CapacitySliders (7 dimensions, 0-10)
+    ├── Mood Rating (1-5)
+    ├── Journal Text / Voice Transcript
+    ├── Tags & Symptoms
+    └── Optional Bio Mirror capture
+         │
+         ▼
+    ValidationService
+    (clamp mood 1-5, sanitize text, validate capacity 0-10)
+         │
+         ▼
+    StorageService.saveEntry()  ──►  localStorage / IndexedDB
+         │
+         ├──►  AI Analysis (background, async)
+         │     geminiService.analyzeJournalEntry()
+         │     └── Returns: strategies, patterns, insights
+         │
+         ├──►  SyncService.queue()  ──►  Cloud (if online + authenticated)
+         │
+         └──►  ObservationContext.add()  ──►  Correlation analysis
+```
+
+### 5.2 Bio Mirror (FACS Analysis) Flow
+
+```
+StateCheckWizard (INTRO → CAMERA → ANALYZING → RESULTS)
+    │
+    ▼
+BiofeedbackCameraModal
+    ├── useCameraCapture hook (stable refs, GPU optimized)
+    ├── Canvas capture → base64, Compress via Web Worker
+    └── Portal rendering (event isolation)
+         │
+         ▼
+StateCheckAnalyzing
+    ├── geminiVisionService.analyzeImage(base64)
+    │   ├── Gemini 2.5 Flash API call (structured JSON schema)
+    │   ├── FACS expert persona prompt
+    │   ├── 45-second timeout, circuit breaker wrapped
+    │   └── On error: fallback minimal FacialAnalysis
+    │
+    ├── transformAIResponse(rawResponse)
+    │   ├── Unwrap facs_analysis wrapper
+    │   ├── Map snake_case → camelCase
+    │   └── Ensure required fields with defaults
+    │
+    └── checkDetectionQuality(analysis)
+        ├── Quality score 0-100 (informational, never blocks)
+        └── Suggestions for improvement
+         │
+         ▼
+StateCheckResults
+    ├── FACS AU breakdown (intensity A-E badges)
+    ├── Smile analysis (Duchenne vs Social)
+    ├── compareSubjectiveToObjective(entry, analysis, baseline)
+    │   ├── calculateTensionFromAUs() → AU4×0.4 + AU24×0.4 + AU14×0.2
+    │   ├── calculateFatigueFromAUs() → AU43×0.5 + AU7×0.3 + low_exp×0.2
+    │   ├── Apply baseline adjustment (subtract neutral levels)
+    │   └── Discrepancy score 0-100
+    │
+    └── Save: encryptionService.encrypt() → IndexedDB
+```
+
+### 5.3 Live Coach Flow
+
+```
+User taps Record
+    │
+    ▼
+MediaRecorder API → audio chunks
+    │                (Float32 → PCM16)
+    ▼
+AIRouter.streamAudio() or connectLive()
+    │
+    ├── Gemini WebSocket (live mode)
+    │   ├── PCM16 streaming input
+    │   ├── Audio + text response
+    │   └── Real-time transcript display
+    │
+    └── Batch mode (record → stop → send)
+         │
+         ▼
+    Response displayed in chat bubbles
+    User can save transcript → new HealthEntry
+```
+
+### 5.4 Cloud Sync Flow
+
+```
+SyncService.fullSync()
+    │
+    ├── Fetch remote entries with timestamps
+    ├── Compare with local entries
+    │
+    ├── Conflicts (same ID, different updatedAt):
+    │   └── Last-Write-Wins: most recent timestamp wins
+    │
+    ├── Local-only entries → Push to cloud
+    ├── Remote-only entries → Pull to local
+    └── Update both sides with merged state
+```
+
+---
+
+## 6. Directory Structure
+
+```
+/opt/Maeple/
 ├── src/
-│   ├── components/      # React UI Components
-│   │   ├── OnboardingWizard.tsx        # v2.2.4 - User-focused messaging, skip button
-│   │   ├── BiofeedbackCameraModal.tsx  # Refactored - uses useCameraCapture
-│   │   ├── StateCheckCamera.tsx        # Refactored - uses useCameraCapture
-│   │   ├── StateCheckWizard.tsx        # Updated - real progress callbacks
-│   │   └── Settings.tsx                # v2.2.4 - Added Help & Resources section
-│   ├── contexts/        # React Contexts
-│   │   └── ObservationContext.tsx      # NEW - Centralized observation storage
-│   ├── hooks/           # Custom React Hooks
-│   │   └── useCameraCapture.ts         # NEW - Stable camera management
-│   ├── services/        # Business Logic & API Clients
-│   │   ├── ai/          # AI Router & Adapters
-│   │   ├── wearables/   # Wearable Integrations
-│   │   ├── correlationService.ts       # NEW - Pattern/masking detection
-│   │   ├── draftService.ts             # NEW - Auto-save persistence
-│   │   └── geminiVisionService.ts      # Enhanced - Progress callbacks
-│   ├── stores/          # Zustand Stores
-│   │   └── appStore.ts                 # v2.2.4 - Dual first-entry detection
+│   ├── components/           # 40 React UI components
+│   ├── services/             # 22 core business services
+│   │   ├── ai/               # AI router + 7 provider adapters
+│   │   ├── validation/       # Zod schemas + validation runner
+│   │   └── wearables/        # 5 wearable adapters + manager
+│   ├── stores/               # 3 Zustand stores (app, auth, sync)
+│   ├── contexts/             # 2 React contexts (DI, observations)
+│   ├── hooks/                # 2 custom hooks (camera, PWA)
+│   ├── adapters/             # Service adapters with circuit breakers
+│   ├── patterns/             # Circuit Breaker, Request Batcher
+│   ├── workers/              # Web Worker (image processing)
+│   ├── utils/                # 12 utility modules
+│   ├── factories/            # Dependency factory
+│   ├── routes.ts             # Route definitions
+│   ├── types.ts              # Core TypeScript interfaces
+│   └── index.tsx             # Entry point
+│
+├── api/                      # Express API server
+│   └── index.cjs
+│
+├── tests/                    # Vitest test suites
+│   ├── components/
+│   ├── services/
+│   ├── facs-core/
+│   └── patterns/
+│
+├── deploy/                   # Docker configuration
+│   ├── docker-compose.yml
+│   ├── Dockerfile.api
+│   ├── Dockerfile.web
+│   └── nginx.conf
+│
+├── specifications/           # Technical specifications
+│   ├── COMPLETE_SPECIFICATIONS.md
+│   ├── COMPONENT_REFERENCE.md
+│   ├── SERVICES_REFERENCE.md
+│   ├── DATA_MODELS.md
+│   ├── DATA_ANALYSIS_LOGIC.md
+│   ├── API_REFERENCE.md
+│   ├── UI_UX_GUIDELINES.md
 │   └── ...
-├── api/                 # Express API Server
-├── tests/               # Vitest Suites
-└── local_schema.sql     # Database Schema
+│
+├── docs/                     # User & developer guides
+│   ├── INDEX.md
+│   ├── FEATURES.md
+│   ├── FACS_IMPLEMENTATION_GUIDE.md
+│   ├── AI_INTEGRATION_GUIDE.md
+│   └── ...
+│
+├── android/                  # Capacitor Android build
+├── ios/                      # Capacitor iOS build (planned)
+├── public/                   # Static assets
+├── supabase/                 # Supabase config
+│
+├── DEVELOPMENT.md            # Development setup guide
+├── package.json              # Dependencies & scripts
+├── vite.config.ts            # Vite build configuration
+├── tsconfig.json             # TypeScript configuration
+├── tailwind.config.js        # Tailwind CSS configuration
+├── vitest.config.ts          # Test configuration
+└── vercel.json               # Vercel deployment config
 ```
 
-## 5. New Service Architecture (v2.2.0)
+---
 
-### 5.0.1 Onboarding System (v2.2.4)
+## 7. Security Architecture
 
-**Component**: `src/components/OnboardingWizard.tsx`
-**Store Integration**: `src/stores/appStore.ts`
+### Data Protection
 
-**Key Features**:
+| Layer        | Mechanism                 | Scope                        |
+|-------------|--------------------------|------------------------------|
+| At rest     | AES-GCM 256-bit          | Bio Mirror images/analysis   |
+| In transit  | TLS 1.3 (HTTPS)          | All API calls                |
+| Auth        | JWT (access + refresh)    | API authentication           |
+| Auth (prod) | Supabase Auth             | Production sessions          |
+| Input       | Zod schemas + runtime validation | All user data          |
+| API         | Token bucket rate limiter | Prevent quota exhaustion     |
+| XSS         | Content sanitization      | All text inputs              |
 
-1. **User-Focused Messaging**: All 5 steps emphasize outcomes over features
-   - Step 1: "Understand Yourself Better" - emphasizes self-compassion
-   - Step 2: "See Your Patterns Clearly" - emphasizes practical awareness
-   - Step 3: "Meet Mae, Your Personal Pattern Analyst" - emphasizes benefit
-   - Step 4: "Your Data Stays Yours" - privacy-first approach
-   - Step 5: "Your Pattern Journey Starts with One Entry" - action-oriented
+### Privacy Model
 
-2. **Skip Functionality**
-   - Visible "Skip" button on every step (left side of navigation)
-   - Does NOT mark onboarding as complete
-   - User can see onboarding again on next session
-   - Provides graceful exit for users who want to explore first
+- **Local-first**: Primary data on user's device
+- **Opt-in sync**: User explicitly enables cloud sync
+- **No tracking**: No analytics, no third-party tracking
+- **Data export**: Full GDPR-compliant data export (ZIP)
+- **Encryption**: Biometric data encrypted before storage
 
-3. **Dual First-Entry Detection** (appStore.ts)
-   - Primary: Check `localStorage.getItem('maeple_onboarding_complete') === 'true'`
-   - Secondary: Check `getEntries().length === 0`
-   - Show onboarding only if BOTH checks indicate new user
-   - Survives browser cache clearing and works across devices
+---
 
-4. **Replay Feature** (Settings.tsx)
-   - New "Help & Resources" section in Settings
-   - "Replay Onboarding Tutorial" button
-   - Removes localStorage flag and triggers `setShowOnboarding(true)`
-   - Users can re-watch anytime
+## 8. Performance Architecture
 
-**User Flows**:
+### Frontend Optimization
 
-**Flow A: First-Time User (Completes)**
+| Strategy           | Implementation                      |
+|-------------------|-------------------------------------|
+| Code splitting     | Route-based lazy loading (7 routes) |
+| React.memo         | Camera components wrapped           |
+| Web Workers        | Image compression off main thread   |
+| Service caching    | Multi-layer L1/L2 cache             |
+| Debouncing         | Input handlers, API calls           |
+| GPU hints          | `willChange`, `contain`, `isolation` on video |
+| Portal isolation   | Camera modal renders in portal      |
+
+### Bundle Strategy
+
+- Heavy components lazy-loaded: HealthMetricsDashboard, LiveCoach, VisionBoard, StateCheckWizard, Settings, ClinicalReport, BetaDashboard
+- Eagerly loaded: JournalView, Guide, SearchResources, Terms, Roadmap, MobileNav
+
+---
+
+## 9. Deployment Architecture
+
+### Development (Docker)
+
 ```
-Open App → showOnboarding=true → Steps 1-5 → Click "Start Journaling" 
-→ Mark complete (localStorage=true) → Modal closes → User sees dashboard
-```
-
-**Flow B: First-Time User (Skips)**
-```
-Open App → showOnboarding=true → Step 3 → Click "Skip" 
-→ localStorage NOT set → Modal closes → User sees dashboard
-→ Next session: showOnboarding=true (because entries.length=0) → Onboarding reappears
-```
-
-**Flow C: Existing User**
-```
-Open App → entries.length > 0 → showOnboarding=false → No modal shown
-→ User can still replay from Settings if desired
-```
-
-**Flow D: Replay from Settings**
-```
-Settings → Help & Resources → Click "Replay Onboarding Tutorial"
-→ localStorage cleared → setShowOnboarding=true) → Modal appears with all steps
+docker-compose up -d
+├── deploy-web-1 (Nginx, port 80)      → serves built frontend
+├── deploy-api-1 (Node.js, port 3001)  → Express API
+└── deploy-db-1  (PostgreSQL, port 5432) → database
 ```
 
-### 5.1 Camera Management
+### Production (Vercel + Supabase)
 
-**Hook**: `useCameraCapture(isActive, config)`
-
-Provides stable camera management with proper lifecycle handling:
-- Uses `useRef` for MediaStream (prevents re-renders)
-- Uses `useRef` for config values (prevents dependency cascade)
-- Single `useEffect` with minimal dependencies (`isActive`, `facingMode` only)
-- `initializeCamera` accepts `facingMode` as parameter (not closure capture)
-- Resolution fallback (HD → SD → Low)
-- Context-aware error messages
-
-```typescript
-const {
-  videoRef,
-  canvasRef,
-  state: { isReady, isInitializing, error },
-  capture,
-  switchCamera,
-  retry,
-  facingMode,
-} = useCameraCapture(isModalOpen);
+```
+Vercel ──► serves frontend SPA
+    │
+    ├── Supabase Auth ──► authentication
+    ├── Supabase DB   ──► PostgreSQL (data storage)
+    └── AI APIs       ──► direct client-side calls
+        ├── Gemini API (generativelanguage.googleapis.com)
+        ├── OpenAI API (api.openai.com)
+        ├── Anthropic API (api.anthropic.com)
+        └── Perplexity API (api.perplexity.ai)
 ```
 
-**Key Implementation Details (v2.2.1):**
-```typescript
-// Config stored in refs to prevent dependency changes
-const resolutionsRef = useRef(config.resolutionPresets || DEFAULT_RESOLUTIONS);
-const maxRetriesRef = useRef(config.maxRetries || 3);
+### Mobile (Capacitor)
 
-// initializeCamera accepts facingMode explicitly
-const initializeCamera = useCallback(
-  async (resolutionIndex: number = 0, currentFacingMode: 'user' | 'environment' = 'user') => {
-    // Uses resolutionsRef.current, not resolutions prop
-  },
-  [] // Empty deps - stable reference
-);
-
-// Main effect only depends on isActive and facingMode
-useEffect(() => {
-  if (isActive) initializeCamera(0, facingMode);
-  else cleanup();
-}, [isActive, facingMode]); // NOT initializeCamera, cleanup
+```
+Capacitor wraps the web app as native:
+├── Android (android/ directory, Gradle build)
+└── iOS (ios/ directory, Xcode project) [planned]
 ```
 
-### 5.2 Observation Context
+---
 
-**Context**: `ObservationProvider` / `useObservations()`
+## 10. Cross-References
 
-Centralized storage for visual, audio, and text observations:
-- `useReducer` for immutable state management
-- Supports correlation with journal entries
-- Query methods by type, source, or time range
-
-```typescript
-const { add, getByType, getRecent, correlate } = useObservations();
-add(faceAnalysisToObservation(analysis));
-const visuals = getByType('visual', 24); // Last 24 hours
-```
-
-### 5.3 Draft Service
-
-**Service**: `draftService` / `useDraft()`
-
-Automatic draft persistence for journal entries:
-- Auto-save every 30 seconds
-- Multiple draft versions (max 10)
-- 7-day retention with automatic cleanup
-- Recovery on app restart
-
-```typescript
-const { draft, save, markDirty, autoSave } = useDraft();
-markDirty(currentData); // Schedules auto-save
-```
-
-### 5.4 Correlation Service
-
-**Service**: `correlationService` / `useCorrelationAnalysis()`
-
-Real-time correlation analysis between subjective and objective data:
-- Masking detection with confidence scoring
-- Pattern identification (meeting stress, sensory overload, etc.)
-- Actionable recommendations
-- Alignment scoring (high/moderate/low/mismatch)
-
-```typescript
-const { analyze } = useCorrelationAnalysis();
-const analysis = analyze(entry, observations);
-// Returns: { score, alignment, masking, patterns, recommendations }
-```
+| Document | Content |
+|----------|---------|
+| [COMPONENT_REFERENCE.md](COMPONENT_REFERENCE.md) | Detailed definitions for all 40 React components |
+| [SERVICES_REFERENCE.md](SERVICES_REFERENCE.md) | Detailed definitions for all services, stores, hooks, patterns, utilities |
+| [DATA_MODELS.md](DATA_MODELS.md) | Core data types: HealthEntry, CapacityProfile, FacialAnalysis, ActionUnit |
+| [DATA_ANALYSIS_LOGIC.md](DATA_ANALYSIS_LOGIC.md) | Analysis algorithms, quality assessment, AI decision matrix |
+| [COMPLETE_SPECIFICATIONS.md](COMPLETE_SPECIFICATIONS.md) | Full feature specifications with data flow diagrams |
+| [API_REFERENCE.md](API_REFERENCE.md) | REST API endpoints and service interfaces |
+| [UI_UX_GUIDELINES.md](UI_UX_GUIDELINES.md) | Design philosophy, theming, navigation, accessibility |

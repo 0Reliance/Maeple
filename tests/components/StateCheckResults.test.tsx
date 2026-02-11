@@ -42,6 +42,12 @@ vi.mock('../../src/services/comparisonEngine', () => ({
       fatigueAUs: [],
     },
   }),
+  checkDetectionQuality: vi.fn().mockReturnValue({
+    score: 75,
+    level: 'high',
+    suggestions: [],
+    canProceed: true,
+  }),
 }));
 
 import { saveStateCheck } from '../../src/services/stateCheckService';

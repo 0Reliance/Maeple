@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Mic, Square, Loader2, Save, AlertCircle, CheckCircle2, Volume2, X, Sparkles } from "lucide-react";
+import { Mic, Square, AlertCircle, Sparkles } from "lucide-react";
 import { useAIService } from "@/contexts/DependencyContext";
 import { useAppStore } from "../stores";
 import { useNavigate } from "react-router-dom";
@@ -83,14 +83,17 @@ const VoiceIntake: React.FC = () => {
   const processAudio = async (blob: Blob) => {
     setIsProcessing(true);
     try {
-      // Convert Blob to Base64
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        const base64data = reader.result as string;
-        const base64Audio = base64data.split(',')[1]; // Remove data URL prefix
+      // Convert Blob to Base64 using promise wrapper (avoids FileReader callback race)
+      const base64data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Failed to read audio blob"));
+        reader.readAsDataURL(blob);
+      });
 
-        const prompt = `
+      const base64Audio = base64data.split(',')[1]; // Remove data URL prefix
+
+      const prompt = `
           You are Mae, a supportive AI companion. 
           Listen to this audio journal entry.
           1. Transcribe the key points.
@@ -115,55 +118,54 @@ const VoiceIntake: React.FC = () => {
           }
         `;
 
-        // Use DI with Circuit Breaker protection
-        const response = await aiService.analyzeAudio(
-          base64Audio,
-          blob.type || 'audio/webm',
-          prompt
-        );
+      // Use DI with Circuit Breaker protection
+      const response = await aiService.analyzeAudio(
+        base64Audio,
+        blob.type || 'audio/webm',
+        prompt
+      );
 
-        if (response && response.content) {
-          const { data, error } = safeParseAIResponse(response.content, {
-            context: 'LiveCoach',
-            stripMarkdown: true,
-          });
+      if (response && response.content) {
+        const { data, error } = safeParseAIResponse(response.content, {
+          context: 'LiveCoach',
+          stripMarkdown: true,
+        });
           
-          let parsedData;
-          if (error) {
-            console.warn("Failed to parse JSON, using raw text", error);
-            parsedData = { summary: response.content };
-          } else {
-            parsedData = data!;
-          }
-
-          // Save Entry
-          await addEntry({
-            id: uuidv4(),
-            timestamp: new Date().toISOString(),
-            rawText: parsedData.summary || "Audio Entry",
-            mood: parsedData.moodScore || 3,
-            moodLabel: parsedData.moodLabel || "Neutral",
-            medications: parsedData.medications || [],
-            symptoms: parsedData.symptoms || [],
-            tags: ['voice-intake', ...(parsedData.activityTypes || [])],
-            activityTypes: parsedData.activityTypes || [],
-            strengths: parsedData.strengths || [],
-            neuroMetrics: {
-              spoonLevel: 5, // Default
-              capacity: {
-                focus: 5, social: 5, structure: 5, emotional: 5, physical: 5, sensory: 5, executive: 5
-              },
-              ...parsedData.neuroMetrics
-            },
-            notes: "Transcribed from Voice Intake"
-          });
-
-          // Navigate to Journal
-          navigate('/');
+        let parsedData;
+        if (error) {
+          console.warn("Failed to parse JSON, using raw text", error);
+          parsedData = { summary: response.content };
         } else {
-          throw new Error("No response from AI");
+          parsedData = data!;
         }
-      };
+
+        // Save Entry
+        await addEntry({
+          id: uuidv4(),
+          timestamp: new Date().toISOString(),
+          rawText: parsedData.summary || "Audio Entry",
+          mood: parsedData.moodScore || 3,
+          moodLabel: parsedData.moodLabel || "Neutral",
+          medications: parsedData.medications || [],
+          symptoms: parsedData.symptoms || [],
+          tags: ['voice-intake', ...(parsedData.activityTypes || [])],
+          activityTypes: parsedData.activityTypes || [],
+          strengths: parsedData.strengths || [],
+          neuroMetrics: {
+            spoonLevel: 5, // Default
+            capacity: {
+              focus: 5, social: 5, structure: 5, emotional: 5, physical: 5, sensory: 5, executive: 5
+            },
+            ...parsedData.neuroMetrics
+          },
+          notes: "Transcribed from Voice Intake"
+        });
+
+        // Navigate to Journal
+        navigate('/');
+      } else {
+        throw new Error("No response from AI");
+      }
     } catch (err) {
       console.error("Processing failed:", err);
       
@@ -222,6 +224,7 @@ const VoiceIntake: React.FC = () => {
             <button
               onClick={isRecording ? stopRecording : startRecording}
               disabled={circuitState === CircuitState.OPEN || isProcessing}
+              aria-label={isRecording ? "Stop recording" : "Start recording"}
               className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-xl ring-4 
                 ${isRecording 
                   ? "bg-rose-500 hover:bg-rose-600 ring-rose-500/30 animate-pulse" 

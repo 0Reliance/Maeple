@@ -13,8 +13,9 @@
  * loaded on startup. Old observations (>24h) are cleaned up on load.
  */
 
-import React, { createContext, useCallback, useEffect, useReducer } from 'react';
-import { ObjectiveObservation, FacialAnalysis, Observation as BaseObservation } from '../types';
+import React, { createContext, useCallback, useReducer } from 'react';
+import { storageWrapper } from '../services/storageWrapper';
+import { Observation as BaseObservation, FacialAnalysis, ObjectiveObservation } from '../types';
 
 const STORAGE_KEY = 'maeple_observations';
 const MAX_AGE_HOURS = 24; // Auto-cleanup observations older than this
@@ -46,11 +47,19 @@ interface ObservationAction {
 }
 
 /**
- * Load observations from localStorage, filtering out old ones
+ * Load observations from storage, filtering out old ones.
+ * Uses synchronous localStorage first for initial render, with async fallback.
  */
 const loadPersistedObservations = (): StoredObservation[] => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    // Try synchronous localStorage first for initial state
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(STORAGE_KEY);
+    } catch {
+      // localStorage not available, will load asynchronously
+      return [];
+    }
     if (!stored) return [];
     
     const parsed = JSON.parse(stored) as StoredObservation[];
@@ -70,14 +79,12 @@ const loadPersistedObservations = (): StoredObservation[] => {
 };
 
 /**
- * Save observations to localStorage
+ * Save observations via storageWrapper (supports IndexedDB fallback)
  */
 const persistObservations = (observations: StoredObservation[]): void => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(observations));
-  } catch (e) {
+  storageWrapper.setItem(STORAGE_KEY, JSON.stringify(observations)).catch(e => {
     console.warn('[ObservationContext] Failed to persist observations:', e);
-  }
+  });
 };
 
 const createInitialState = (): StoredObservation[] => loadPersistedObservations();

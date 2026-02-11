@@ -1,5 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { storageWrapper } from '../../src/services/storageWrapper';
+
+// Mock IndexedDBFallback to prevent "IDBRequest is not defined" error
+vi.mock('../../src/services/IndexedDBFallback', () => {
+  return {
+    IndexedDBFallback: class {
+      async init() { return true; }
+      async getItem() { return null; }
+      async setItem() { return true; }
+      async removeItem() { return true; }
+      async clear() { return true; }
+    }
+  };
+});
 
 describe('StorageWrapper', () => {
   beforeEach(() => {

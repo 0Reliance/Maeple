@@ -9,6 +9,7 @@ import { HealthEntry } from "../types";
 import * as apiClient from "./apiClient";
 import { isCloudSyncAvailable } from "./authService";
 import { bulkSaveEntries, getEntries, getUserSettings, saveUserSettings } from "./storageService";
+import { storageWrapper } from "./storageWrapper";
 
 // ============================================
 // SYNC STATE
@@ -55,14 +56,18 @@ let syncState: SyncState = {
 
 // Defer loading to avoid circular dependencies with storage
 if (typeof window !== "undefined") {
-  try {
-    const stored = localStorage.getItem(PENDING_KEY);
+  // Load initial state asynchronously via storageWrapper
+  storageWrapper.getItem(PENDING_KEY).then(stored => {
     if (stored) {
-      syncState.pendingChanges = JSON.parse(stored).length;
+      try {
+        syncState.pendingChanges = JSON.parse(stored).length;
+      } catch (e) {
+        console.warn("Failed to load initial sync state:", e);
+      }
     }
-  } catch (e) {
+  }).catch(e => {
     console.warn("Failed to load initial sync state:", e);
-  }
+  });
 }
 
 let syncListeners: Array<(state: SyncState) => void> = [];
@@ -71,19 +76,18 @@ let syncListeners: Array<(state: SyncState) => void> = [];
 // STATE MANAGEMENT
 // ============================================
 
-const getPendingChanges = (): PendingChange[] => {
-  const stored = localStorage.getItem(PENDING_KEY);
+const getPendingChanges = async (): Promise<PendingChange[]> => {
+  const stored = await storageWrapper.getItem(PENDING_KEY);
   return stored ? JSON.parse(stored) : [];
 };
 
-const getLastSyncTime = (): Date | null => {
-  const stored = localStorage.getItem(LAST_SYNC_KEY);
+const getLastSyncTime = async (): Promise<Date | null> => {
+  const stored = await storageWrapper.getItem(LAST_SYNC_KEY);
   return stored ? new Date(stored) : null;
 };
 
 export const getSyncState = (): SyncState => ({
   ...syncState,
-  lastSyncAt: getLastSyncTime(),
 });
 
 export const onSyncStateChange = (callback: (state: SyncState) => void): (() => void) => {
@@ -96,7 +100,7 @@ export const onSyncStateChange = (callback: (state: SyncState) => void): (() => 
 const updateSyncState = (updates: Partial<SyncState>) => {
   syncState = { ...syncState, ...updates };
   if (updates.lastSyncAt) {
-    localStorage.setItem(LAST_SYNC_KEY, updates.lastSyncAt.toISOString());
+    storageWrapper.setItem(LAST_SYNC_KEY, updates.lastSyncAt.toISOString());
   }
   syncListeners.forEach(cb => cb(syncState));
 };
@@ -108,31 +112,33 @@ const updateSyncState = (updates: Partial<SyncState>) => {
 /**
  * Add a pending change to the queue with size limits
  */
-const addPendingChange = (change: PendingChange): void => {
-  const pending = getPendingChanges();
+const addPendingChange = async (change: PendingChange): Promise<void> => {
+  const pending = await getPendingChanges();
   
   // Enforce queue limit
   if (pending.length >= MAX_PENDING_CHANGES) {
     // Remove oldest entries
     const toRemove = pending.slice(0, pending.length - MAX_PENDING_CHANGES + 1);
-    toRemove.forEach(c => removePendingChange(c.id, c.type));
+    for (const c of toRemove) {
+      await removePendingChange(c.id, c.type);
+    }
     console.warn(`[SyncService] Queue full, removed ${toRemove.length} oldest entries`);
   }
   
   pending.push(change);
-  localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+  await storageWrapper.setItem(PENDING_KEY, JSON.stringify(pending));
   updateSyncState({ pendingChanges: pending.length });
 };
 
-const removePendingChange = (id: string, type: string) => {
-  const pending = getPendingChanges();
+const removePendingChange = async (id: string, type: string) => {
+  const pending = await getPendingChanges();
   const filtered = pending.filter(p => !(p.id === id && p.type === type));
-  localStorage.setItem(PENDING_KEY, JSON.stringify(filtered));
+  await storageWrapper.setItem(PENDING_KEY, JSON.stringify(filtered));
   updateSyncState({ pendingChanges: filtered.length });
 };
 
-const clearPendingChanges = () => {
-  localStorage.removeItem(PENDING_KEY);
+const clearPendingChanges = async () => {
+  await storageWrapper.removeItem(PENDING_KEY);
   updateSyncState({ pendingChanges: 0 });
 };
 
@@ -158,7 +164,7 @@ export const processPendingChanges = async (): Promise<void> => {
     return;
   }
 
-  const pending = getPendingChanges();
+  const pending = await getPendingChanges();
   if (pending.length === 0) {
     updateSyncState({ status: "synced", pendingChanges: 0 });
     return;
@@ -196,9 +202,7 @@ export const processPendingChanges = async (): Promise<void> => {
  */
 async function executeSyncOperations(pending: PendingChange[]): Promise<void> {
   for (const change of pending) {
-    if (!activeSyncs.has(change.id)) {
-      continue; // Skip if sync was cancelled
-    }
+    // Process each change regardless of activeSyncs tracking
     
     if (change.type === "entry") {
       if (change.action === "delete") {
@@ -219,7 +223,7 @@ async function executeSyncOperations(pending: PendingChange[]): Promise<void> {
       await apiClient.updateSettings(settings);
     }
 
-    removePendingChange(change.id, change.type);
+    await removePendingChange(change.id, change.type);
   }
 }
 
@@ -434,7 +438,7 @@ export const getSyncStats = async (): Promise<{
   syncStatus: string;
 }> => {
   const localEntries = (await getEntries()).length;
-  const pendingChanges = getPendingChanges().length;
+  const pendingChanges = (await getPendingChanges()).length;
 
   let cloudEntries = 0;
   let lastSyncAt: Date | null = null;
@@ -445,7 +449,7 @@ export const getSyncStats = async (): Promise<{
       const { entries } = await apiClient.getEntries();
       cloudEntries = entries ? entries.length : 0;
       syncStatus = "synced";
-      lastSyncAt = getLastSyncTime();
+      lastSyncAt = await getLastSyncTime();
     } catch {
       syncStatus = "error";
     }
@@ -464,7 +468,7 @@ export const getSyncStats = async (): Promise<{
  * Initialize sync on app startup with stale entry cleanup
  */
 export const initializeSync = async () => {
-  const pending = getPendingChanges();
+  const pending = await getPendingChanges();
   
   // Clean up stale pending changes (older than 7 days)
   const staleThreshold = Date.now() - STALE_ENTRY_THRESHOLD_MS;
@@ -475,7 +479,7 @@ export const initializeSync = async () => {
   if (freshPending.length < pending.length) {
     const removed = pending.length - freshPending.length;
     console.warn(`[SyncService] Removed ${removed} stale pending changes`);
-    localStorage.setItem(PENDING_KEY, JSON.stringify(freshPending));
+    await storageWrapper.setItem(PENDING_KEY, JSON.stringify(freshPending));
   }
   
   updateSyncState({ pendingChanges: freshPending.length });

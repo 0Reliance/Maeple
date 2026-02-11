@@ -192,7 +192,7 @@ export function validateHealthEntry(data: unknown): HealthEntry | null {
     id: data.id,
     timestamp: data.timestamp,
     rawText: isString(data.rawText) ? data.rawText : "",
-    mood: isNumber(data.mood) ? clamp(data.mood, 1, 10) : 5,
+    mood: isNumber(data.mood) ? clamp(data.mood, 1, 5) : 5,
     moodLabel: isString(data.moodLabel) ? data.moodLabel : "Unknown",
     medications: isArray(data.medications) ? validateMedications(data.medications) : [],
     symptoms: isArray(data.symptoms) ? validateSymptoms(data.symptoms) : [],
@@ -205,6 +205,12 @@ export function validateHealthEntry(data: unknown): HealthEntry | null {
       ? (data.aiStrategies as HealthEntry["aiStrategies"])
       : undefined,
     aiReasoning: isString(data.aiReasoning) ? data.aiReasoning : undefined,
+    // Preserve fields that were previously stripped
+    updatedAt: isString(data.updatedAt) ? data.updatedAt : undefined,
+    sleep: isObject(data.sleep) ? (data.sleep as unknown as HealthEntry["sleep"]) : undefined,
+    objectiveObservations: isArray(data.objectiveObservations)
+      ? (data.objectiveObservations as HealthEntry["objectiveObservations"])
+      : undefined,
   };
 }
 
@@ -458,19 +464,29 @@ export function safeParseJSON<T>(
 }
 
 /**
- * Safely parse entries from localStorage
+ * Safely parse entries from storage (deprecated - use storageService.getEntries() instead)
+ * Kept for backwards compatibility but now uses storageWrapper
  */
 export function safeLoadEntries(key: string): HealthEntry[] {
-  const json = localStorage.getItem(key);
-  return safeParseJSON(json, validateHealthEntries, []);
+  try {
+    const json = localStorage.getItem(key);
+    return safeParseJSON(json, validateHealthEntries, []);
+  } catch {
+    // localStorage unavailable, return empty (storageService handles the async path)
+    return [];
+  }
 }
 
 /**
- * Safely parse settings from localStorage
+ * Safely parse settings from storage (deprecated - use storageService.getUserSettings() instead)
  */
 export function safeLoadSettings(key: string): UserSettings {
-  const json = localStorage.getItem(key);
-  return safeParseJSON(json, validateUserSettings, { ...DEFAULT_USER_SETTINGS });
+  try {
+    const json = localStorage.getItem(key);
+    return safeParseJSON(json, validateUserSettings, { ...DEFAULT_USER_SETTINGS });
+  } catch {
+    return { ...DEFAULT_USER_SETTINGS };
+  }
 }
 
 // Export defaults for use elsewhere
@@ -478,7 +494,7 @@ export {
   DEFAULT_CAPACITY_PROFILE,
   DEFAULT_FACIAL_ANALYSIS,
   DEFAULT_NEURO_METRICS,
-  DEFAULT_USER_SETTINGS,
+  DEFAULT_USER_SETTINGS
 };
 
 // ============================================

@@ -1,9 +1,11 @@
 # MAEPLE Development Guide
 
-**App Version**: 0.97.7  
-**Last Updated**: January 20, 2026
+**App Version**: 0.97.9  
+**Last Updated**: February 9, 2026
 
-This guide explains how to set up and run the MAEPLE development environment, including the local Docker stack with PostgreSQL database.
+This guide explains how to set up and run the MAEPLE (Mental And Emotional Pattern Literacy Engine) development environment, including the local Docker stack with PostgreSQL database.
+
+---
 
 ## Prerequisites
 
@@ -28,8 +30,11 @@ npm install
 # Copy environment template
 cp .env.example .env
 
-# Add your own API keys in .env
-# See docs/QUICK_REFERENCE.md for details
+# Required keys in .env:
+# VITE_GEMINI_API_KEY=...       (primary AI provider)
+# VITE_SUPABASE_URL=...         (production auth/sync)
+# VITE_SUPABASE_ANON_KEY=...    (production auth/sync)
+# See docs/QUICK_REFERENCE.md for full key list
 ```
 
 ### 3. Start Development Server
@@ -39,6 +44,8 @@ npm run dev
 ```
 
 The app will be available at `http://localhost:5173`.
+
+---
 
 ## Local Docker Stack (Recommended)
 
@@ -57,19 +64,22 @@ docker logs deploy-api-1 --tail 50
 ```
 
 ### Services
-| Container | Port | Purpose |
-|-----------|------|---------|
-| deploy-db-1 | 5432 | PostgreSQL 16 database |
-| deploy-api-1 | 3001 | Express API server |
-| deploy-web-1 | 80 | Production frontend |
+
+| Container     | Port | Purpose                |
+| ------------- | ---- | ---------------------- |
+| deploy-db-1   | 5432 | PostgreSQL 16 database |
+| deploy-api-1  | 3001 | Express API server     |
+| deploy-web-1  | 80   | Production frontend    |
 
 ### Database
+
 - **Database**: `maeple`
 - **User**: `maeple_user`
 - **Password**: `maeple_beta_2025`
 - **Schema**: Initialized from `local_schema.sql`
 
 ### Access Points
+
 - **Frontend**: http://localhost:80
 - **API**: http://localhost:3001/api
 - **Health Check**: http://localhost:3001/api/health
@@ -90,6 +100,8 @@ npm run typecheck
 npm run test:run
 ```
 
+---
+
 ## Available Scripts
 
 | Script              | Description                  |
@@ -105,132 +117,182 @@ npm run test:run
 | `npm run format`    | Format code with Prettier    |
 | `npm run check-all` | Run lint + typecheck + tests |
 
+---
+
 ## Architecture Overview
+
+### Technology Stack
+
+| Layer      | Technology                      | Version  |
+| ---------- | ------------------------------- | -------- |
+| UI         | React + TypeScript              | 19.2 / 5.2+ |
+| Build      | Vite                            | 7.2      |
+| State      | Zustand                         | 5.0      |
+| Styling    | Tailwind CSS                    | 3.4      |
+| Routing    | React Router DOM                | 7.10     |
+| Testing    | Vitest + React Testing Library  | 4.0      |
+| Mobile     | Capacitor                       | 8.0      |
+| AI Primary | Google Gemini 2.5 Flash         | Latest   |
+| Backend    | Node.js + Express               | 22+ / 5  |
+| Database   | PostgreSQL                      | 16       |
+| Auth       | Supabase Auth (prod) / JWT (local) | —     |
+
+### Directory Structure
 
 ```
 src/
-├── components/        # React UI components
-├── services/         # Business logic
-│   ├── ai/          # AI router and adapters
-│   ├── wearables/   # Wearable integrations
-│   └── ...
-├── stores/          # Zustand state management
-├── adapters/        # Service adapters (DI)
-├── patterns/        # Design patterns (Circuit Breaker)
-├── contexts/        # React contexts (DI)
-└── types.ts         # TypeScript interfaces
+├── components/           # 40 React UI components (11,726 lines total)
+│   ├── App.tsx              # Root application shell, routing, initialization
+│   ├── JournalEntry.tsx     # Main journal + Energy Check-in (829 lines)
+│   ├── JournalView.tsx      # Journal list/view wrapper
+│   ├── HealthMetricsDashboard.tsx  # Patterns dashboard (1,044 lines)
+│   ├── StateCheckWizard.tsx # Bio Mirror orchestrator (271 lines)
+│   ├── StateCheckAnalyzing.tsx  # FACS analysis UI (501 lines)
+│   ├── StateCheckResults.tsx    # Analysis results display (431 lines)
+│   ├── StateCheckCamera.tsx     # Camera capture for calibration (226 lines)
+│   ├── BiofeedbackCameraModal.tsx  # Camera modal portal (301 lines)
+│   ├── BioCalibration.tsx   # Baseline calibration flow (203 lines)
+│   ├── LiveCoach.tsx        # Voice intake / Mae companion (266 lines)
+│   ├── Settings.tsx         # App settings (736 lines)
+│   ├── ClinicalReport.tsx   # Professional PDF report (301 lines)
+│   ├── AnalysisDashboard.tsx   # Analytics charts (162 lines)
+│   ├── LandingPage.tsx      # Pre-auth landing (347 lines)
+│   ├── AuthModal.tsx        # Sign in/up modal (329 lines)
+│   ├── MobileNav.tsx        # Bottom navigation bar (226 lines)
+│   ├── Guide.tsx            # Poziverse guide page (168 lines)
+│   ├── VisionBoard.tsx      # Personal vision board (309 lines)
+│   ├── SearchResources.tsx  # Resource search (234 lines)
+│   ├── GentleInquiry.tsx    # Contextual follow-up questions (180 lines)
+│   ├── ObjectiveObservation.tsx   # Objective data display (142 lines)
+│   ├── PhotoObservations.tsx      # Bio Mirror photo results (242 lines)
+│   ├── VoiceObservations.tsx      # Voice analysis results (189 lines)
+│   ├── RecordVoiceButton.tsx      # Voice recording button (380 lines)
+│   ├── QuickCaptureMenu.tsx       # Capture method selector (102 lines)
+│   ├── CapacitySlider.tsx         # Energy Check-in slider (98 lines)
+│   ├── AILoadingState.tsx         # AI processing overlay
+│   ├── AIProviderSettings.tsx     # Multi-provider config (379 lines)
+│   ├── AIProviderStats.tsx        # Provider usage stats (134 lines)
+│   ├── CloudSyncSettings.tsx      # Sync configuration (413 lines)
+│   ├── NotificationSettings.tsx   # Notification preferences (251 lines)
+│   ├── ErrorBoundary.tsx          # React error boundary (288 lines)
+│   ├── ErrorMessages.tsx          # Error display components (392 lines)
+│   ├── StateTrendChart.tsx        # Capacity trend chart (101 lines)
+│   ├── TimelineEntry.tsx          # Entry timeline item (179 lines)
+│   ├── ToastNotification.tsx      # Toast system (220 lines)
+│   ├── TypingIndicator.tsx        # Chat typing dots
+│   ├── UserMenu.tsx               # User dropdown menu (109 lines)
+│   ├── SyncIndicator.tsx          # Sync status display
+│   ├── BetaDashboard.tsx          # Beta error log dashboard (198 lines)
+│   ├── Roadmap.tsx                # Product roadmap (151 lines)
+│   ├── Terms.tsx                  # Terms & legal (122 lines)
+│   └── ui/                  # Shared UI primitives
+│       ├── Badge.tsx, Button.tsx, Card.tsx, Icons.tsx, Input.tsx
+│
+├── services/             # Business logic services
+│   ├── (22 core services, 7 AI adapters, 6 wearable adapters)
+│   ├── ai/               # AI provider abstraction layer
+│   │   ├── router.ts, types.ts, adapters/ (gemini, openai, anthropic, etc.)
+│   ├── validation/       # Schema validation (Zod)
+│   └── wearables/        # Wearable integrations (Oura, Apple, Garmin, etc.)
+│
+├── stores/               # Zustand state management (appStore, authStore, syncStore)
+├── contexts/             # React contexts (DependencyContext, ObservationContext)
+├── hooks/                # Custom hooks (useCameraCapture, usePWAInstall)
+├── adapters/             # Service adapters with circuit breakers
+├── patterns/             # Design patterns (CircuitBreaker, RequestBatcher)
+├── workers/              # Web Workers (imageProcessor)
+├── utils/                # Utility functions (12 modules)
+├── factories/            # Factory pattern (dependencyFactory)
+├── routes.ts             # Route definitions
+├── types.ts              # Core TypeScript interfaces (291 lines)
+└── index.tsx             # React entry point
 
-tests/
-├── components/      # Component tests
-├── services/        # Service tests
-├── patterns/        # Pattern tests
-└── setup.ts        # Test configuration
+tests/                    # Vitest test suites
+api/                      # Express API server
+deploy/                   # Docker configuration
 ```
 
-## Key Patterns
+---
+
+## Key Design Patterns
 
 ### Circuit Breaker
 
-Services use the Circuit Breaker pattern for resilience:
+All external service calls are wrapped in circuit breakers:
 
-- `src/patterns/CircuitBreaker.ts` - Core implementation
-- `src/adapters/serviceAdapters.ts` - Service adapters with circuit breakers
+- **Closed**: Normal operation, requests pass through
+- **Open**: Failure threshold exceeded, requests fail-fast
+- **Half-Open**: After cooldown, one test request allowed
+
+**Files**: `src/patterns/CircuitBreaker.ts`, `src/adapters/serviceAdapters.ts`
 
 ### Dependency Injection
 
-Components receive services via React context:
+Services injected via React context:
 
-- `src/contexts/DependencyContext.tsx` - Service interfaces and providers
+- **Factory**: `src/factories/dependencyFactory.ts`
+- **Context**: `src/contexts/DependencyContext.tsx`
+- **Hooks**: `useAIService()`, `useVisionService()`
 
-## Recent Updates
+### Local-First Storage
 
-### Onboarding System Improvements
+- **localStorage**: User settings, quick-access data
+- **IndexedDB**: Large blobs (encrypted images), offline queue
+- **Cloud**: Supabase (optional sync via `syncService.ts`)
 
-#### Changes Made:
+### AI Provider Abstraction
 
-1. **OnboardingWizard.tsx** - Complete messaging and UX overhaul
-   - Added "Skip" button on every step for graceful exit
-   - Reframed all 5 steps from feature-focused to user-need-focused messaging
-   - Improved visual hierarchy and layout
+- **Router**: `src/services/ai/router.ts` — capability-based selection
+- **Adapters**: Each provider implements `BaseAIAdapter`
+- **Fallback Chain**: Gemini → OpenAI → Anthropic → Z.ai
 
-2. **appStore.ts** - Dual first-entry detection
-   - Now checks BOTH localStorage flag AND entries.length
-   - Survives browser cache clearing
-   - Works across device switches
+---
 
-3. **Settings.tsx** - Replay functionality
-   - New "Help & Resources" section
-   - "Replay Onboarding Tutorial" button
-   - Users can re-watch onboarding anytime
+## Testing
 
-#### Testing Onboarding:
+Vitest with `--pool=forks` (required):
 
 ```bash
-# Clear onboarding flag to test first-time flow
-# In browser console:
-localStorage.removeItem('maeple_onboarding_complete');
-location.reload();
-
-# Test skip flow:
-# On any onboarding step, click "Skip" button
-# Verify modal closes and user sees dashboard
-# Refresh page - onboarding should reappear (no entries created yet)
-
-# Test replay:
-# Go to Settings → Help & Resources
-# Click "Replay Onboarding Tutorial"
-# Verify modal opens with all 5 steps
+npx vitest run --pool=forks              # All tests
+npx vitest run tests/components/ --pool=forks  # Component tests
+npx vitest run --coverage --pool=forks   # With coverage
 ```
 
-## Database Setup (Optional)
+---
 
-For local development with PostgreSQL:
+## Routes and Navigation
 
-```bash
-# Run database setup script
-bash setup_db.sh
+| Path             | Component                  | Lazy Loaded |
+| ---------------- | -------------------------- | ----------- |
+| `/journal`       | JournalView                | No          |
+| `/dashboard`     | HealthMetricsDashboard     | Yes         |
+| `/bio-mirror`    | StateCheckWizard           | Yes         |
+| `/coach`         | LiveCoach                  | Yes         |
+| `/vision`        | VisionBoard                | Yes         |
+| `/resources`     | SearchResources            | No          |
+| `/settings`      | Settings                   | Yes         |
+| `/guide`         | Guide                      | No          |
+| `/terms`         | Terms                      | No          |
+| `/roadmap`       | Roadmap                    | No          |
+| `/beta-dashboard`| BetaDashboard              | Yes         |
 
-# Start API server
-node api/index.cjs
-```
-
-## Cloud Development
-
-MAEPLE uses Supabase for production authentication and data:
-
-1. Configure Supabase credentials in `.env`
-2. See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for setup guide
+---
 
 ## Troubleshooting
 
-### TypeScript Errors
+| Issue | Solution |
+| ----- | -------- |
+| TypeScript errors | `npm run typecheck` |
+| Test failures | `npx vitest run --pool=forks` (not `--no-threads`) |
+| Build failures | `npm run build` |
+| Onboarding loop | Clear `localStorage.getItem('maeple_onboarding_complete')` |
 
-```bash
-npm run typecheck
-```
-
-### Test Failures
-
-```bash
-npm run test:run
-```
-
-### Build Failures
-
-```bash
-npm run build:production
-```
-
-### Onboarding Issues
-
-- Onboarding not appearing? Check `localStorage.getItem('maeple_onboarding_complete')` and `getEntries().length`
-- Both must be falsy for onboarding to show on startup
-- Use browser DevTools to clear localStorage and test
+---
 
 ## Code Quality Standards
 
 - TypeScript strict mode enabled
 - ESLint with React hooks rules
 - Prettier for consistent formatting
-- Test coverage for core functionality (run `npm run test:run`)
-- Onboarding follows accessibility standards (keyboard navigation, ARIA labels)
+- Test coverage for core functionality
+- Accessibility standards (keyboard navigation, ARIA labels)

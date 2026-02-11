@@ -14,113 +14,31 @@ import {
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { z } from "zod";
+
 import { faceAnalysisToObservation, useObservations } from "../contexts/ObservationContext";
 import { AudioAnalysisResult } from "../services/audioAnalysisService";
 import { useCorrelationAnalysis } from "../services/correlationService";
 import { useDraft } from "../services/draftService";
 import {
   CapacityProfile,
+  FacialAnalysis,
+  GentleInquiry as GentleInquiryType,
   HealthEntry,
   ObjectiveObservation,
   ParsedResponse,
   StrategyRecommendation,
-  FacialAnalysis,
-  GentleInquiry as GentleInquiryType,
 } from "../types";
+import { isValidGentleInquiry, validateFacialAnalysis } from "../utils/dataValidation";
+import { normalizeObjectiveObservations } from "../utils/observationNormalizer";
+import { safeParseAIResponse } from "../utils/safeParse";
 import AILoadingState from "./AILoadingState";
+import CapacitySlider from "./CapacitySlider";
 import GentleInquiry from "./GentleInquiry";
 import RecordVoiceButton from "./RecordVoiceButton";
 import VoiceObservations from "./VoiceObservations";
 import { Button } from "./ui/Button";
 import { Card, CardDescription } from "./ui/Card";
 import { Textarea } from "./ui/Input";
-import { normalizeObjectiveObservations } from "../utils/observationNormalizer";
-import { safeParseAIResponse, validateWithZod } from "../utils/safeParse";
-import { validateFacialAnalysis, validateGentleInquiry } from "../utils/dataValidation";
-
-// Zod schema for AI response validation
-// Note: moodScore uses 1-10 scale to match HealthEntry.mood type
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _AIResponseSchemaStrict = z
-  .object({
-    moodScore: z.number().min(1).max(10).optional().default(5),
-    moodLabel: z.string().optional().default("Neutral"),
-    medications: z
-      .array(
-        z.object({
-          name: z.string(),
-          amount: z.string().optional(),
-          unit: z.string().optional(),
-        })
-      )
-      .optional()
-      .default([]),
-    symptoms: z
-      .array(
-        z.object({
-          name: z.string(),
-          severity: z.number().min(1).max(10).optional(),
-        })
-      )
-      .optional()
-      .default([]),
-    activityTypes: z.array(z.string()).optional().default([]),
-    strengths: z.array(z.string()).optional().default([]),
-    strategies: z
-      .array(
-        z.object({
-          id: z.string().default(() => `strategy-${Date.now()}-${Math.random()}`),
-          title: z.string(),
-          action: z.string(),
-          type: z.enum(["REST", "FOCUS", "SOCIAL", "SENSORY", "EXECUTIVE"]).default("REST"),
-          icon: z.string().optional(),
-          relevanceScore: z.number().optional().default(0.7),
-        })
-      )
-      .optional()
-      .default([]),
-    summary: z.string().optional().default("Entry analyzed"),
-    analysisReasoning: z.string().optional().default(""),
-    // Use permissive schema for objectiveObservations to accept any AI output
-    // The normalizer will handle cleaning and filtering
-    objectiveObservations: z
-      .array(
-        z.object({
-          category: z.string(),
-          value: z.string(),
-          severity: z.string(),
-          evidence: z.string().optional(),
-        })
-      )
-      .optional()
-      .default([]),
-    gentleInquiry: z
-      .object({
-        id: z.string().default(() => `inquiry-${Date.now()}-${Math.random()}`),
-        basedOn: z.array(z.string()).default([]),
-        question: z.string().default(""),
-        tone: z.enum(["curious", "supportive", "informational"]).default("curious"),
-        skipAllowed: z.boolean().default(true),
-        priority: z.enum(["low", "medium", "high"]).default("medium"),
-      })
-      .optional(),
-    neuroMetrics: z
-      .object({
-        environmentalMentions: z.array(z.string()).optional().default([]),
-        socialMentions: z.array(z.string()).optional().default([]),
-        executiveMentions: z.array(z.string()).optional().default([]),
-        physicalMentions: z.array(z.string()).optional().default([]),
-      })
-      .optional()
-      .default({
-        environmentalMentions: [],
-        socialMentions: [],
-        executiveMentions: [],
-        physicalMentions: [],
-      }),
-  })
-  .passthrough();
 
 interface Props {
   onEntryAdded: (entry: HealthEntry) => Promise<void>;
@@ -424,7 +342,24 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
       let parsed: ParsedResponse;
       if (error) {
         console.warn("Failed to parse AI response, using fallback", error);
-        parsed = _AIResponseSchemaStrict.parse({}) as ParsedResponse;
+        parsed = {
+          moodScore: 5,
+          moodLabel: "Neutral",
+          medications: [],
+          symptoms: [],
+          activityTypes: [],
+          strengths: [],
+          strategies: [],
+          summary: "Entry analyzed",
+          analysisReasoning: "",
+          objectiveObservations: [],
+          neuroMetrics: {
+            environmentalMentions: [],
+            socialMentions: [],
+            executiveMentions: [],
+            physicalMentions: [],
+          },
+        } as ParsedResponse;
       } else {
         const parsedCandidate = data ?? ({} as ParsedResponse);
         // Normalize objectiveObservations to handle messy AI output
@@ -545,16 +480,36 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         (newEntry as any).maskingDetected = correlation.masking.detected;
       }
 
-      // Handle gentle inquiry - display if provided, otherwise save entry
+      // Handle gentle inquiry - display if valid (has observations), otherwise save entry
+      const hasValidInquiry = isValidGentleInquiry(parsed.gentleInquiry);
+
+      // Log for debugging
       if (parsed.gentleInquiry) {
-        setGentleInquiry(parsed.gentleInquiry);
+        console.log('[JournalEntry] gentleInquiry received:', {
+          hasInquiry: !!parsed.gentleInquiry,
+          basedOnLength: parsed.gentleInquiry.basedOn?.length || 0,
+          basedOnContent: parsed.gentleInquiry.basedOn,
+          willShow: hasValidInquiry,
+          question: parsed.gentleInquiry.question,
+          isValid: hasValidInquiry
+        });
+      }
+
+      if (hasValidInquiry) {
+        setGentleInquiry(parsed.gentleInquiry || null);
         setShowInquiry(true);
         setPendingEntry(newEntry);
       } else {
-        await onEntryAdded(newEntry);
-        // Clear draft on successful save
-        saveDraft({ notes: "" });
-        resetForm();
+        try {
+          await onEntryAdded(newEntry);
+          // Clear draft only after confirmed save success
+          saveDraft({ notes: "" });
+          resetForm();
+        } catch (saveError) {
+          console.error('[JournalEntry] Failed to save entry:', saveError);
+          setError('Failed to save your entry. Your data is still in the form — please try again.');
+          return;
+        }
       }
 
       // Ensure strategies is always an array before setting state
@@ -587,9 +542,15 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
     if (!inquiryResponse.trim() || !pendingEntry) {
       setShowInquiry(false);
       if (pendingEntry) {
-        await onEntryAdded(pendingEntry);
-        // Clear draft on successful save
-        saveDraft({ notes: "" });
+        try {
+          await onEntryAdded(pendingEntry);
+          // Clear draft only after confirmed save success
+          saveDraft({ notes: "" });
+        } catch (saveError) {
+          console.error('[JournalEntry] Failed to save entry after inquiry skip:', saveError);
+          setError('Failed to save your entry. Please try again.');
+          return;
+        }
       }
       resetForm();
       return;
@@ -602,18 +563,30 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
         : pendingEntry.notes,
     };
 
-    await onEntryAdded(entryWithInquiry);
-    // Clear draft on successful save
-    saveDraft({ notes: "" });
-    resetForm();
+    try {
+      await onEntryAdded(entryWithInquiry);
+      // Clear draft only after confirmed save success
+      saveDraft({ notes: "" });
+      resetForm();
+    } catch (saveError) {
+      console.error('[JournalEntry] Failed to save entry with inquiry:', saveError);
+      setError('Failed to save your entry. Please try again.');
+      return;
+    }
   };
 
   const handleInquirySkip = async () => {
     setShowInquiry(false);
     if (pendingEntry) {
-      await onEntryAdded(pendingEntry);
-      // Clear draft on successful save
-      saveDraft({ notes: "" });
+      try {
+        await onEntryAdded(pendingEntry);
+        // Clear draft only after confirmed save success
+        saveDraft({ notes: "" });
+      } catch (saveError) {
+        console.error('[JournalEntry] Failed to save entry on inquiry skip:', saveError);
+        setError('Failed to save your entry. Please try again.');
+        return;
+      }
     }
     resetForm();
   };
@@ -638,103 +611,6 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
   };
 
   const [pendingEntry, setPendingEntry] = useState<HealthEntry | null>(null);
-
-  const colorStyles: Record<
-    string,
-    { bg: string; text: string; gradient: string; accent: string }
-  > = {
-    blue: {
-      bg: "bg-blue-100 dark:bg-blue-900/50",
-      text: "text-blue-600 dark:text-blue-400",
-      gradient: "from-blue-400 to-blue-500",
-      accent: "accent-blue-500",
-    },
-    pink: {
-      bg: "bg-pink-100 dark:bg-pink-900/50",
-      text: "text-pink-600 dark:text-pink-400",
-      gradient: "from-pink-400 to-pink-500",
-      accent: "accent-pink-500",
-    },
-    purple: {
-      bg: "bg-purple-100 dark:bg-purple-900/50",
-      text: "text-purple-600 dark:text-purple-400",
-      gradient: "from-purple-400 to-purple-500",
-      accent: "accent-purple-500",
-    },
-    cyan: {
-      bg: "bg-cyan-100 dark:bg-cyan-900/50",
-      text: "text-cyan-600 dark:text-cyan-400",
-      gradient: "from-cyan-400 to-cyan-500",
-      accent: "accent-cyan-500",
-    },
-    indigo: {
-      bg: "bg-indigo-100 dark:bg-indigo-900/50",
-      text: "text-indigo-600 dark:text-indigo-400",
-      gradient: "from-indigo-400 to-indigo-500",
-      accent: "accent-indigo-500",
-    },
-    rose: {
-      bg: "bg-rose-100 dark:bg-rose-900/50",
-      text: "text-rose-600 dark:text-rose-400",
-      gradient: "from-rose-400 to-rose-500",
-      accent: "accent-rose-500",
-    },
-    orange: {
-      bg: "bg-orange-100 dark:bg-orange-900/50",
-      text: "text-orange-600 dark:text-orange-400",
-      gradient: "from-orange-400 to-orange-500",
-      accent: "accent-orange-500",
-    },
-    yellow: {
-      bg: "bg-yellow-100 dark:bg-yellow-900/50",
-      text: "text-yellow-600 dark:text-yellow-400",
-      gradient: "from-yellow-400 to-yellow-500",
-      accent: "accent-yellow-500",
-    },
-  };
-
-  const CapacitySlider = ({ label, icon: Icon, value, field, color, suggested }: any) => {
-    const styles = colorStyles[color] || colorStyles.blue;
-    const informedBy = getInformedByContext(field);
-    const isSuggested = suggested !== undefined && value === suggested;
-
-    return (
-      <div className="mb-4">
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-full ${styles.bg} ${styles.text}`}>
-              <Icon size={14} />
-            </div>
-            <span className="text-sm font-medium text-text-primary">{label}</span>
-            {isSuggested && <span className="text-xs text-primary font-medium">(Suggested)</span>}
-          </div>
-          <span className="text-sm font-bold text-text-primary">{value}/10</span>
-        </div>
-
-        {informedBy && (
-          <div className="mb-2 text-xs text-primary flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-full">
-            <span>💡</span>
-            <span>{informedBy}</span>
-          </div>
-        )}
-
-        <div className="relative h-3 bg-bg-secondary rounded-full overflow-hidden cursor-pointer group">
-          <div
-            className={`absolute top-0 left-0 h-full bg-gradient-to-r ${styles.gradient} rounded-full transition-all duration-300`}
-            style={{ width: `${value * 10}%` }}
-          ></div>
-          <input
-            type="range"
-            min="1"
-            max="10"
-            value={value}
-            onChange={e => updateCapacity(field, parseInt(e.target.value))}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          />
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-lg animate-fadeIn">
@@ -830,33 +706,37 @@ const JournalEntry: React.FC<Props> = ({ onEntryAdded }) => {
                 label="Deep Focus"
                 icon={Brain}
                 value={capacity.focus}
-                field="focus"
                 color="blue"
                 suggested={suggestedCapacity.focus}
+                informedBy={getInformedByContext("focus")}
+                onValueChange={(v) => updateCapacity("focus", v)}
               />
               <CapacitySlider
                 label="Emotional Processing"
                 icon={Heart}
                 value={capacity.emotional}
-                field="emotional"
                 color="pink"
                 suggested={suggestedCapacity.emotional}
+                informedBy={getInformedByContext("emotional")}
+                onValueChange={(v) => updateCapacity("emotional", v)}
               />
               <CapacitySlider
                 label="Social Energy"
                 icon={Users}
                 value={capacity.social}
-                field="social"
                 color="purple"
                 suggested={suggestedCapacity.social}
+                informedBy={getInformedByContext("social")}
+                onValueChange={(v) => updateCapacity("social", v)}
               />
               <CapacitySlider
                 label="Decision Capacity"
                 icon={Zap}
                 value={capacity.executive}
-                field="executive"
                 color="cyan"
                 suggested={suggestedCapacity.executive}
+                informedBy={getInformedByContext("executive")}
+                onValueChange={(v) => updateCapacity("executive", v)}
               />
             </div>
           )}

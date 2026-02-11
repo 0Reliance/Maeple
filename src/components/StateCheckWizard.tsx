@@ -1,7 +1,7 @@
 import { useVisionService } from "@/contexts/DependencyContext";
 import { CircuitState } from "@/patterns/CircuitBreaker";
-import { AlertCircle, ArrowRight, Camera, Loader2, X } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { AlertCircle, ArrowRight, Camera } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
 import { getBaseline } from "../services/stateCheckService";
 import { getEntries as getJournalEntries } from "../services/storageService";
 import { FacialAnalysis, FacialBaseline, HealthEntry } from "../types";
@@ -21,12 +21,6 @@ const StateCheckWizard: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [circuitState, setCircuitState] = useState<CircuitState>(CircuitState.CLOSED);
   const visionService = useVisionService();
-
-  // Progress tracking
-  const [progress, setProgress] = useState(0);
-  const [currentStage, setCurrentStage] = useState("");
-  const [estimatedTime, setEstimatedTime] = useState(30);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Subscribe to circuit breaker state changes
   useEffect(() => {
@@ -70,24 +64,12 @@ const StateCheckWizard: React.FC = () => {
     loadContext();
   }, []);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, []);
-
   const handleCapture = async (src: string) => {
-    // CRITICAL FIX: Close camera modal IMMEDIATELY after capture
+    // CRITICAL FIX: Batch all state updates together to prevent flickering
+    // React will schedule all these updates in a single render
     setIsCameraOpen(false);
-    
     setImageSrc(src);
     setStep("ANALYZING");
-    setProgress(0);
-    setCurrentStage("Initializing analysis...");
-    setEstimatedTime(ANALYSIS_TIMEOUT_SECONDS);
     setError("");
 
     // Note: The actual AI analysis is now handled by the StateCheckAnalyzing component
@@ -99,47 +81,22 @@ const StateCheckWizard: React.FC = () => {
     setStep("INTRO");
   };
 
-  const cancelAnalysis = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  };
-
-  const handleAnalysisProgress = useCallback(
-    (stage: string, progressPercent: number) => {
-      setProgress(progressPercent);
-      setCurrentStage(stage);
-      const remainingPercent = Math.max(0, 100 - progressPercent);
-      const estimatedRemainingSeconds = Math.max(
-        0,
-        Math.round((remainingPercent / 100) * ANALYSIS_TIMEOUT_SECONDS)
-      );
-      setEstimatedTime(estimatedRemainingSeconds);
-    },
-    [setCurrentStage, setEstimatedTime, setProgress]
-  );
-
   const handleAnalysisComplete = useCallback(
     (analysisResult: FacialAnalysis) => {
-      console.log('[StateCheckWizard] === ANALYSIS COMPLETE CALLBACK ===');
-      console.log('[StateCheckWizard] Received analysis:', {
-        actionUnitsCount: analysisResult.actionUnits?.length || 0,
-        confidence: analysisResult.confidence,
-        hasFacsInterpretation: !!analysisResult.facsInterpretation,
-        jawTension: analysisResult.jawTension,
-        eyeFatigue: analysisResult.eyeFatigue,
-        hasError: !!(analysisResult as any).error
-      });
-      
       // Validate analysis before setting state
-      if (!analysisResult || !analysisResult.actionUnits) {
-        console.error('[StateCheckWizard] Invalid analysis received:', analysisResult);
+      if (!analysisResult) {
+        console.error('[StateCheckWizard] Invalid analysis received: null/undefined');
         setError('Analysis returned invalid data');
         setStep('ERROR');
         return;
       }
+
+      // Ensure actionUnits is at least an empty array (graceful degradation)
+      if (!analysisResult.actionUnits) {
+        console.warn('[StateCheckWizard] No actionUnits in result, using empty array');
+        analysisResult.actionUnits = [];
+      }
       
-      console.log('[StateCheckWizard] Analysis is valid, setting state...');
       setAnalysis(analysisResult);
       setStep("RESULTS");
     },
@@ -154,8 +111,6 @@ const StateCheckWizard: React.FC = () => {
     setStep("INTRO");
     setImageSrc(null);
     setAnalysis(null);
-    setProgress(0);
-    setCurrentStage("");
     setIsCameraOpen(false);
   };
 
@@ -224,10 +179,9 @@ const StateCheckWizard: React.FC = () => {
     return (
       <StateCheckAnalyzing
         imageSrc={imageSrc}
-        onProgress={handleAnalysisProgress}
         onComplete={handleAnalysisComplete}
-        onCancel={cancelAnalysis}
-        estimatedTime={estimatedTime}
+        onCancel={() => setStep("INTRO")}
+        estimatedTime={ANALYSIS_TIMEOUT_SECONDS}
       />
     );
   }
@@ -292,23 +246,27 @@ const StateCheckWizard: React.FC = () => {
         )}
 
         <p className="text-[10px] text-slate-400">
-          Analysis happens locally. Images are never stored without permission.
+          Photos are compressed on-device and sent to your configured AI provider for analysis. Images are never stored without permission.
         </p>
       </div>
     </div>
   );
 
-  // Camera Modal - Only render when open to prevent premature initialization
+  // Camera Modal - Always render but control visibility with CSS
+  // This prevents flicker from mount/unmount cycles
   return (
     <>
-      {isCameraOpen && (
+      <div 
+        className={!isCameraOpen ? "hidden" : ""} 
+        aria-hidden={!isCameraOpen}
+      >
         <BiofeedbackCameraModal
           isOpen={isCameraOpen}
           onCapture={handleCapture}
           onCancel={handleCloseCamera}
         />
-      )}
-      {/* Only show intro when camera is closed AND step is INTRO */}
+      </div>
+      {/* Show intro when camera is closed AND step is INTRO */}
       {!isCameraOpen && step === "INTRO" && introContent}
     </>
   );

@@ -1,5 +1,5 @@
 import { ChevronRight, Lightbulb, MessageCircle, X } from 'lucide-react';
-import React from 'react';
+import React, { useRef } from 'react';
 import { GentleInquiry as GentleInquiryType } from '../types';
 
 interface Props {
@@ -25,6 +25,7 @@ const GentleInquiry: React.FC<Props> = ({
   onSkip,
   disabled = false,
 }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
   const getToneColor = (tone: string) => {
     switch (tone) {
       case 'curious':
@@ -56,7 +57,9 @@ const GentleInquiry: React.FC<Props> = ({
             💬 Quick Question
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Based on what I observed
+            {inquiry.basedOn && inquiry.basedOn.length > 0
+              ? "Based on what I observed"
+              : "I have a quick question for you"}
           </p>
         </div>
         <button
@@ -68,28 +71,30 @@ const GentleInquiry: React.FC<Props> = ({
         </button>
       </div>
 
-      {/* What I'm Asking About */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl space-y-3">
-        <div className="flex items-start gap-2">
-          <Lightbulb size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              I noticed:
-            </p>
-            <ul className="space-y-1">
-              {(inquiry.basedOn || []).map((item, index) => (
-                <li
-                  key={index}
-                  className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"
-                >
-                  <span className="text-indigo-500">•</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
+      {/* What I'm Asking About - Only show if there are observations */}
+      {inquiry.basedOn && inquiry.basedOn.length > 0 && (
+        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl space-y-3">
+          <div className="flex items-start gap-2">
+            <Lightbulb size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                I noticed:
+              </p>
+              <ul className="space-y-1">
+                {inquiry.basedOn.map((item, index) => (
+                  <li
+                    key={index}
+                    className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"
+                  >
+                    <span className="text-indigo-500">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* The Question */}
       <div className="p-5 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-2xl">
@@ -126,6 +131,7 @@ const GentleInquiry: React.FC<Props> = ({
         </p>
         <div className="relative">
           <input
+            ref={inputRef}
             type="text"
             placeholder="Share more if you'd like..."
             disabled={disabled}
@@ -138,9 +144,7 @@ const GentleInquiry: React.FC<Props> = ({
           />
           <button
             onClick={() => {
-              const input = document.querySelector(
-                'input[type="text"]'
-              ) as HTMLInputElement;
+              const input = inputRef.current;
               if (input?.value.trim()) {
                 onResponse(input.value.trim());
               }

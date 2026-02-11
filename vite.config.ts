@@ -27,6 +27,14 @@ function copyServiceWorker() {
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
+    port: 80,
+    host: true,
+    allowedHosts: [
+      'maeple.0reliance.com',
+      'localhost',
+      '192.168.1.192',
+      '172.18.0.1',
+    ],
     proxy: {
       "/api": {
         target: "http://localhost:3001",

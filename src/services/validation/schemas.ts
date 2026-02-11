@@ -124,18 +124,49 @@ export const FacialAnalysisObservationSchema = z.object({
 });
 
 /**
+ * Action Unit Schema (FACS)
+ */
+export const ActionUnitSchema = z.object({
+  auCode: z.string(),
+  name: z.string(),
+  intensity: z.enum(['A', 'B', 'C', 'D', 'E']),
+  intensityNumeric: z.number(),
+  confidence: z.number().min(0).max(1),
+});
+
+/**
+ * FACS Interpretation Schema
+ */
+export const FACSInterpretationSchema = z.object({
+  duchennSmile: z.boolean(),
+  socialSmile: z.boolean(),
+  maskingIndicators: z.array(z.string()),
+  fatigueIndicators: z.array(z.string()),
+  tensionIndicators: z.array(z.string()),
+});
+
+/**
  * Facial Analysis Schema
+ * Updated to match FACS-based analysis with actionUnits and facsInterpretation
  */
 export const FacialAnalysisSchema = z.object({
   confidence: z.number().min(0).max(1),
+  
+  // NEW: Structured FACS Action Unit detection
+  actionUnits: z.array(ActionUnitSchema),
+  
+  // NEW: FACS-based interpretation
+  facsInterpretation: FACSInterpretationSchema.optional(),
+  
+  // Legacy observation fields (backward compatible)
   observations: z.array(FacialAnalysisObservationSchema),
   lighting: z.string().min(1).max(100),
   lightingSeverity: z.enum(['low', 'moderate', 'high']),
   environmentalClues: z.array(z.string().max(200)),
-  // Optional fields for backward compatibility
-  maskingScore: z.number().min(1).max(10).optional(),
-  jawTension: z.number().min(1).max(10).optional(),
-  eyeFatigue: z.number().min(1).max(10).optional(),
+  
+  // Legacy numeric fields (derived from AUs for backward compatibility)
+  jawTension: z.number().min(0).max(1).optional(),
+  eyeFatigue: z.number().min(0).max(1).optional(),
   primaryEmotion: z.string().max(100).optional(),
   signs: z.array(z.object({
     description: z.string().max(500),
